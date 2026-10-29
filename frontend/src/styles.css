@@ -348,7 +348,9 @@ button, select, textarea, input { font: inherit; color: inherit; }
 .grid td.active { outline: 2px solid var(--blue); outline-offset: -2px; }
 /* Lưới dùng được bằng bàn phím: viền focus quanh cả bảng, ô đang sửa có ô nhập phủ kín */
 .grid:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; border-radius: 4px; }
-.grid td.editing { padding: 0; position: relative; }
+.grid td.editing, .grid td.active.editing { padding: 0; position: relative; outline: none; }
+/* Ô nhập chỉ có một viền vuông khớp mép ô (không dùng viền focus bo tròn chung của trang) */
+.grid .cell-edit:focus-visible, .grid .cell-edit:focus { outline: 2px solid var(--blue); outline-offset: -2px; border-radius: 0; }
 .grid .cell-edit { width: 100%; min-width: 120px; height: 26px; border: 0; outline: 2px solid var(--blue); outline-offset: -2px; padding: 3px 8px; background: var(--card); color: var(--ink); font: inherit; }
 .formula-bar .formula-status { flex: none; font-size: 12px; color: var(--muted); }
 .formula-bar .formula-status.error { color: var(--red); max-width: 50%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
