@@ -4,24 +4,29 @@ import base64
 import binascii
 import json
 import logging
+import time
 import uuid
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from pydantic import ValidationError
 
-from ..agent.loop import StepLimitError, run_turn
-from ..agent.prompts import context_block
+from .. import runtime_settings
+from ..agent.loop import StepLimitError, TurnStats, run_turn
+from ..agent.prompts import context_block, system_prompt
 from ..config import get_settings
-from ..db import ChatSession, File, Message, SessionLocal
+from ..db import ChatSession, File, Message, SessionLocal, Turn
 from ..llm import get_provider
-from ..llm.base import LLMError
+from ..llm.base import HistoryRow, LLMError
+from ..privacy.pii import Anonymizer
+from ..tools.assets import list_assets, normalize_image, save_asset
 from ..tools.executor import ToolExecutor
 from ..tools.registry import Selection
+from ..versioning import store
 
 log = logging.getLogger(__name__)
 router = APIRouter()
 
-IMAGE_MIMES = {"image/png", "image/jpeg", "image/webp"}
+IMAGE_MIMES = {"image/png", "image/jpeg", "image/webp", "image/heic", "image/gif"}
 CONFIRM_TIMEOUT_S = 120
 
 
@@ -42,7 +47,6 @@ class Connection:
     def __init__(self, ws: WebSocket, db, session_id: str):
         self.ws, self.db, self.session_id = ws, db, session_id
         self.settings = get_settings()
-        self.provider = get_provider()
         self.turn: asyncio.Task | None = None
         self.confirms: dict[str, asyncio.Future] = {}
         self.send_lock = asyncio.Lock()
@@ -78,6 +82,9 @@ class Connection:
                 else:
                     await self.send({"type": "error", "message": f"Không hiểu loại tin nhắn '{kind}'"})
         except WebSocketDisconnect:
+            for fut in self.confirms.values():
+                if not fut.done():
+                    fut.set_result(False)
             if self.turn and not self.turn.done():
                 await self.turn  # để lượt chạy xong và lưu lịch sử
 
@@ -97,14 +104,14 @@ class Connection:
         out = []
         for it in items or []:
             if it.get("mime") not in IMAGE_MIMES:
-                raise ValueError("Chỉ nhận ảnh PNG, JPEG, WEBP")
+                raise ValueError("Chỉ nhận ảnh PNG, JPEG, WEBP, HEIC, GIF")
             try:
                 data = base64.b64decode(it.get("data", ""), validate=True)
             except binascii.Error:
                 raise ValueError("Ảnh không hợp lệ")
             if len(data) > self.settings.max_image_mb * 1024 * 1024:
                 raise ValueError(f"Mỗi ảnh tối đa {self.settings.max_image_mb} MB")
-            out.append((data, it["mime"]))
+            out.append(normalize_image(data))
         return out
 
     async def handle_chat(self, msg: dict) -> None:
@@ -119,52 +126,83 @@ class Connection:
             await self.send({"type": "error", "message": "Tin nhắn trống"})
             return
 
-        self.db.expire_all()  # nạp lại dữ liệu có thể đã đổi qua REST (tải tệp, undo, ...)
+        self.db.expire_all()  # nạp lại dữ liệu có thể đã đổi qua REST (tải tệp, undo, cài đặt, ...)
+        cfg = runtime_settings.load(self.db)
+        try:
+            provider = get_provider(cfg)
+        except LLMError as e:
+            await self.send({"type": "error", "message": str(e)})
+            return
+
         session = self.db.get(ChatSession, self.session_id)
         files = [{"name": f.name, "kind": f.kind, "version": f.current_version}
                  for f in self.db.query(File).filter_by(session_id=self.session_id)]
-        ctx = context_block(files, selection.model_dump(exclude_none=True) if selection else None)
-        user_raw = self.provider.user_message(f"{ctx}\n\n{text}", images)
-        history = [m.raw for m in session.messages]
-        executor = ToolExecutor(self.db, self.session_id, self.confirm, selection)
+        active_file = msg.get("active_file") if any(f["name"] == msg.get("active_file") for f in files) else None
+        adir = store.assets_dir(self.session_id)
+        new_assets = [save_asset(adir, data, mime) for data, mime in images]
 
+        pii = Anonymizer(session.pii_map) if cfg.pii_masking and cfg.provider != "mock" else None
+        ctx = context_block(files, selection.model_dump(exclude_none=True) if selection else None,
+                            active_file, list_assets(adir), new_assets)
+        user_text = f"{ctx}\n\n{text}"
+        user_raw = provider.user_message(pii.mask_text(user_text) if pii else user_text, images)
+        rows = [HistoryRow(m.role, m.text, m.fmt, m.raw) for m in session.messages]
+        history = provider.adopt_history(rows)
+
+        turn = Turn(session_id=self.session_id, request=text, provider=provider.name, model=provider.model)
+        self.db.add(turn)
+        self.db.commit()
+        executor = ToolExecutor(self.db, self.session_id, self.confirm, selection, turn.id)
+        stats = TurnStats()
         out: list[tuple[str, str, dict]] = []
         note = None
-        await self.send({"type": "turn.start"})
+        await self.send({"type": "turn.start", "turn_id": turn.id, "provider": provider.name, "model": provider.model})
         try:
             async with asyncio.timeout(self.settings.turn_timeout_s):
-                await run_turn(provider=self.provider, executor=executor, history=history, user_raw=user_raw,
-                               emit=self.send, max_steps=self.settings.max_steps, out=out)
+                await run_turn(provider=provider, executor=executor, history=history, user_raw=user_raw,
+                               system=system_prompt(text, files, active_file), emit=self.send,
+                               max_steps=self.settings.max_steps, out=out, pii=pii, stats=stats)
+            turn.status = "done"
         except asyncio.CancelledError:
-            note = "(Người dùng đã dừng lượt này.)"
+            note, turn.status = "(Người dùng đã dừng lượt này.)", "cancelled"
             await self.send({"type": "turn.cancelled"})
         except TimeoutError:
-            note = "(Lượt này bị dừng vì quá thời gian xử lý.)"
+            note, turn.status = "(Lượt này bị dừng vì quá thời gian xử lý.)", "error"
             await self.send({"type": "error", "message": "Quá thời gian xử lý, hãy thử chia nhỏ yêu cầu"})
         except (StepLimitError, LLMError) as e:
-            note = f"({e})"
+            note, turn.status = f"({e})", "error"
             await self.send({"type": "error", "message": str(e)})
         except Exception:
             log.exception("Lỗi khi xử lý lượt chat")
-            note = "(Lỗi hệ thống khi xử lý lượt này.)"
+            note, turn.status = "(Lỗi hệ thống khi xử lý lượt này.)", "error"
             await self.send({"type": "error", "message": "Lỗi hệ thống, vui lòng thử lại"})
 
-        if note and not (out and out[-1][0] == "model"):
-            out.append(("model", note, self.provider.model_text_message(note)))
+        if note:
+            turn.error = note
+            if not (out and out[-1][0] == "model"):
+                out.append(("model", note, provider.model_text_message(note)))
         seq = len(session.messages)
         for i, (role, t, raw) in enumerate([("user", text, user_raw), *out]):
-            self.db.add(Message(session_id=self.session_id, seq=seq + i, role=role, text=t, raw=raw))
+            self.db.add(Message(session_id=self.session_id, turn_id=turn.id, seq=seq + i, role=role, text=t,
+                                fmt=provider.fmt, raw=raw))
+        if pii:
+            session.pii_map = dict(pii.mapping)
+        turn.steps, turn.tool_calls, turn.tool_errors = stats.steps, stats.tool_calls, stats.tool_errors
+        turn.first_token_ms = stats.first_token_ms
+        turn.duration_ms = int((time.monotonic() - stats.started) * 1000)
+        turn.input_tokens, turn.output_tokens = stats.input_tokens, stats.output_tokens
         self.db.commit()
-        await self.send({"type": "turn.end"})
+        await self.send({"type": "turn.end", "turn_id": turn.id})
 
         if session.title == "Phiên mới" and text:
-            await self._name_session(session, text)
+            await self._name_session(provider, session, text, pii)
 
-    async def _name_session(self, session: ChatSession, text: str) -> None:
+    async def _name_session(self, provider, session: ChatSession, text: str, pii: Anonymizer | None) -> None:
         try:
-            title = await self.provider.quick(
+            title = await provider.quick(
                 "Đặt tiêu đề ngắn (tối đa 6 từ, tiếng Việt) cho cuộc trò chuyện bắt đầu bằng câu dưới. "
-                f"Chỉ trả về tiêu đề.\n{text}")
+                f"Chỉ trả về tiêu đề.\n{pii.mask_text(text) if pii else text}")
+            title = pii.unmask_text(title) if pii else title
         except Exception:
             title = text[:40]
         session.title = title.strip().strip('"')[:200] or text[:40]

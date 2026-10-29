@@ -91,8 +91,7 @@ export function useChatSocket(sessionId: string | null, handlers: Handlers) {
         );
         break;
       case "file.changed":
-        if (ev.summary !== "Không có thay đổi")
-          setItems((xs) => [...xs, { kind: "change", fileName: ev.file_name, version: ev.version, summary: ev.summary }]);
+        setItems((xs) => [...xs, { kind: "change", fileId: ev.file_id, fileName: ev.file_name, version: ev.version, summary: ev.summary }]);
         h.current.onFileChanged(ev.file_id, ev.diff);
         break;
       case "confirm.request":
@@ -107,8 +106,8 @@ export function useChatSocket(sessionId: string | null, handlers: Handlers) {
     }
   };
 
-  const send = useCallback((text: string, images: OutgoingImage[], selection: Selection | null) => {
-    wsRef.current?.send(JSON.stringify({ type: "chat", text, images, selection }));
+  const send = useCallback((text: string, images: OutgoingImage[], selection: Selection | null, activeFile: string | null) => {
+    wsRef.current?.send(JSON.stringify({ type: "chat", text, images, selection, active_file: activeFile }));
     setItems((xs) => [
       ...xs,
       { kind: "text", role: "user", text: images.length ? `${text}\n[${images.length} ảnh]` : text },

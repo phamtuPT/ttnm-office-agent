@@ -11,7 +11,18 @@ export interface OfficeFile {
   name: string;
   kind: FileKind;
   current_version: number;
+  oldest_version: number;
   latest_version: number;
+}
+
+export interface FileVersion {
+  number: number;
+  source: string;
+  summary: string;
+  request: string;
+  created_at: string;
+  current: boolean;
+  diff: FileDiff;
 }
 
 /** Vùng người dùng chọn trên khung xem trước — agent chỉ được sửa trong vùng này. */
@@ -24,18 +35,39 @@ export interface Selection {
 }
 
 export interface FileDiff {
-  cells?: { sheet: string; ref: string; before: unknown; after: unknown }[];
-  cells_total?: number;
+  created?: boolean;
+  cells?: { sheet: string; ref: string; kind: "value" | "format"; before: unknown; after: unknown }[];
+  values_total?: number;
+  formats_total?: number;
+  charts?: { sheet: string; before: number; after: number }[];
   sheets_added?: string[];
   sheets_removed?: string[];
   paragraphs?: { op: string; before_index: number; after_index: number; before: string[]; after: string[] }[];
   slides?: { index: number; before: string | null; after: string | null }[];
 }
 
+export type Provider = "gemini" | "openai" | "ollama" | "mock";
+
+export interface ModelSet {
+  agent: string;
+  lite: string;
+  fallback: string;
+  stt: string;
+}
+
+export interface AppSettings {
+  provider: Provider;
+  models: Record<Provider, ModelSet>;
+  ollama_base_url: string;
+  pii_masking: boolean;
+  has_key: { gemini: boolean; openai: boolean };
+  render_available?: boolean;
+}
+
 export type ChatItem =
   | { kind: "text"; role: "user" | "model"; text: string; streaming?: boolean }
   | { kind: "tool"; id: string | null; name: string; args: Record<string, unknown>; status: "running" | "ok" | "error"; result?: Record<string, unknown> }
-  | { kind: "change"; fileName: string; version: number; summary: string }
+  | { kind: "change"; fileId: string; fileName: string; version: number; summary: string }
   | { kind: "notice"; text: string };
 
 export interface ConfirmRequest {
@@ -46,7 +78,8 @@ export interface ConfirmRequest {
 
 /** Sự kiện server → client. Đặc tả: docs/API.md */
 export type ServerEvent =
-  | { type: "turn.start" | "turn.end" | "turn.cancelled" }
+  | { type: "turn.start"; turn_id: string; provider: string; model: string }
+  | { type: "turn.end" | "turn.cancelled" }
   | { type: "message.delta"; text: string }
   | { type: "message.done"; text: string }
   | { type: "tool.start"; id: string | null; name: string; args: Record<string, unknown> }
@@ -58,14 +91,24 @@ export type ServerEvent =
 
 export const TOOL_LABELS: Record<string, string> = {
   list_files: "Xem danh sách tệp",
+  render_pages: "Tự kiểm tra bố cục bằng hình ảnh",
+  undo_last_request: "Hoàn tác yêu cầu trước",
   excel_inspect: "Đọc cấu trúc bảng tính",
   excel_read_range: "Đọc vùng ô",
+  excel_create_workbook: "Tạo bảng tính mới",
   excel_write_cells: "Ghi ô",
   excel_format_range: "Định dạng ô",
+  excel_conditional_format: "Tô màu có điều kiện",
+  excel_add_chart: "Thêm biểu đồ",
   excel_delete_sheet: "Xoá sheet",
   word_inspect: "Đọc dàn ý tài liệu",
+  word_create_document: "Tạo tài liệu Word",
   word_replace_paragraph: "Sửa đoạn văn",
   word_insert_paragraph: "Chèn đoạn văn",
+  word_insert_image: "Chèn ảnh vào Word",
   pptx_inspect: "Đọc dàn ý slide",
+  pptx_create_presentation: "Tạo bài trình chiếu",
   pptx_set_text: "Sửa chữ trên slide",
+  pptx_set_notes: "Ghi chú thuyết trình",
+  pptx_add_image: "Chèn ảnh vào slide",
 };

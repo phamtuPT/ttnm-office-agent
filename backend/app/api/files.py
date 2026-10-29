@@ -6,10 +6,11 @@ from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from ..config import get_settings
-from ..db import File
+from ..db import File, Turn
+from ..preview import render
 from ..tools.registry import REGISTRY, ToolCtx
 from ..versioning import store
-from .deps import get_db, get_file_or_404, get_session_or_404
+from .deps import get_db, get_file_or_404, get_session_or_404, iso
 
 router = APIRouter(prefix="/api", tags=["files"])
 
@@ -23,8 +24,9 @@ MAX_UNCOMPRESSED = 200 * 1024 * 1024
 
 
 def file_out(f: File) -> dict:
+    numbers = [v.number for v in f.versions] or [1]
     return {"id": f.id, "name": f.name, "kind": f.kind, "current_version": f.current_version,
-            "latest_version": max((v.number for v in f.versions), default=1)}
+            "oldest_version": min(numbers), "latest_version": max(numbers)}
 
 
 def _validate_office_zip(data: bytes) -> None:
@@ -78,12 +80,41 @@ def file_outline(file_id: str, db: Session = Depends(get_db)):
     return tool.handler(args, ToolCtx(path=store.working_path(f), selection=None))
 
 
+def _render_dir(f: File):
+    return store.session_dir(f.session_id) / "renders" / f.id / f"v{f.current_version}"
+
+
+@router.get("/files/{file_id}/pages")
+def file_pages(file_id: str, db: Session = Depends(get_db)):
+    """Ảnh từng trang/slide (LibreOffice). available=false nếu máy chưa cài LibreOffice → giao diện dùng dàn ý."""
+    f = get_file_or_404(db, file_id)
+    if f.kind == "xlsx" or not render.available():
+        return {"available": False, "pages": 0}
+    try:
+        pages = render.render(store.working_path(f), _render_dir(f))
+    except render.RenderError as e:
+        raise HTTPException(500, str(e))
+    return {"available": True, "pages": len(pages), "version": f.current_version}
+
+
+@router.get("/files/{file_id}/pages/{index}.png")
+def file_page_png(file_id: str, index: int, db: Session = Depends(get_db)):
+    f = get_file_or_404(db, file_id)
+    p = _render_dir(f) / f"page-{index}.png"
+    if not p.exists():
+        raise HTTPException(404, "Chưa render trang này — gọi /pages trước")
+    return FileResponse(p, media_type="image/png")
+
+
 @router.get("/files/{file_id}/versions")
 def list_versions(file_id: str, db: Session = Depends(get_db)):
+    """Lịch sử phiên bản, mỗi phiên bản ứng với một yêu cầu (kèm câu yêu cầu để người dùng nhận ra)."""
     f = get_file_or_404(db, file_id)
+    requests = {t.id: t.request for t in db.query(Turn).filter(Turn.id.in_([v.turn_id for v in f.versions if v.turn_id]))}
     return [{"number": v.number, "source": v.source, "summary": v.summary, "diff": v.diff,
-             "created_at": v.created_at.isoformat(), "current": v.number == f.current_version}
-            for v in f.versions]
+             "request": requests.get(v.turn_id, ""), "created_at": iso(v.created_at),
+             "current": v.number == f.current_version}
+            for v in reversed(f.versions)]
 
 
 @router.post("/files/{file_id}/undo")
@@ -108,6 +139,7 @@ def redo(file_id: str, db: Session = Depends(get_db)):
 
 @router.post("/files/{file_id}/restore/{number}")
 def restore(file_id: str, number: int, db: Session = Depends(get_db)):
+    """Khôi phục nội dung phiên bản cũ thành phiên bản MỚI → lần khôi phục cũng hoàn tác được."""
     f = get_file_or_404(db, file_id)
     try:
         store.restore(db, f, number)

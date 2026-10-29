@@ -1,9 +1,11 @@
-"""Tool Word (python-docx). TV2 mở rộng: bảng, định dạng ký tự, tìm-thay thế, mục lục, ..."""
+"""Tool Word (python-docx). TV2 mở rộng: bảng, định dạng từ khoá, tìm-thay thế, Track Changes/Comment, ..."""
 from docx import Document
 from docx.oxml import OxmlElement
+from docx.shared import Cm
 from docx.text.paragraph import Paragraph
 from pydantic import BaseModel, Field
 
+from .assets import asset_path
 from .registry import ToolCtx, ToolError, tool
 
 FILE = Field(description="Tên tệp .docx trong phiên")
@@ -89,3 +91,50 @@ def word_insert_paragraph(args: InsertArgs, ctx: ToolCtx) -> dict:
         raise ToolError(f"Tài liệu không có style '{args.style}'")
     doc.save(ctx.path)
     return {"inserted_after": args.after_index}
+
+
+class ParagraphSpec(BaseModel):
+    text: str
+    style: str | None = Field(None, description="'Title', 'Heading 1'..'Heading 3', 'List Bullet', 'List Number'; "
+                                                "bỏ trống = Normal")
+
+
+class CreateArgs(BaseModel):
+    file: str = Field(description="Tên tệp mới, đuôi .docx")
+    paragraphs: list[ParagraphSpec] = Field(description="Nội dung theo thứ tự")
+
+
+@tool("word_create_document", "Tạo tài liệu Word mới có đề mục, đoạn văn, danh sách.", CreateArgs,
+      kind="docx", creates=True)
+def word_create_document(args: CreateArgs, ctx: ToolCtx) -> dict:
+    doc = Document()
+    for p in args.paragraphs:
+        try:
+            doc.add_paragraph(p.text, p.style)
+        except KeyError:
+            raise ToolError(f"Không có style '{p.style}'")
+    doc.save(ctx.path)
+    return {"created": args.file, "paragraphs": len(args.paragraphs)}
+
+
+class InsertImageArgs(BaseModel):
+    file: str = FILE
+    image: str = Field(description="Tên ảnh người dùng đã gửi, xem [Ảnh đính kèm], ví dụ anh-1.png")
+    after_index: int = Field(description="Chèn sau đoạn này; -1 để chèn lên đầu")
+    width_cm: float = Field(12, description="Chiều rộng ảnh (cm)")
+
+
+@tool("word_insert_image", "Chèn ảnh người dùng đã gửi vào tài liệu Word.", InsertImageArgs, kind="docx", writes=True)
+def word_insert_image(args: InsertImageArgs, ctx: ToolCtx) -> dict:
+    img = asset_path(ctx, args.image)
+    _check_selection(ctx, args.after_index)
+    doc = Document(ctx.path)
+    para = doc.add_paragraph()
+    para.add_run().add_picture(str(img), width=Cm(args.width_cm))
+    # add_paragraph thêm vào cuối → dời về đúng vị trí
+    if args.after_index == -1 and len(doc.paragraphs) > 1:
+        doc.paragraphs[0]._p.addprevious(para._p)
+    elif args.after_index >= 0:
+        _paragraph(doc, args.after_index)._p.addnext(para._p)
+    doc.save(ctx.path)
+    return {"inserted": args.image}

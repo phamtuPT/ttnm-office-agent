@@ -9,26 +9,23 @@ interface Props {
   onUpload: (files: FileList) => void;
 }
 
+/** Dải tab các tệp trong phiên (tệp tải lên và tệp trợ lý tạo ra). */
 export function FileList({ files, selectedId, onSelect, onUpload }: Props) {
   return (
-    <div className="files">
-      <label className="btn primary block">
-        + Tải tệp lên
+    <nav className="file-tabs" aria-label="Tệp trong phiên">
+      {files.map((f) => (
+        <button key={f.id} className={`file-tab ${f.id === selectedId ? "active" : ""}`} onClick={() => onSelect(f.id)}
+          aria-current={f.id === selectedId} title={`${f.name} — phiên bản ${f.current_version}`}>
+          <span aria-hidden>{ICON[f.kind]}</span>
+          <span className="name">{f.name}</span>
+          <span className="ver">v{f.current_version}</span>
+        </button>
+      ))}
+      <label className="btn primary upload" title="Tải lên .xlsx, .docx, .pptx">
+        + Tải tệp
         <input type="file" accept=".xlsx,.docx,.pptx" multiple hidden
           onChange={(e) => { if (e.target.files) onUpload(e.target.files); e.target.value = ""; }} />
       </label>
-      {files.length === 0 && <p className="hint">Chưa có tệp. Hỗ trợ .xlsx, .docx, .pptx.</p>}
-      <ul>
-        {files.map((f) => (
-          <li key={f.id}>
-            <button className={`file ${f.id === selectedId ? "active" : ""}`} onClick={() => onSelect(f.id)}>
-              <span>{ICON[f.kind]}</span>
-              <span className="name">{f.name}</span>
-              <span className="ver">v{f.current_version}</span>
-            </button>
-          </li>
-        ))}
-      </ul>
-    </div>
+    </nav>
   );
 }

@@ -65,3 +65,10 @@ def pptx_bytes() -> bytes:
     buf = io.BytesIO()
     prs.save(buf)
     return buf.getvalue()
+
+
+def png_bytes() -> bytes:
+    from PIL import Image
+    buf = io.BytesIO()
+    Image.new("RGB", (40, 20), "red").save(buf, "PNG")
+    return buf.getvalue()

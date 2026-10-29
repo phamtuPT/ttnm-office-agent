@@ -1,3 +1,5 @@
+# docker compose up --build                     → http://localhost:3000
+# docker compose --profile ollama up --build    → thêm Ollama chạy trên máy (đặt OLLAMA_BASE_URL=http://ollama:11434/v1)
 services:
   backend:
     build: ./backend
@@ -9,10 +11,18 @@ services:
   frontend:
     build: ./frontend
     ports:
-      - "8080:80"
+      - "127.0.0.1:3000:80" # chỉ mở trên máy này, không lộ ra mạng LAN
     depends_on:
       - backend
     restart: unless-stopped
 
+  ollama:
+    image: ollama/ollama:0.12.6
+    profiles: ["ollama"]
+    volumes:
+      - ollama:/root/.ollama
+    restart: unless-stopped
+
 volumes:
   storage:
+  ollama:

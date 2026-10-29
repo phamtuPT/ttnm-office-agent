@@ -1,11 +1,15 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "./api";
 import { ChatPanel } from "./components/ChatPanel";
 import { ConfirmDialog } from "./components/ConfirmDialog";
 import { FileList } from "./components/FileList";
+import { HistoryDialog } from "./components/HistoryDialog";
 import { PreviewPane } from "./components/PreviewPane";
-import type { ChatSession, FileDiff, OfficeFile, Selection } from "./types";
+import { SettingsDialog } from "./components/SettingsDialog";
+import type { AppSettings, ChatSession, FileDiff, OfficeFile, Selection } from "./types";
 import { useChatSocket } from "./useChatSocket";
+
+const PROVIDER_LABEL: Record<string, string> = { gemini: "Gemini", openai: "OpenAI", ollama: "Ollama", mock: "Thử nghiệm" };
 
 export default function App() {
   const [sessions, setSessions] = useState<ChatSession[]>([]);
@@ -16,6 +20,8 @@ export default function App() {
   const [reloadKey, setReloadKey] = useState(0);
   const [diffs, setDiffs] = useState<Record<string, FileDiff>>({});
   const [error, setError] = useState<string | null>(null);
+  const [settings, setSettings] = useState<AppSettings | null>(null);
+  const [dialog, setDialog] = useState<"settings" | "history" | null>(null);
 
   const refreshFiles = useCallback(async (sid: string) => {
     const fs = await api.listFiles(sid);
@@ -23,12 +29,16 @@ export default function App() {
     setFileId((cur) => (cur && fs.some((f) => f.id === cur) ? cur : fs[0]?.id ?? null));
   }, []);
 
+  const booted = useRef(false);
   useEffect(() => {
+    if (booted.current) return; // StrictMode chạy effect hai lần → tránh tạo hai phiên rỗng
+    booted.current = true;
     api.listSessions().then(async (ss) => {
       if (ss.length === 0) ss = [await api.createSession()];
       setSessions(ss);
       setSessionId(ss[0].id);
     }).catch((e) => setError(e.message));
+    api.getSettings().then(setSettings).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -62,13 +72,27 @@ export default function App() {
     refreshFiles(sessionId);
   };
 
+  const afterVersionChange = (fids: string[]) => {
+    setDiffs((d) => ({ ...d, ...Object.fromEntries(fids.map((id) => [id, {}])) }));
+    setReloadKey((k) => k + 1);
+    if (sessionId) refreshFiles(sessionId);
+  };
+
   const versionAction = async (fn: (id: string) => Promise<OfficeFile>) => {
-    if (!fileId || !sessionId) return;
+    if (!fileId) return;
     try {
       await fn(fileId);
-      setDiffs((d) => ({ ...d, [fileId]: {} }));
-      setReloadKey((k) => k + 1);
-      refreshFiles(sessionId);
+      afterVersionChange([fileId]);
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  };
+
+  const undoLastRequest = async () => {
+    if (!sessionId) return;
+    try {
+      const fs = await api.undoLastRequest(sessionId);
+      afterVersionChange(fs.map((f) => f.id));
     } catch (e) {
       setError((e as Error).message);
     }
@@ -84,16 +108,37 @@ export default function App() {
 
   return (
     <div className="app">
-      <aside className="sidebar">
-        <h1>Trợ lý Office</h1>
-        <select value={sessionId ?? ""} onChange={(e) => setSessionId(e.target.value)} aria-label="Phiên làm việc">
-          {sessions.map((s) => <option key={s.id} value={s.id}>{s.title}</option>)}
-        </select>
-        <button className="btn block" onClick={newSession}>+ Phiên mới</button>
-        <FileList files={files} selectedId={fileId} onSelect={setFileId} onUpload={upload} />
-      </aside>
+      <div className="left">
+        <header className="topbar">
+          <select value={sessionId ?? ""} onChange={(e) => setSessionId(e.target.value)} aria-label="Phiên làm việc">
+            {sessions.map((s) => <option key={s.id} value={s.id}>{s.title}</option>)}
+          </select>
+          <button className="btn" onClick={newSession} title="Phiên mới">＋</button>
+          <button className="btn" onClick={undoLastRequest} disabled={chat.busy}
+            title="Hoàn tác mọi thay đổi tệp của yêu cầu vừa rồi">↶ Hoàn tác yêu cầu</button>
+          <button className="btn" onClick={() => setDialog("settings")} title="Đổi mô hình AI">
+            ⚙ {settings ? PROVIDER_LABEL[settings.provider] : ""}
+          </button>
+        </header>
+        {sessionId && (
+          <ChatPanel
+            sessionId={sessionId}
+            items={chat.items}
+            busy={chat.busy}
+            connected={chat.connected}
+            activeFile={file?.name ?? null}
+            selection={selection}
+            onClearSelection={() => setSelection(null)}
+            onSend={(text, images) => chat.send(text, images, selection, file?.name ?? null)}
+            onCancel={chat.cancel}
+            onOpenFile={setFileId}
+            onError={setError}
+          />
+        )}
+      </div>
 
-      <main className="center">
+      <main className="right">
+        <FileList files={files} selectedId={fileId} onSelect={setFileId} onUpload={upload} />
         {file ? (
           <PreviewPane
             file={file}
@@ -103,25 +148,12 @@ export default function App() {
             onSelect={setSelection}
             onUndo={() => versionAction(api.undo)}
             onRedo={() => versionAction(api.redo)}
+            onHistory={() => setDialog("history")}
           />
         ) : (
-          <div className="empty">Chọn hoặc tải tệp lên để xem trước</div>
+          <div className="empty">Tải tệp lên, hoặc nhờ trợ lý tạo tệp mới</div>
         )}
       </main>
-
-      {sessionId && (
-        <ChatPanel
-          sessionId={sessionId}
-          items={chat.items}
-          busy={chat.busy}
-          connected={chat.connected}
-          selection={selection}
-          onClearSelection={() => setSelection(null)}
-          onSend={(text, images) => chat.send(text, images, selection)}
-          onCancel={chat.cancel}
-          onError={setError}
-        />
-      )}
 
       {error && (
         <div className="toast" role="alert">
@@ -130,6 +162,13 @@ export default function App() {
         </div>
       )}
       {chat.confirm && <ConfirmDialog req={chat.confirm} onAnswer={chat.answerConfirm} />}
+      {dialog === "settings" && (
+        <SettingsDialog onClose={() => setDialog(null)} onSaved={setSettings} onError={setError} />
+      )}
+      {dialog === "history" && file && (
+        <HistoryDialog file={file} onClose={() => setDialog(null)} onError={setError}
+          onRestored={() => { setDialog(null); afterVersionChange([file.id]); }} />
+      )}
     </div>
   );
 }

@@ -12,6 +12,7 @@ interface Props {
   onSelect: (s: Selection | null) => void;
   onUndo: () => void;
   onRedo: () => void;
+  onHistory: () => void;
 }
 
 export function PreviewPane(p: Props) {
@@ -23,9 +24,10 @@ export function PreviewPane(p: Props) {
     <section className="preview">
       <header className="preview-head">
         <b className="name">{file.name}</b>
-        <span className="ver">Phiên bản {file.current_version}/{file.latest_version}</span>
-        <button className="btn" onClick={p.onUndo} disabled={file.current_version <= 1} title="Hoàn tác thay đổi gần nhất">↶ Hoàn tác</button>
+        <span className="ver">Phiên bản {file.current_version}</span>
+        <button className="btn" onClick={p.onUndo} disabled={file.current_version <= file.oldest_version} title="Hoàn tác yêu cầu gần nhất trên tệp này">↶ Hoàn tác</button>
         <button className="btn" onClick={p.onRedo} disabled={file.current_version >= file.latest_version} title="Làm lại">↷ Làm lại</button>
+        <button className="btn" onClick={p.onHistory} title="Xem thay đổi theo từng yêu cầu, khôi phục phiên bản cũ">🕘 Lịch sử</button>
         {file.kind === "docx" && (
           <button className="btn" onClick={() => setPrintView((v) => !v)}>{printView ? "Dàn ý" : "Bản in"}</button>
         )}
@@ -39,7 +41,7 @@ export function PreviewPane(p: Props) {
       <div className="preview-body">
         {file.kind === "xlsx" && <XlsxView {...p} selection={sel} />}
         {file.kind === "docx" && (printView ? <DocxPrint {...p} /> : <OutlineView {...p} selection={sel} />)}
-        {file.kind === "pptx" && <OutlineView {...p} selection={sel} />}
+        {file.kind === "pptx" && <SlidesView {...p} selection={sel} />}
       </div>
     </section>
   );
@@ -59,7 +61,7 @@ function XlsxView({ file, reloadKey, diff, selection, onSelect }: Props) {
     fetch(api.fileContentUrl(file.id))
       .then((r) => r.arrayBuffer())
       .then((buf) => {
-        const book = XLSX.read(buf, { cellFormula: true });
+        const book = XLSX.read(buf, { cellFormula: true, sheetStubs: true });
         setWb(book);
         setSheet((s) => (book.SheetNames.includes(s) ? s : book.SheetNames[0]));
       });
@@ -87,7 +89,8 @@ function XlsxView({ file, reloadKey, diff, selection, onSelect }: Props) {
     const c = ws?.[addr] as XLSX.CellObject | undefined;
     if (!c) return "";
     // openpyxl không lưu giá trị đã tính của công thức → hiển thị công thức
-    return c.w ?? (c.v !== undefined ? String(c.v) : c.f ? `=${c.f}` : "");
+    if (c.f && (c.t === "z" || c.v === undefined || c.v === "")) return `=${c.f}`;
+    return c.w ?? (c.v !== undefined ? String(c.v) : "");
   };
 
   return (
@@ -142,6 +145,38 @@ function DocxPrint({ file, reloadKey }: Props) {
       .then((b) => ref.current && renderAsync(b, ref.current, undefined, { inWrapper: true }));
   }, [file.id, reloadKey]);
   return <div ref={ref} className="docx-print" />;
+}
+
+// ---------- PowerPoint: ảnh slide (LibreOffice) hoặc dàn ý ----------
+
+function SlidesView(p: Props) {
+  const { file, reloadKey, diff, selection, onSelect } = p;
+  const [pages, setPages] = useState<{ available: boolean; pages: number; version?: number } | null>(null);
+  useEffect(() => {
+    setPages(null);
+    api.pages(file.id).then(setPages).catch(() => setPages({ available: false, pages: 0 }));
+  }, [file.id, reloadKey]);
+  if (!pages) return <p className="hint">Đang dựng ảnh slide…</p>;
+  if (!pages.available) return <OutlineView {...p} />;
+
+  const chosen = selection?.slides ?? [];
+  const changed = new Set((diff?.slides ?? []).map((d) => d.index));
+  const toggle = (i: number, multi: boolean) => {
+    const next = multi ? (chosen.includes(i) ? chosen.filter((x) => x !== i) : [...chosen, i].sort((a, b) => a - b))
+      : chosen.length === 1 && chosen[0] === i ? [] : [i];
+    onSelect(next.length ? { file: file.name, slides: next } : null);
+  };
+  return (
+    <ol className="slides">
+      {Array.from({ length: pages.pages }, (_, i) => (
+        <li key={i} className={`${chosen.includes(i) ? "sel" : ""} ${changed.has(i) ? "changed" : ""}`}
+          onClick={(e) => toggle(i, e.ctrlKey || e.metaKey)}>
+          <img src={api.pageUrl(file.id, i, pages.version ?? 0)} alt={`Slide ${i + 1}`} loading="lazy" />
+          <small>Slide {i + 1}</small>
+        </li>
+      ))}
+    </ol>
+  );
 }
 
 // ---------- Word / PowerPoint (dàn ý, chọn đoạn/slide) ----------

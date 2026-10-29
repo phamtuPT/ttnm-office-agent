@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from typing import Iterator
 
 from fastapi import HTTPException
@@ -12,6 +13,11 @@ def get_db() -> Iterator[Session]:
         yield db
     finally:
         db.close()
+
+
+def iso(dt: datetime) -> str:
+    """SQLite không lưu múi giờ → coi giá trị đọc ra là UTC để trình duyệt đổi đúng giờ địa phương."""
+    return (dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)).isoformat()
 
 
 def get_session_or_404(db: Session, session_id: str) -> ChatSession:
