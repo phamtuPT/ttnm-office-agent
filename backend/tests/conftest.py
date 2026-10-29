@@ -1,11 +1,37 @@
+import atexit
 import io
 import os
 import tempfile
+import uuid
 
-# Phải đặt trước khi import app (config được cache, engine tạo lúc import)
+
+def _fresh_postgres(admin_url: str) -> str:
+    """Tạo một CSDL test_<ngẫu nhiên> trên máy chủ Postgres cho lượt chạy này, xoá khi xong."""
+    from sqlalchemy import create_engine, text
+    from sqlalchemy.engine import make_url
+
+    url = make_url(admin_url.replace("postgresql://", "postgresql+psycopg://", 1))
+    name = f"test_{uuid.uuid4().hex[:10]}"
+    admin = create_engine(url, isolation_level="AUTOCOMMIT")
+    with admin.connect() as c:
+        c.execute(text(f'CREATE DATABASE "{name}"'))
+
+    def _drop() -> None:
+        from app.db import engine
+        engine.dispose()
+        with admin.connect() as c:
+            c.execute(text(f'DROP DATABASE IF EXISTS "{name}" WITH (FORCE)'))
+
+    atexit.register(_drop)
+    return url.set(database=name).render_as_string(hide_password=False)
+
+
+# Phải đặt trước khi import app (config được cache, engine tạo lúc import).
+# Mặc định SQLite tạm; TEST_DATABASE_URL=postgresql://... → chạy trên Postgres thật (CSDL riêng mỗi lượt).
 _tmp = tempfile.mkdtemp(prefix="ttnm-test-")
 os.environ["STORAGE_DIR"] = _tmp
-os.environ["DATABASE_URL"] = f"sqlite:///{_tmp}/test.db"
+_pg = os.environ.get("TEST_DATABASE_URL")
+os.environ["DATABASE_URL"] = _fresh_postgres(_pg) if _pg else f"sqlite:///{_tmp}/test.db"
 os.environ["LLM_PROVIDER"] = "mock"
 
 import openpyxl  # noqa: E402

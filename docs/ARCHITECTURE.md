@@ -31,7 +31,7 @@ Frontend có hai màn hình: **trang chủ** (chọn loại tệp để bắt đ
 │  media/        ocr.py — Tesseract cục bộ, CER, độ chính xác trích bảng                           │
 │  runtime_settings.py — đổi nhà cung cấp/model/khoá lúc đang chạy                                 │
 └───────┬───────────────────────────────┬───────────────────────────────┬─────────────────────────┘
-   SQLite storage/app.db         storage/<phiên>/files|versions|assets|renders     Gemini / OpenAI / Ollama
+   PostgreSQL (Alembic)          storage/<phiên>/files|versions|assets|renders     Gemini / OpenAI / Ollama
                                                                           sandbox (mạng nội bộ, không Internet)
 ```
 

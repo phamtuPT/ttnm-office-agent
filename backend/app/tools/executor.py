@@ -73,7 +73,7 @@ class ToolExecutor:
     async def run(self, name: str, raw_args: dict) -> ToolResult:
         started = time.monotonic()
         result = await self._run(name, raw_args or {})
-        self.db.add(ToolCallLog(session_id=self.session_id, turn_id=self.turn_id, name=name, args=raw_args or {},
+        self.db.add(ToolCallLog(session_id=self.session_id, turn_id=self.turn_id, name=name[:64], args=raw_args or {},
                                 ok=result.ok, result=result.for_model(),
                                 duration_ms=int((time.monotonic() - started) * 1000)))
         self.db.commit()

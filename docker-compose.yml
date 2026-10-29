@@ -1,4 +1,5 @@
 # docker compose up --build                     → http://localhost:3000
+# docker compose up -d db                        → chỉ PostgreSQL, để chạy backend bằng tay trên máy
 # docker compose --profile ollama up --build    → thêm Ollama chạy trên máy (đặt OLLAMA_BASE_URL=http://ollama:11434/v1)
 services:
   backend:
@@ -6,9 +7,30 @@ services:
     env_file: .env
     environment:
       SANDBOX_URL: http://sandbox:9000
+      DATABASE_URL: postgresql://office:${POSTGRES_PASSWORD}@db:5432/office_agent
     volumes:
       - storage:/data
     networks: [default, sandboxnet]
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: office
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Đặt POSTGRES_PASSWORD trong .env}
+      POSTGRES_DB: office_agent
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5432:5432" # chỉ trên máy này: để chạy backend bằng tay / xem dữ liệu
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U office -d office_agent"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
     restart: unless-stopped
 
   frontend:
@@ -47,4 +69,5 @@ networks:
 
 volumes:
   storage:
+  pgdata:
   ollama:

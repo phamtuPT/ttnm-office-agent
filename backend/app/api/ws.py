@@ -116,7 +116,7 @@ class Connection:
         return out
 
     async def handle_chat(self, msg: dict) -> None:
-        text = (msg.get("text") or "").strip()
+        text = (msg.get("text") or "").replace(chr(0), "").strip()  # Postgres không nhận ký tự NUL trong text
         try:
             images = self._parse_images(msg.get("images"))
             selection = Selection.model_validate(msg["selection"]) if msg.get("selection") else None

@@ -16,7 +16,7 @@ def get_db() -> Iterator[Session]:
 
 
 def iso(dt: datetime) -> str:
-    """SQLite không lưu múi giờ → coi giá trị đọc ra là UTC để trình duyệt đổi đúng giờ địa phương."""
+    """Postgres trả về giờ có múi giờ; SQLite thì không → coi là UTC để trình duyệt đổi đúng giờ địa phương."""
     return (dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)).isoformat()
 
 

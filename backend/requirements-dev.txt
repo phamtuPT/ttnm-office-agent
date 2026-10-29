@@ -1,3 +1,5 @@
 -r requirements.txt
 pytest==9.2.0
 pytest-cov==7.1.0
+# PostgreSQL đóng gói sẵn cho máy không có Docker: scripts/dev_postgres.py
+pgserver==0.1.4

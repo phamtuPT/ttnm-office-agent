@@ -36,7 +36,8 @@ class Settings(BaseSettings):
     max_generations: int = 20  # số thế hệ sao lưu giữ lại cho mỗi tệp
 
     storage_dir: Path = Path("./storage")
-    database_url: str = "sqlite:///./storage/app.db"
+    # PostgreSQL: postgresql://user:pass@host:5432/db. Trống = SQLite storage/app.db (chỉ để thử nhanh)
+    database_url: str = ""
     max_upload_mb: int = 20
     max_image_mb: int = 10
     cors_origins: list[str] = ["http://localhost:5173", "http://localhost:3000"]

@@ -1,11 +1,16 @@
 """SQLAlchemy models. Schema chi tiết: docs/DATABASE.md.
 
-Chưa dùng migration: đổi schema thì xoá storage/app.db khi phát triển.
+CSDL chính là PostgreSQL; SQLite vẫn chạy được để thử nhanh (DATABASE_URL trống).
+Đổi schema → sửa model rồi tạo migration: `alembic revision --autogenerate -m "..."` (xem docs/DATABASE.md).
 """
+import logging
 import uuid
 from datetime import datetime, timezone
+from pathlib import Path
 
-from sqlalchemy import JSON, DateTime, ForeignKey, Integer, String, Text, create_engine
+from sqlalchemy import JSON, DateTime, ForeignKey, Integer, String, Text, create_engine, event, inspect
+from sqlalchemy.engine import Engine, make_url
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship, sessionmaker
 
 from .config import get_settings
@@ -130,11 +135,61 @@ class AppSetting(Base):
     value: Mapped[dict] = mapped_column(JSON)
 
 
+log = logging.getLogger(__name__)
+MIGRATIONS = Path(__file__).parent / "migrations"
+BASELINE = "0001"  # bản migration đầu = schema lúc còn dùng create_all
+
+
+def database_url(url: str, storage_dir: Path) -> str:
+    """Trống → SQLite trong storage. postgres:// / postgresql:// không ghi driver → psycopg 3 (driver duy nhất được cài)."""
+    if not url:
+        return f"sqlite:///{storage_dir}/app.db"
+    for prefix in ("postgres://", "postgresql://"):
+        if url.startswith(prefix):
+            return "postgresql+psycopg://" + url[len(prefix):]
+    return url
+
+
+def make_engine(url: str) -> Engine:
+    if make_url(url).get_backend_name() != "sqlite":
+        # pre_ping: bỏ kết nối chết sau khi Postgres khởi động lại thay vì báo lỗi cho người dùng
+        return create_engine(url, pool_pre_ping=True, pool_size=10, max_overflow=20)
+    eng = create_engine(url, connect_args={"check_same_thread": False})
+
+    @event.listens_for(eng, "connect")
+    def _pragmas(conn, _record) -> None:
+        # WAL: xem trước đọc được trong lúc agent ghi. foreign_keys: ràng buộc giống Postgres để lỗi lộ ra sớm.
+        cur = conn.cursor()
+        cur.execute("PRAGMA journal_mode=WAL")
+        cur.execute("PRAGMA foreign_keys=ON")
+        cur.close()
+
+    return eng
+
+
 _settings = get_settings()
 _settings.storage_dir.mkdir(parents=True, exist_ok=True)
-engine = create_engine(_settings.database_url, connect_args={"check_same_thread": False})
+engine = make_engine(database_url(_settings.database_url, _settings.storage_dir))
 SessionLocal = sessionmaker(engine, expire_on_commit=False)
 
 
 def init_db() -> None:
-    Base.metadata.create_all(engine)
+    """Đưa schema lên migration mới nhất. DB cũ tạo bằng create_all (chưa có bảng alembic_version) → đánh dấu bản đầu."""
+    from alembic import command
+    from alembic.config import Config
+
+    logging.getLogger("alembic.runtime.plugins").setLevel(logging.WARNING)  # bớt 7 dòng log mỗi lần khởi động
+    cfg = Config()
+    cfg.set_main_option("script_location", str(MIGRATIONS))
+    try:
+        tables = inspect(engine).get_table_names()
+    except OperationalError as e:
+        raise RuntimeError(
+            f"Không kết nối được CSDL {engine.url.render_as_string(hide_password=True)}. "
+            "Chạy PostgreSQL bằng `docker compose up -d db` hoặc `python scripts/dev_postgres.py`, "
+            "hoặc để trống DATABASE_URL để dùng SQLite."
+        ) from e
+    if "chat_sessions" in tables and "alembic_version" not in tables:
+        log.info("CSDL có sẵn từ trước khi dùng migration → đánh dấu bản %s", BASELINE)
+        command.stamp(cfg, BASELINE)
+    command.upgrade(cfg, "head")

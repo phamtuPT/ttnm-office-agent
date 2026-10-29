@@ -22,8 +22,8 @@ docs/       Đề xuất, phân công, tài liệu thiết kế
 ## Chạy bằng Docker (demo)
 
 ```bash
-cp .env.example .env            # điền GEMINI_API_KEY (hoặc nhập sau trên giao diện)
-docker compose up --build       # http://localhost:3000
+cp .env.example .env            # điền GEMINI_API_KEY (hoặc nhập sau trên giao diện) và POSTGRES_PASSWORD
+docker compose up --build       # http://localhost:3000 (kèm PostgreSQL)
 ```
 
 Thêm Ollama chạy trên máy: `docker compose --profile ollama up --build`, đặt `OLLAMA_BASE_URL=http://ollama:11434/v1`
@@ -41,8 +41,11 @@ python -m venv .venv
 .venv/Scripts/activate          # macOS/Linux: source .venv/bin/activate
 pip install -r requirements-dev.txt
 cp ../.env.example .env
+python scripts/dev_postgres.py  # PostgreSQL tại chỗ, không cần Docker (hoặc: docker compose up -d db)
 uvicorn app.main:app --reload --port 8000
 ```
+
+CSDL: xem [docs/DATABASE.md](docs/DATABASE.md) (migration, chuyển dữ liệu từ SQLite cũ, test trên Postgres).
 
 Chưa có API key? Để `LLM_PROVIDER=mock` — trợ lý giả trả lời để làm giao diện (gõ “tạo bảng”, “hoàn tác”).
 Đổi nhà cung cấp/model/khoá API ngay trên giao diện bằng nút ⚙.
@@ -61,6 +64,7 @@ Backend chạy cổng khác: `BACKEND_URL=http://localhost:8010 npm run dev`.
 
 ```bash
 cd backend && python -m pytest --cov=app
+cd backend && TEST_DATABASE_URL=postgresql://office@localhost:5432/postgres python -m pytest   # trên Postgres
 cd frontend && npm test && npm run build
 ```
 
@@ -73,7 +77,7 @@ cd backend && python -m eval.run_eval --provider gemini --repeat 3
 ## Quy ước
 
 - Không commit `.env`, `storage/`, tệp người dùng thật.
-- Đổi schema DB khi phát triển → xoá `backend/storage/app.db` (chưa dùng migration).
+- Đổi schema DB → sửa `backend/app/db.py` rồi `alembic revision --autogenerate` (xem docs/DATABASE.md).
 - Thêm tool mới: xem `backend/app/tools/registry.py` và mục của Lê Trọng Thức trong `docs/PHAN_CONG.md`.
 - Mỗi tính năng làm trên nhánh riêng, mở Pull Request để người khác xem.
 
