@@ -72,4 +72,15 @@ describe("ChatPanel", () => {
     expect(screen.getByText(/Ô nằm ngoài vùng/)).toBeTruthy();
   });
 
+  it("hiển thị Markdown trong trả lời (không còn dấu **), bỏ qua HTML thô", () => {
+    const items: ChatItem[] = [{ kind: "text", role: "model", text:
+      "Đã tạo **Bảng tính mới.xlsx**:\n\n- Vùng `A1:E12`\n- Dòng **Tổng cộng** dùng `=SUM(E2:E11)`\n\n<img src=x onerror=alert(1)>" }];
+    const { container } = render(<ChatPanel {...base} items={items} onSend={() => {}} />);
+    expect(container.querySelector(".msg.model strong")?.textContent).toBe("Bảng tính mới.xlsx");
+    expect(container.querySelectorAll(".msg.model li").length).toBe(2);
+    expect(container.querySelector(".msg.model code")?.textContent).toBe("A1:E12");
+    expect(container.querySelector(".msg.model")?.textContent).not.toContain("**");
+    expect(container.querySelector(".msg.model img")).toBeNull();
+  });
+
 });

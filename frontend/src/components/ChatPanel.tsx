@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import type { ChatItem, Selection } from "../types";
 import { TOOL_LABELS } from "../types";
 import type { OutgoingImage } from "../useChatSocket";
+import { Markdown } from "./Markdown";
 import { VoiceButton } from "./VoiceButton";
 
 interface Props {
@@ -200,8 +201,9 @@ function ChatRow({ item, onOpenFile }: { item: ChatItem; onOpenFile: (id: string
       const [first, ...rest] = item.text.split("\n");
       const isPlan = /^\s*①/.test(first);
       return (
-        <div className={`msg model ${item.streaming ? "cursor" : ""}`}>
-          {isPlan ? <><span className="plan">{first}</span>{rest.join("\n")}</> : item.text}
+        <div className={`msg model md ${item.streaming ? "cursor" : ""}`}>
+          {isPlan && <div className="plan"><Markdown text={first} inline /></div>}
+          <Markdown text={isPlan ? rest.join("\n") : item.text} />
         </div>
       );
     }
