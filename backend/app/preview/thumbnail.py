@@ -154,6 +154,8 @@ def _rgb(color_format):
 
 
 def _pptx(path: Path) -> Image.Image:
+    from ..tools.pptx_math import all_shapes, shape_markup
+
     prs = Presentation(path)
     if not len(prs.slides):
         return Image.new("RGB", (W, H), PAGE)
@@ -168,7 +170,7 @@ def _pptx(path: Path) -> Image.Image:
     d = ImageDraw.Draw(img)
     dark_bg = sum(bg) < 380
     sx, sy = W / prs.slide_width, H / prs.slide_height
-    for sh in s.shapes:
+    for sh in all_shapes(s):
         box = [int(sh.left * sx), int(sh.top * sy), int((sh.left + sh.width) * sx), int((sh.top + sh.height) * sy)] \
             if sh.left is not None else [24, 24, W - 24, H - 24]
         if sh.shape_type == 13:  # ảnh
@@ -181,7 +183,7 @@ def _pptx(path: Path) -> Image.Image:
                 h = (box[3] - box[1]) * (0.35 + 0.12 * i)
                 d.rectangle([box[0] + i * bw * 1.6, box[3] - h, box[0] + i * bw * 1.6 + bw, box[3]], fill=(0, 114, 178))
             continue
-        if not sh.has_text_frame or not sh.text_frame.text.strip():
+        if not sh.has_text_frame or not shape_markup(sh).strip():
             continue
         is_title = sh.is_placeholder and sh.placeholder_format.idx in (0, 3)
         size = 22 if is_title else 12
@@ -198,8 +200,8 @@ def _pptx(path: Path) -> Image.Image:
         color = color or ((240, 237, 230) if dark_bg else INK)
         y = box[1] + 4
         width = max(box[2] - box[0] - 8, 40)
-        for p in sh.text_frame.paragraphs:
-            text = _t(p.text).strip()
+        for text in shape_markup(sh).split("\n"):
+            text = _t(text).strip()
             if not text:
                 continue
             prefix = "" if is_title else "• "

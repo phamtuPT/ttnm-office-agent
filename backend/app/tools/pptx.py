@@ -5,10 +5,14 @@ from pptx import Presentation
 from pptx.chart.data import CategoryChartData
 from pptx.dml.color import RGBColor
 from pptx.enum.chart import XL_CHART_TYPE, XL_LEGEND_POSITION
+from pptx.oxml.ns import qn
+from pptx.oxml.xmlchemy import OxmlElement
 from pptx.util import Cm, Emu, Pt
 from pydantic import BaseModel, Field
 
+from . import omml
 from .assets import asset_path
+from .pptx_math import all_shapes, finalize, shape_markup, write_text
 from .registry import ToolCtx, ToolError, tool
 
 FILE = Field(description="Tên tệp .pptx trong phiên")
@@ -32,13 +36,13 @@ class InspectArgs(BaseModel):
 
 
 @tool("pptx_inspect", "Xem dàn ý bài trình chiếu: từng slide với layout, các shape có chữ (kèm chỉ số) và "
-      "ghi chú thuyết trình. Luôn gọi trước khi sửa.", InspectArgs, kind="pptx")
+      "ghi chú thuyết trình; công thức toán hiện dạng LaTeX $...$. Luôn gọi trước khi sửa.", InspectArgs, kind="pptx")
 def pptx_inspect(args: InspectArgs, ctx: ToolCtx) -> dict:
     prs = Presentation(ctx.path)
     slides = []
     for i, s in enumerate(prs.slides):
-        shapes = [{"index": j, "name": sh.name, "text": sh.text_frame.text[:300]}
-                  for j, sh in enumerate(s.shapes) if sh.has_text_frame]
+        shapes = [{"index": j, "name": sh.name, "text": shape_markup(sh)[:300]}
+                  for j, sh in enumerate(all_shapes(s)) if sh.has_text_frame]
         notes = s.notes_slide.notes_text_frame.text[:300] if s.has_notes_slide else ""
         slides.append({"index": i, "layout": s.slide_layout.name, "shapes": shapes, "notes": notes})
     return {"slide_size_cm": [round(prs.slide_width / 360000, 1), round(prs.slide_height / 360000, 1)],
@@ -48,7 +52,8 @@ def pptx_inspect(args: InspectArgs, ctx: ToolCtx) -> dict:
 class SlideSpec(BaseModel):
     layout: Literal["title", "title_content", "section", "title_only", "blank"] = "title_content"
     title: str = ""
-    bullets: list[str] = Field(default_factory=list, description="Các ý, mỗi ý ngắn gọn (≤ 12 từ)")
+    bullets: list[str] = Field(default_factory=list, description="Các ý, mỗi ý ngắn gọn (≤ 12 từ). Công thức toán "
+                                                                 "viết LaTeX $...$; cả ý là $$...$$ → căn giữa")
     notes: str = Field("", description="Ghi chú thuyết trình")
 
 
@@ -71,6 +76,33 @@ THEMES = {
 }
 
 
+def _fill_slide(s, spec: "SlideSpec") -> None:
+    """Tiêu đề, gạch đầu dòng, ghi chú cho slide mới (chữ có $...$ thành công thức)."""
+    if s.shapes.title is not None and spec.title:
+        write_text(s.shapes.title, spec.title)
+    if spec.bullets:
+        body = next((ph for ph in s.placeholders if ph.placeholder_format.idx == 1), None)
+        if body is None:
+            raise ToolError(f"Layout '{spec.layout}' không có ô nội dung, dùng 'title_content'")
+        write_text(body, "\n".join(spec.bullets))
+    if spec.notes:
+        s.notes_slide.notes_text_frame.text = spec.notes
+
+
+def _color_math(shape, rgb: str) -> None:
+    """Tô màu chữ cho công thức (m:r có a:rPr riêng, không nằm trong p.runs)."""
+    for rpr in shape.text_frame._txBody.iter(qn("a:rPr")):
+        if rpr.getparent().tag != f"{{{omml.M}}}r":
+            continue
+        for old in rpr.findall(qn("a:solidFill")):
+            rpr.remove(old)
+        fill = OxmlElement("a:solidFill")
+        clr = OxmlElement("a:srgbClr")
+        clr.set("val", rgb)
+        fill.append(clr)
+        rpr.insert(0, fill)
+
+
 def _apply_theme(slide, theme: str) -> None:
     bg, title_c, body_c = THEMES[theme]
     fill = slide.background.fill
@@ -85,6 +117,7 @@ def _apply_theme(slide, theme: str) -> None:
                 r.font.color.rgb = RGBColor.from_string(title_c if is_title else body_c)
                 if is_title:
                     r.font.bold = True
+        _color_math(sh, title_c if is_title else body_c)
 
 
 @tool("pptx_create_presentation", "Tạo bài trình chiếu 16:9 mới. Sau khi tạo nên gọi render_pages để tự kiểm tra "
@@ -95,18 +128,9 @@ def pptx_create_presentation(args: CreateArgs, ctx: ToolCtx) -> dict:
     prs.slide_width, prs.slide_height = SLIDE_16_9
     for spec in args.slides:
         s = prs.slides.add_slide(prs.slide_layouts[_LAYOUTS[spec.layout]])
-        if s.shapes.title is not None and spec.title:
-            s.shapes.title.text = spec.title
-        if spec.bullets:
-            body = next((ph for ph in s.placeholders if ph.placeholder_format.idx == 1), None)
-            if body is None:
-                raise ToolError(f"Layout '{spec.layout}' không có ô nội dung, dùng 'title_content'")
-            body.text_frame.text = spec.bullets[0]
-            for b in spec.bullets[1:]:
-                body.text_frame.add_paragraph().text = b
-        if spec.notes:
-            s.notes_slide.notes_text_frame.text = spec.notes
+        _fill_slide(s, spec)
         _apply_theme(s, args.theme)
+        finalize(s)
     prs.save(ctx.path)
     return {"created": args.file, "slides": len(args.slides), "theme": args.theme}
 
@@ -114,7 +138,8 @@ def pptx_create_presentation(args: CreateArgs, ctx: ToolCtx) -> dict:
 class TextItem(BaseModel):
     slide: int = Field(description="Chỉ số slide (từ 0)")
     shape: int = Field(description="Chỉ số shape trong slide, lấy từ pptx_inspect")
-    text: str = Field(description="Nội dung mới; xuống dòng bằng \\n để tạo nhiều đoạn")
+    text: str = Field(description="Nội dung mới; xuống dòng bằng \\n để tạo nhiều đoạn. Công thức toán viết LaTeX "
+                                  "$...$; cả dòng là $$...$$ → công thức căn giữa")
 
 
 class SetTextArgs(BaseModel):
@@ -122,7 +147,8 @@ class SetTextArgs(BaseModel):
     items: list[TextItem] = Field(description="Các shape cần sửa — gộp TẤT CẢ thay đổi chữ vào một lần gọi")
 
 
-@tool("pptx_set_text", "Thay nội dung chữ của các shape (có thể trên nhiều slide), giữ định dạng của đoạn đầu.",
+@tool("pptx_set_text", "Thay nội dung chữ của các shape (có thể trên nhiều slide), giữ định dạng của đoạn đầu; "
+      "$...$ thành công thức toán PowerPoint thật.",
       SetTextArgs, kind="pptx", writes=True)
 def pptx_set_text(args: SetTextArgs, ctx: ToolCtx) -> dict:
     if not args.items:
@@ -132,27 +158,17 @@ def pptx_set_text(args: SetTextArgs, ctx: ToolCtx) -> dict:
     prs = Presentation(ctx.path)
     for it in args.items:
         _set_text(prs, it)
+    for i in {it.slide for it in args.items}:
+        finalize(prs.slides[i])
     prs.save(ctx.path)
     return {"updated": [[it.slide, it.shape] for it in args.items]}
 
 
 def _set_text(prs, it: TextItem) -> None:
-    shapes = list(_slide(prs, it.slide).shapes)
+    shapes = all_shapes(_slide(prs, it.slide))
     if not 0 <= it.shape < len(shapes) or not shapes[it.shape].has_text_frame:
         raise ToolError(f"Slide {it.slide}: shape {it.shape} không tồn tại hoặc không chứa chữ")
-    tf = shapes[it.shape].text_frame
-    lines = it.text.split("\n")
-    first = tf.paragraphs[0]
-    for p in list(tf.paragraphs)[1:]:
-        p._p.getparent().remove(p._p)
-    if first.runs:
-        first.runs[0].text = lines[0]
-        for r in first.runs[1:]:
-            r._r.getparent().remove(r._r)
-    else:
-        first.text = lines[0]
-    for line in lines[1:]:
-        tf.add_paragraph().text = line
+    write_text(shapes[it.shape], it.text)
 
 
 class NotesArgs(BaseModel):
@@ -211,15 +227,8 @@ def pptx_add_slide(args: AddSlideArgs, ctx: ToolCtx) -> dict:
         raise ToolError(f"Vị trí {args.after} không hợp lệ (có {len(prs.slides)} slide)")
     layouts = prs.slide_layouts
     s = prs.slides.add_slide(layouts[min(_LAYOUTS[args.slide.layout], len(layouts) - 1)])
-    if s.shapes.title is not None and args.slide.title:
-        s.shapes.title.text = args.slide.title
-    body = next((ph for ph in s.placeholders if ph.placeholder_format.idx == 1), None)
-    if args.slide.bullets and body is not None:
-        body.text_frame.text = args.slide.bullets[0]
-        for b in args.slide.bullets[1:]:
-            body.text_frame.add_paragraph().text = b
-    if args.slide.notes:
-        s.notes_slide.notes_text_frame.text = args.slide.notes
+    _fill_slide(s, args.slide)
+    finalize(s)
     _move_slide(prs, len(prs.slides) - 1, args.after + 1)
     prs.save(ctx.path)
     return {"inserted_at": args.after + 1}

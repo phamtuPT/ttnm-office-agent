@@ -135,6 +135,53 @@ def test_word_insert_many_paragraphs_into_blank_document(db, chat):
     assert len(doc.element.body.findall(f".//{M}oMathPara")) == 1
 
 
+# ---------- PowerPoint ----------
+
+MC = "{http://schemas.openxmlformats.org/markup-compatibility/2006}"
+A14 = "{http://schemas.microsoft.com/office/drawing/2010/main}"
+
+
+def test_pptx_equations(db, chat):
+    from pptx import Presentation
+
+    from app.versioning import store
+
+    r = _run(_ex(db, chat, "p1"), "pptx_create_presentation", {"file": "toan.pptx", "theme": "midnight", "slides": [
+        {"layout": "title_content", "title": "Phương trình bậc hai",
+         "bullets": [r"Dạng tổng quát $ax^2+bx+c=0$", r"$$x = \frac{-b \pm \sqrt{\Delta}}{2a}$$", "Không có công thức"]},
+        {"layout": "title_content", "title": "Ghi nhớ", "bullets": ["Chữ thường"]},
+    ]})
+    assert r.ok, r.data
+    f = next(x for x in chat.files if x.name == "toan.pptx")
+    prs = Presentation(store.working_path(f))
+    tree = prs.slides[0].shapes._spTree
+    ac = tree.find(f"{MC}AlternateContent")
+    assert ac is not None and ac.find(f"{MC}Choice").get("Requires") == "a14"
+    assert ac.find(f"{MC}Fallback") is not None and len(list(ac.iter(f"{A14}m"))) == 2
+    assert len(list(ac.iter(f"{M}oMathPara"))) == 1
+    assert prs.slides[1].shapes._spTree.find(f"{MC}AlternateContent") is None  # slide không có công thức giữ nguyên
+
+    shapes = _run(_ex(db, chat, "p2"), "pptx_inspect", {"file": "toan.pptx"}).data["slides"][0]["shapes"]
+    body = next(s for s in shapes if "Dạng tổng quát" in s["text"])
+    assert body["text"].split("\n")[:2] == ["Dạng tổng quát $ax^2+bx+c=0$", r"$$x=\frac{-b\pm \sqrt{\Delta}}{2a}$$"]
+    assert any(s["text"] == "Phương trình bậc hai" for s in shapes)  # tiêu đề vẫn thấy được
+
+    # Sửa chữ shape đang chứa công thức → bỏ hết công thức → shape trở về dạng thường
+    r = _run(_ex(db, chat, "p3"), "pptx_set_text", {"file": "toan.pptx", "items": [
+        {"slide": 0, "shape": body["index"], "text": "Hết công thức"}]})
+    assert r.ok, r.data
+    prs = Presentation(store.working_path(f))
+    assert prs.slides[0].shapes._spTree.find(f"{MC}AlternateContent") is None
+    assert any(sh.has_text_frame and sh.text_frame.text == "Hết công thức" for sh in prs.slides[0].shapes)
+
+
+def test_literal_newline_from_model():
+    from app.tools.omml import fix_newlines
+    assert fix_newlines(r"$a^2+b^2=c^2$\nÝ nghĩa") == "$a^2+b^2=c^2$\nÝ nghĩa"
+    assert fix_newlines(r"$a \neq b$\n2 dòng") == "$a \\neq b$\n2 dòng"
+    assert fix_newlines("Giá $100") == r"Giá \$100"  # $ thường được escape để tách lại vẫn là chữ
+
+
 def test_syntax_talk_is_not_math():
     assert not has_math("viết công thức dạng $...$ hoặc $$...$$")
 

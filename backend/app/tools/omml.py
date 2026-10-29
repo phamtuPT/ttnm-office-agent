@@ -423,5 +423,17 @@ def split_math(text: str) -> list[tuple[str, str]]:
     return [(k, v.replace(r"\$", "$") if k == "text" else v) for k, v in out]
 
 
+def fix_newlines(text: str) -> str:
+    """Model đôi khi gửi "\\n" dạng chữ thay vì xuống dòng thật. Chỉ đổi ở phần chữ thường và khi sau đó không phải
+    chữ cái ASCII — trong công thức "\\neq", "\\nabla" là lệnh LaTeX."""
+    out = []
+    for kind, value in split_math(text):
+        if kind == "text":
+            out.append(re.sub(r"\\n(?![A-Za-z])", "\n", value).replace("$", r"\$"))
+        else:
+            out.append(f"$${value}$$" if kind == "display" else f"${value}$")
+    return "".join(out)
+
+
 def has_math(text: str) -> bool:
     return any(k != "text" for k, _ in split_math(text))

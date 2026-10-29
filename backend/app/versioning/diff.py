@@ -126,13 +126,15 @@ def _docx(before: Path, after: Path) -> dict:
 
 def _slide_sig(s) -> str:
     # XML các shape: chữ, định dạng run, vị trí, bảng, biểu đồ; cộng nền và ghi chú
-    shapes = [sh._element.xml for sh in s.shapes]
+    from ..tools.pptx_math import all_shapes
+    shapes = [sh._element.xml for sh in all_shapes(s)]
     notes = s.notes_slide.notes_text_frame.text if s.has_notes_slide else ""
     return repr((shapes, s.background._cSld.xml if hasattr(s.background, "_cSld") else "", notes))
 
 
 def _slide_text(s) -> str:
-    return "\n".join(sh.text_frame.text for sh in s.shapes if sh.has_text_frame)
+    from ..tools.pptx_math import all_shapes, shape_markup
+    return "\n".join(shape_markup(sh) for sh in all_shapes(s) if sh.has_text_frame)
 
 
 def _pptx(before: Path, after: Path) -> dict:
