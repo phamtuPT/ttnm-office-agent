@@ -8,7 +8,7 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
-from sqlalchemy import JSON, DateTime, ForeignKey, Integer, String, Text, create_engine, event, inspect
+from sqlalchemy import JSON, DateTime, Float, ForeignKey, Integer, String, Text, create_engine, event, inspect
 from sqlalchemy.engine import Engine, make_url
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship, sessionmaker
@@ -28,9 +28,46 @@ class Base(DeclarativeBase):
     pass
 
 
+class User(Base):
+    """Tài khoản — chỉ dùng khi bật AUTH_ENABLED (máy chủ dùng chung). Người đăng ký đầu tiên là quản trị."""
+
+    __tablename__ = "users"
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=_id)
+    email: Mapped[str] = mapped_column(String(254), unique=True, index=True)
+    name: Mapped[str] = mapped_column(String(100), default="")
+    password_hash: Mapped[str] = mapped_column(String(255))
+    is_admin: Mapped[bool] = mapped_column(default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+
+class AuthToken(Base):
+    """Phiên đăng nhập: chỉ lưu SHA-256 của token trong cookie → lộ CSDL cũng không dùng lại được."""
+
+    __tablename__ = "auth_tokens"
+    token_hash: Mapped[str] = mapped_column(String(64), primary_key=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+
+class SusResponse(Base):
+    """Phiếu SUS (System Usability Scale) — đánh giá người dùng, đề xuất mục 8.2."""
+
+    __tablename__ = "sus_responses"
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=_id)
+    user_id: Mapped[str | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    participant: Mapped[str] = mapped_column(String(100), default="")  # mã người tham gia, không cần tên thật
+    answers: Mapped[list] = mapped_column(JSON)  # 10 câu, mỗi câu 1–5
+    score: Mapped[float] = mapped_column(Float)
+    comment: Mapped[str] = mapped_column(Text, default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+
 class ChatSession(Base):
     __tablename__ = "chat_sessions"
     id: Mapped[str] = mapped_column(String(32), primary_key=True, default=_id)
+    user_id: Mapped[str | None] = mapped_column(ForeignKey("users.id", name="fk_chat_sessions_user_id"), nullable=True,
+                                                index=True)  # null = chế độ một người
     title: Mapped[str] = mapped_column(String(200), default="Phiên mới")
     # Bảng ánh xạ ⟦EMAIL_1⟧ → giá trị thật khi bật ẩn danh PII (không bao giờ gửi cho LLM)
     pii_map: Mapped[dict] = mapped_column(JSON, default=dict)

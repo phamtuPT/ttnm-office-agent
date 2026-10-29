@@ -8,12 +8,13 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from ..config import get_settings
-from ..db import File, Turn
+from ..db import File, Turn, User
 from ..preview import render, thumbnail
 from ..tools.executor import ToolExecutor
 from ..tools.registry import REGISTRY, ToolCtx
 from ..tools.word import document_equations
 from ..versioning import store
+from ..auth import current_user
 from .deps import get_db, get_file_or_404, get_session_or_404, iso
 
 router = APIRouter(prefix="/api", tags=["files"])
@@ -49,8 +50,8 @@ def _validate_office_zip(data: bytes) -> None:
 
 
 @router.post("/sessions/{session_id}/files")
-async def upload_file(session_id: str, file: UploadFile, db: Session = Depends(get_db)):
-    get_session_or_404(db, session_id)
+async def upload_file(session_id: str, file: UploadFile, db: Session = Depends(get_db), user: User | None = Depends(current_user)):
+    get_session_or_404(db, session_id, user)
     limit = get_settings().max_upload_mb
     data = await file.read(limit * 1024 * 1024 + 1)
     if len(data) > limit * 1024 * 1024:
@@ -64,37 +65,37 @@ async def upload_file(session_id: str, file: UploadFile, db: Session = Depends(g
 
 
 @router.get("/sessions/{session_id}/files")
-def list_files(session_id: str, db: Session = Depends(get_db)):
-    return [file_out(f) for f in get_session_or_404(db, session_id).files]
+def list_files(session_id: str, db: Session = Depends(get_db), user: User | None = Depends(current_user)):
+    return [file_out(f) for f in get_session_or_404(db, session_id, user).files]
 
 
 @router.get("/files/{file_id}/content")
-def file_content(file_id: str, db: Session = Depends(get_db)):
-    f = get_file_or_404(db, file_id)
+def file_content(file_id: str, db: Session = Depends(get_db), user: User | None = Depends(current_user)):
+    f = get_file_or_404(db, file_id, user)
     return FileResponse(store.working_path(f), media_type=MIME[f.kind], filename=f.name,
                         headers={"Cache-Control": "no-store"})
 
 
 @router.get("/files/{file_id}/outline")
-def file_outline(file_id: str, db: Session = Depends(get_db)):
+def file_outline(file_id: str, db: Session = Depends(get_db), user: User | None = Depends(current_user)):
     """Dàn ý (sheet / đoạn văn / slide) để frontend hiển thị và cho người dùng chọn vùng."""
-    f = get_file_or_404(db, file_id)
+    f = get_file_or_404(db, file_id, user)
     tool = REGISTRY[OUTLINE_TOOL[f.kind]]
     args = tool.args_model(file=f.name, **({"limit": 10_000} if f.kind == "docx" else {}))
     return tool.handler(args, ToolCtx(path=store.working_path(f), selection=None))
 
 
 @router.get("/files/{file_id}/equations")
-def file_equations(file_id: str, db: Session = Depends(get_db)):
+def file_equations(file_id: str, db: Session = Depends(get_db), user: User | None = Depends(current_user)):
     """Công thức toán trong tài liệu Word (LaTeX, theo thứ tự) — bản in dùng để vẽ lại công thức bằng KaTeX."""
-    f = get_file_or_404(db, file_id)
+    f = get_file_or_404(db, file_id, user)
     return document_equations(store.working_path(f)) if f.kind == "docx" else []
 
 
 @router.get("/files/{file_id}/thumbnail.png")
-def file_thumbnail(file_id: str, db: Session = Depends(get_db)):
+def file_thumbnail(file_id: str, db: Session = Depends(get_db), user: User | None = Depends(current_user)):
     """Ảnh thu nhỏ trang/slide/bảng đầu tiên của phiên bản hiện tại (URL kèm ?v=<phiên bản> để trình duyệt cache)."""
-    f = get_file_or_404(db, file_id)
+    f = get_file_or_404(db, file_id, user)
     cache = store.session_dir(f.session_id) / "thumbs" / f"{f.id}-v{f.current_version}.png"
     try:
         png = thumbnail.build(store.current_snapshot(f), f.kind, cache)
@@ -108,9 +109,9 @@ def _render_dir(f: File):
 
 
 @router.get("/files/{file_id}/pages")
-def file_pages(file_id: str, db: Session = Depends(get_db)):
+def file_pages(file_id: str, db: Session = Depends(get_db), user: User | None = Depends(current_user)):
     """Ảnh từng trang/slide (LibreOffice). available=false nếu máy chưa cài LibreOffice → giao diện dùng dàn ý."""
-    f = get_file_or_404(db, file_id)
+    f = get_file_or_404(db, file_id, user)
     if f.kind == "xlsx" or not render.available():
         return {"available": False, "pages": 0}
     try:
@@ -121,8 +122,8 @@ def file_pages(file_id: str, db: Session = Depends(get_db)):
 
 
 @router.get("/files/{file_id}/pages/{index}.png")
-def file_page_png(file_id: str, index: int, db: Session = Depends(get_db)):
-    f = get_file_or_404(db, file_id)
+def file_page_png(file_id: str, index: int, db: Session = Depends(get_db), user: User | None = Depends(current_user)):
+    f = get_file_or_404(db, file_id, user)
     p = _render_dir(f) / f"page-{index}.png"
     if not p.exists():
         raise HTTPException(404, "Chưa render trang này — gọi /pages trước")
@@ -130,9 +131,9 @@ def file_page_png(file_id: str, index: int, db: Session = Depends(get_db)):
 
 
 @router.get("/files/{file_id}/versions")
-def list_versions(file_id: str, db: Session = Depends(get_db)):
+def list_versions(file_id: str, db: Session = Depends(get_db), user: User | None = Depends(current_user)):
     """Lịch sử phiên bản, mỗi phiên bản ứng với một yêu cầu (kèm câu yêu cầu để người dùng nhận ra)."""
-    f = get_file_or_404(db, file_id)
+    f = get_file_or_404(db, file_id, user)
     requests = {t.id: t.request for t in db.query(Turn).filter(Turn.id.in_([v.turn_id for v in f.versions if v.turn_id]))}
     return [{"number": v.number, "source": v.source, "summary": v.summary, "diff": v.diff,
              "request": requests.get(v.turn_id, ""), "created_at": iso(v.created_at),
@@ -141,8 +142,8 @@ def list_versions(file_id: str, db: Session = Depends(get_db)):
 
 
 @router.post("/files/{file_id}/undo")
-def undo(file_id: str, db: Session = Depends(get_db)):
-    f = get_file_or_404(db, file_id)
+def undo(file_id: str, db: Session = Depends(get_db), user: User | None = Depends(current_user)):
+    f = get_file_or_404(db, file_id, user)
     try:
         store.undo(db, f)
     except ValueError as e:
@@ -151,8 +152,8 @@ def undo(file_id: str, db: Session = Depends(get_db)):
 
 
 @router.post("/files/{file_id}/redo")
-def redo(file_id: str, db: Session = Depends(get_db)):
-    f = get_file_or_404(db, file_id)
+def redo(file_id: str, db: Session = Depends(get_db), user: User | None = Depends(current_user)):
+    f = get_file_or_404(db, file_id, user)
     try:
         store.redo(db, f)
     except ValueError as e:
@@ -161,9 +162,9 @@ def redo(file_id: str, db: Session = Depends(get_db)):
 
 
 @router.post("/files/{file_id}/restore/{number}")
-def restore(file_id: str, number: int, db: Session = Depends(get_db)):
+def restore(file_id: str, number: int, db: Session = Depends(get_db), user: User | None = Depends(current_user)):
     """Khôi phục nội dung phiên bản cũ thành phiên bản MỚI → lần khôi phục cũng hoàn tác được."""
-    f = get_file_or_404(db, file_id)
+    f = get_file_or_404(db, file_id, user)
     try:
         store.restore(db, f, number)
     except ValueError as e:
@@ -200,10 +201,10 @@ def _typed(value):
 
 
 @router.put("/files/{file_id}/cells")
-async def edit_cells(file_id: str, body: EditCells, db: Session = Depends(get_db)):
+async def edit_cells(file_id: str, body: EditCells, db: Session = Depends(get_db), user: User | None = Depends(current_user)):
     """Người dùng sửa ô trực tiếp trên lưới: ghi qua cùng tool với trợ lý (ghi nguyên tử, kiểm tra công thức,
     sao lưu) — mỗi lần sửa là một phiên bản riêng, hoàn tác được."""
-    f = get_file_or_404(db, file_id)
+    f = get_file_or_404(db, file_id, user)
     if f.kind != "xlsx":
         raise HTTPException(400, "Chỉ sửa ô được với tệp Excel")
 

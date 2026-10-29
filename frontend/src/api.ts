@@ -1,7 +1,11 @@
-import type { AppSettings, ChatSession, FileDiff, FileKind, FileVersion, OfficeFile } from "./types";
+import type { AppSettings, AuthState, AuthUser, ChatSession, FileDiff, FileKind, FileVersion, OfficeFile, SusSummary } from "./types";
+
+/** Phát khi máy chủ báo cần đăng nhập (401) → App hiện trang đăng nhập. */
+export const UNAUTHORIZED_EVENT = "office-agent-unauthorized";
 
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, init);
+  if (res.status === 401 && !url.startsWith("/api/auth/")) window.dispatchEvent(new Event(UNAUTHORIZED_EVENT));
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     const detail = typeof body.detail === "string" ? body.detail : `Lỗi ${res.status}`;
@@ -17,6 +21,18 @@ const json = (method: string, body: unknown): RequestInit => ({
 });
 
 export const api = {
+  me: () => request<AuthState>("/api/auth/me"),
+  login: (email: string, password: string) => request<AuthUser>("/api/auth/login", json("POST", { email, password })),
+  register: (email: string, name: string, password: string) =>
+    request<AuthUser>("/api/auth/register", json("POST", { email, name, password })),
+  logout: async () => {
+    await fetch("/api/auth/logout", { method: "POST" });
+  },
+  susQuestions: () => request<{ questions: string[]; scale: string[] }>("/api/sus/questions"),
+  submitSus: (answers: number[], participant: string, comment: string) =>
+    request<{ id: string; score: number }>("/api/sus", json("POST", { answers, participant, comment })),
+  susSummary: () => request<SusSummary>("/api/sus/summary"),
+  susExportUrl: "/api/sus/export.csv",
   /** kind: bắt đầu với tệp trống loại đó; bỏ trống = phiên không có tệp (để tải tệp lên). */
   createSession: (kind?: FileKind) => request<ChatSession>("/api/sessions", json("POST", { kind: kind ?? null })),
   listSessions: () => request<ChatSession[]>("/api/sessions"),

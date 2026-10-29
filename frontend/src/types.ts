@@ -141,3 +141,29 @@ export const TOOL_LABELS: Record<string, string> = {
   ocr_image: "OCR cục bộ",
   run_python: "Chạy phân tích (sandbox)",
 };
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  name: string;
+  is_admin: boolean;
+}
+
+/** enabled=false: chạy một người trên máy, không cần đăng nhập. */
+export interface AuthState {
+  enabled: boolean;
+  user: AuthUser | null;
+  can_register: boolean;
+}
+
+export interface SusSummary {
+  n: number;
+  mean: number | null;
+  sd: number | null;
+  min: number | null;
+  max: number | null;
+  target: number;
+  meets_target: boolean;
+  per_question: (number | null)[];
+  responses: { participant: string; score: number; comment: string; created_at: string }[];
+}

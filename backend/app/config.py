@@ -38,6 +38,12 @@ class Settings(BaseSettings):
     storage_dir: Path = Path("./storage")
     # PostgreSQL: postgresql://user:pass@host:5432/db. Trống = SQLite storage/app.db (chỉ để thử nhanh)
     database_url: str = ""
+
+    # Tài khoản: tắt = một người dùng trên máy (mặc định). Bật khi chạy máy chủ dùng chung cho nhiều người.
+    auth_enabled: bool = False
+    auth_open_registration: bool = True  # tắt sau khi đã tạo đủ tài khoản
+    session_days: int = 30
+    cookie_secure: bool = False  # bật khi phục vụ qua HTTPS
     max_upload_mb: int = 20
     max_image_mb: int = 10
     cors_origins: list[str] = ["http://localhost:5173", "http://localhost:3000"]

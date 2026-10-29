@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from . import tools  # noqa: F401  (đăng ký tool)
-from .api import files, sessions, settings as settings_api, ws
+from .api import auth as auth_api, files, sessions, settings as settings_api, sus, ws
 from .config import get_settings
 from .db import init_db
 from .privacy import secrets
@@ -27,6 +27,8 @@ app.include_router(sessions.router)
 app.include_router(files.router)
 app.include_router(settings_api.router)
 app.include_router(ws.router)
+app.include_router(auth_api.router)
+app.include_router(sus.router)
 
 
 @app.get("/api/health")

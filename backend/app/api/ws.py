@@ -11,6 +11,7 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from pydantic import ValidationError
 
 from .. import runtime_settings
+from ..auth import owns, websocket_user
 from ..agent.loop import StepLimitError, TurnStats, run_turn
 from ..agent.prompts import context_block, system_prompt
 from ..config import get_settings
@@ -35,7 +36,12 @@ CONFIRM_TIMEOUT_S = 120
 async def chat_ws(ws: WebSocket, session_id: str):
     db = SessionLocal()
     try:
-        if db.get(ChatSession, session_id) is None:
+        allowed, user = websocket_user(ws, db)
+        chat = db.get(ChatSession, session_id)
+        if not allowed:
+            await ws.close(code=4401)  # chưa đăng nhập
+            return
+        if chat is None or not owns(user, chat.user_id):
             await ws.close(code=4404)
             return
         await ws.accept()

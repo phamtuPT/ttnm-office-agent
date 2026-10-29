@@ -50,3 +50,22 @@ def table_cell_accuracy(reference: list[list[str]], predicted: list[list[str]]) 
     ok = sum(1 for i, row in enumerate(reference) for j, v in enumerate(row)
              if i < len(predicted) and j < len(predicted[i]) and str(predicted[i][j]).strip() == str(v).strip())
     return ok / max(total, 1)
+
+
+def _words(text: str) -> list[str]:
+    import re
+    import unicodedata
+    text = unicodedata.normalize("NFC", text.lower())
+    return re.findall(r"[\w./:%-]+", text)
+
+
+def wer(reference: str, hypothesis: str) -> float:
+    """Tỉ lệ lỗi từ (Word Error Rate) cho nhận dạng giọng nói: bỏ hoa/thường và dấu câu, giữ số như 15/01/2026."""
+    ref, hyp = _words(reference), _words(hypothesis)
+    prev = list(range(len(hyp) + 1))
+    for i, r in enumerate(ref, 1):
+        cur = [i]
+        for j, h in enumerate(hyp, 1):
+            cur.append(min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (r != h)))
+        prev = cur
+    return prev[-1] / max(len(ref), 1)
