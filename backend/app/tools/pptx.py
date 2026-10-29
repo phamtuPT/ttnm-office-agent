@@ -111,23 +111,37 @@ def pptx_create_presentation(args: CreateArgs, ctx: ToolCtx) -> dict:
     return {"created": args.file, "slides": len(args.slides), "theme": args.theme}
 
 
-class SetTextArgs(BaseModel):
-    file: str = FILE
+class TextItem(BaseModel):
     slide: int = Field(description="Chỉ số slide (từ 0)")
     shape: int = Field(description="Chỉ số shape trong slide, lấy từ pptx_inspect")
     text: str = Field(description="Nội dung mới; xuống dòng bằng \\n để tạo nhiều đoạn")
 
 
-@tool("pptx_set_text", "Thay nội dung chữ của một shape, giữ định dạng của đoạn đầu.", SetTextArgs,
-      kind="pptx", writes=True)
+class SetTextArgs(BaseModel):
+    file: str = FILE
+    items: list[TextItem] = Field(description="Các shape cần sửa — gộp TẤT CẢ thay đổi chữ vào một lần gọi")
+
+
+@tool("pptx_set_text", "Thay nội dung chữ của các shape (có thể trên nhiều slide), giữ định dạng của đoạn đầu.",
+      SetTextArgs, kind="pptx", writes=True)
 def pptx_set_text(args: SetTextArgs, ctx: ToolCtx) -> dict:
-    _check_selection(ctx, args.slide)
+    if not args.items:
+        raise ToolError("Cần ít nhất một mục cần sửa")
+    for it in args.items:
+        _check_selection(ctx, it.slide)
     prs = Presentation(ctx.path)
-    shapes = list(_slide(prs, args.slide).shapes)
-    if not 0 <= args.shape < len(shapes) or not shapes[args.shape].has_text_frame:
-        raise ToolError(f"Shape {args.shape} không tồn tại hoặc không chứa chữ")
-    tf = shapes[args.shape].text_frame
-    lines = args.text.split("\n")
+    for it in args.items:
+        _set_text(prs, it)
+    prs.save(ctx.path)
+    return {"updated": [[it.slide, it.shape] for it in args.items]}
+
+
+def _set_text(prs, it: TextItem) -> None:
+    shapes = list(_slide(prs, it.slide).shapes)
+    if not 0 <= it.shape < len(shapes) or not shapes[it.shape].has_text_frame:
+        raise ToolError(f"Slide {it.slide}: shape {it.shape} không tồn tại hoặc không chứa chữ")
+    tf = shapes[it.shape].text_frame
+    lines = it.text.split("\n")
     first = tf.paragraphs[0]
     for p in list(tf.paragraphs)[1:]:
         p._p.getparent().remove(p._p)
@@ -139,8 +153,6 @@ def pptx_set_text(args: SetTextArgs, ctx: ToolCtx) -> dict:
         first.text = lines[0]
     for line in lines[1:]:
         tf.add_paragraph().text = line
-    prs.save(ctx.path)
-    return {"slide": args.slide, "shape": args.shape}
 
 
 class NotesArgs(BaseModel):

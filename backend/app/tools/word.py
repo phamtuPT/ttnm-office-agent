@@ -34,14 +34,31 @@ class InspectArgs(BaseModel):
     limit: int = Field(100, description="Số đoạn tối đa trả về")
 
 
-@tool("word_inspect", "Xem dàn ý tài liệu: các đoạn văn kèm chỉ số, style và nội dung (cắt ở 300 ký tự). "
-      "Luôn gọi trước khi sửa.", InspectArgs, kind="docx")
+def para_text(p) -> str:
+    """Chữ của đoạn như khi chấp nhận mọi đề xuất (gồm chữ trong <w:ins>, bỏ chữ trong <w:del>)."""
+    return "".join(t.text or "" for t in p._p.xpath(".//w:t[not(ancestor::w:del)]"))
+
+
+def _pending(p) -> dict | None:
+    deleted = "".join(t.text or "" for t in p._p.xpath(".//w:delText"))
+    inserted = "".join(t.text or "" for t in p._p.xpath(".//w:ins//w:t"))
+    return {"old": deleted[:300], "new": inserted[:300]} if deleted or inserted else None
+
+
+@tool("word_inspect", "Xem dàn ý tài liệu: các đoạn văn kèm chỉ số, style và nội dung (cắt ở 300 ký tự); "
+      "đoạn có đề xuất Track Changes đang chờ duyệt có thêm pending_suggestion. Luôn gọi trước khi sửa.",
+      InspectArgs, kind="docx")
 def word_inspect(args: InspectArgs, ctx: ToolCtx) -> dict:
     doc = Document(ctx.path)
     paras = doc.paragraphs
-    items = [{"index": i, "style": p.style.name, "text": p.text[:300]}
-             for i, p in enumerate(paras[args.start:args.start + args.limit], start=args.start)]
-    return {"total_paragraphs": len(paras), "tables": len(doc.tables), "paragraphs": items}
+    items = []
+    for i, p in enumerate(paras[args.start:args.start + args.limit], start=args.start):
+        item = {"index": i, "style": p.style.name, "text": para_text(p)[:300]}
+        if (pending := _pending(p)) is not None:
+            item["pending_suggestion"] = pending  # đề xuất Track Changes chờ người dùng duyệt
+        items.append(item)
+    return {"total_paragraphs": len(paras), "tables": len(doc.tables), "comments": len(list(doc.comments)),
+            "paragraphs": items}
 
 
 class ReplaceArgs(BaseModel):
@@ -283,22 +300,33 @@ def word_rewrite_paragraphs(args: RewriteArgs, ctx: ToolCtx) -> dict:
     return {"rewritten": len(args.items)}
 
 
-class CommentArgs(BaseModel):
-    file: str = FILE
+class CommentItem(BaseModel):
     index: int = Field(description="Chỉ số đoạn được nhận xét")
     comment: str = Field(description="Nội dung nhận xét")
 
 
-@tool("word_add_comment", "Thêm Comment (nhận xét bên lề) vào một đoạn — dùng khi rà soát tài liệu.", CommentArgs,
-      kind="docx", writes=True)
+class CommentArgs(BaseModel):
+    file: str = FILE
+    items: list[CommentItem] = Field(description="Các nhận xét — gộp TẤT CẢ nhận xét vào một lần gọi")
+
+
+@tool("word_add_comment", "Thêm Comment (nhận xét bên lề) vào các đoạn — dùng khi rà soát tài liệu. "
+      "Đoạn vừa được đề xuất sửa vẫn nhận xét được.", CommentArgs, kind="docx", writes=True)
 def word_add_comment(args: CommentArgs, ctx: ToolCtx) -> dict:
+    from docx.text.run import Run
+
+    if not args.items:
+        raise ToolError("Cần ít nhất một nhận xét")
     doc = Document(ctx.path)
-    p = _paragraph(doc, args.index)
-    if not p.runs:
-        raise ToolError("Đoạn trống, không gắn nhận xét được")
-    doc.add_comment(p.runs, text=args.comment, author=AUTHOR, initials="AI")
+    for it in args.items:
+        p = _paragraph(doc, it.index)
+        # Gồm cả run nằm trong <w:ins>/<w:del> của Track Changes (p.runs bỏ qua chúng)
+        runs = [Run(r, p) for r in p._p.iter(qn("w:r"))]
+        if not runs:
+            raise ToolError(f"Đoạn {it.index} trống, không gắn nhận xét được")
+        doc.add_comment(runs, text=it.comment, author=AUTHOR, initials="AI")
     doc.save(ctx.path)
-    return {"commented": args.index}
+    return {"commented": [it.index for it in args.items]}
 
 
 def _tracked(tag: str, rid: int):
@@ -309,22 +337,38 @@ def _tracked(tag: str, rid: int):
     return el
 
 
-class SuggestArgs(BaseModel):
-    file: str = FILE
+class SuggestItem(BaseModel):
     index: int = Field(description="Chỉ số đoạn cần đề xuất sửa")
     text: str = Field(description="Nội dung đề xuất thay cho cả đoạn")
 
 
-@tool("word_suggest_edit", "Đề xuất sửa một đoạn dưới dạng Track Changes (chữ cũ gạch đi, chữ mới chèn vào) để "
-      "người dùng Chấp nhận/Từ chối trong Word.", SuggestArgs, kind="docx", writes=True)
+class SuggestArgs(BaseModel):
+    file: str = FILE
+    items: list[SuggestItem] = Field(description="Các đề xuất — gộp TẤT CẢ đề xuất vào một lần gọi")
+
+
+@tool("word_suggest_edit", "Đề xuất sửa các đoạn dưới dạng Track Changes (chữ cũ gạch đi, chữ mới chèn vào) để "
+      "người dùng Chấp nhận/Từ chối trong Word. Không sửa thẳng nội dung.", SuggestArgs, kind="docx", writes=True)
 def word_suggest_edit(args: SuggestArgs, ctx: ToolCtx) -> dict:
-    _check_selection(ctx, args.index)
+    if not args.items:
+        raise ToolError("Cần ít nhất một đề xuất")
+    for it in args.items:
+        _check_selection(ctx, it.index)
     doc = Document(ctx.path)
-    p = _paragraph(doc, args.index)
+    for it in args.items:
+        _suggest(doc, it.index, it.text)
+    doc.save(ctx.path)
+    return {"suggested": [it.index for it in args.items]}
+
+
+def _suggest(doc, index: int, text: str) -> None:
+    p = _paragraph(doc, index)
+    if _pending(p) is not None:
+        raise ToolError(f"Đoạn {index} đã có đề xuất sửa đang chờ duyệt — dùng word_add_comment để góp ý thêm")
     runs = list(p.runs)
     if not runs:
-        raise ToolError("Đoạn trống — dùng word_replace_paragraph thay vì đề xuất sửa")
-    base = 9000 + args.index * 10
+        raise ToolError(f"Đoạn {index} trống — dùng word_replace_paragraph thay vì đề xuất sửa")
+    base = 9000 + index * 10
     deleted = _tracked("w:del", base)
     runs[0]._r.addprevious(deleted)
     for r in runs:
@@ -338,9 +382,7 @@ def word_suggest_edit(args: SuggestArgs, ctx: ToolCtx) -> dict:
             new_r.remove(child)
     t = OxmlElement("w:t")
     t.set(qn("xml:space"), "preserve")
-    t.text = args.text
+    t.text = text
     new_r.append(t)
     inserted.append(new_r)
     deleted.addnext(inserted)
-    doc.save(ctx.path)
-    return {"suggested": args.index}

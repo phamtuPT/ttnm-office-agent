@@ -8,7 +8,7 @@ Ollama (cục bộ — dữ liệu không rời máy).
 - Đề xuất: [docs/đề-xuất-btl.docx](docs/đề-xuất-btl.docx) · Phân công: [docs/PHAN_CONG.md](docs/PHAN_CONG.md)
 - Kiến trúc và đối chiếu với đề xuất: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 - API REST + WebSocket: [docs/API.md](docs/API.md) · Cơ sở dữ liệu: [docs/DATABASE.md](docs/DATABASE.md)
-- Mô hình AI, chi phí, lưu ý: [docs/LLM.md](docs/LLM.md) · Hệ thống thiết kế giao diện: [docs/DESIGN.md](docs/DESIGN.md)
+- Mô hình AI, chi phí, lưu ý: [docs/LLM.md](docs/LLM.md) · Kết quả đánh giá: [docs/EVAL.md](docs/EVAL.md) · Hệ thống thiết kế giao diện: [docs/DESIGN.md](docs/DESIGN.md)
 
 ## Cấu trúc
 

@@ -205,7 +205,7 @@ def test_pptx_create_text_notes(db, chat):
     assert r.ok
     out = run(ex, "pptx_inspect", {"file": "sp.pptx"}).data
     assert out["slide_size_cm"] == [33.9, 19.1] and out["slides"][1]["notes"] == "Nhấn mạnh giá"
-    r = run(ex, "pptx_set_text", {"file": "sp.pptx", "slide": 1, "shape": 1, "text": "Dòng 1\nDòng 2"})
+    r = run(ex, "pptx_set_text", {"file": "sp.pptx", "items": [{"slide": 1, "shape": 1, "text": "Dòng 1\nDòng 2"}]})
     assert r.ok and r.changes[0].version == 1  # cùng yêu cầu tạo tệp → gộp vào phiên bản 1
     f = next(x for x in chat.files if x.name == "sp.pptx")
     assert Presentation(store.working_path(f)).slides[1].placeholders[1].text_frame.text == "Dòng 1\nDòng 2"

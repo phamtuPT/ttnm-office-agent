@@ -90,9 +90,9 @@ def test_word_table_find_replace_rewrite(db, chat):
 def test_word_comment_and_track_changes(db, chat):
     f = store.create_file(db, chat.id, "rv.docx", docx_bytes())
     ex = ex_for(db, chat)
-    r = run(ex, "word_add_comment", {"file": f.name, "index": 1, "comment": "Cần số liệu"})
+    r = run(ex, "word_add_comment", {"file": f.name, "items": [{"index": 1, "comment": "Cần số liệu"}]})
     assert r.ok and r.changes
-    r = run(ex, "word_suggest_edit", {"file": f.name, "index": 2, "text": "Đoạn hai đã sửa."})
+    r = run(ex, "word_suggest_edit", {"file": f.name, "items": [{"index": 2, "text": "Đoạn hai đã sửa."}]})
     assert r.ok and r.changes
     doc = Document(store.working_path(f))
     assert any(c.text == "Cần số liệu" for c in doc.comments)
@@ -221,3 +221,36 @@ def test_run_python_needs_confirmation(db, chat):
         return False
     r = asyncio.run(ToolExecutor(db, chat.id, never).run("run_python", {"code": "print(1)"}))
     assert not r.ok and "từ chối" in r.data["error"]
+
+
+def test_review_flow_suggest_then_comment_same_paragraph(db, chat):
+    """Hồi quy từ bộ đánh giá Gemini: nhận xét vào đoạn vừa đề xuất sửa từng lỗi "Đoạn trống",
+    và word_inspect hiện đoạn đó rỗng khiến agent tưởng đoạn bị xoá."""
+    f = store.create_file(db, chat.id, "hd.docx", docx_bytes())
+    ex = ex_for(db, chat)
+    r = run(ex, "word_suggest_edit", {"file": f.name, "items": [{"index": 1, "text": "Mục một rõ hơn."},
+                                                                 {"index": 2, "text": "Mục hai rõ hơn."}]})
+    assert r.ok and r.data["suggested"] == [1, 2]
+    r = run(ex, "word_add_comment", {"file": f.name, "items": [{"index": 1, "comment": "Thiếu thời hạn"},
+                                                                {"index": 2, "comment": "Nêu rõ bên nào"}]})
+    assert r.ok, r.data
+    paras = run(ex, "word_inspect", {"file": f.name}).data["paragraphs"]
+    assert paras[1]["text"] == "Mục một rõ hơn."
+    assert paras[1]["pending_suggestion"] == {"old": "Đoạn một.", "new": "Mục một rõ hơn."}
+    again = run(ex, "word_suggest_edit", {"file": f.name, "items": [{"index": 1, "text": "Lần hai"}]})
+    assert not again.ok and "chờ duyệt" in again.data["error"]
+    doc = Document(store.working_path(f))
+    assert sorted(c.text for c in doc.comments) == ["Nêu rõ bên nào", "Thiếu thời hạn"]
+
+
+def test_pptx_set_text_many_items_one_call(db, chat):
+    ex = ex_for(db, chat)
+    run(ex, "pptx_create_presentation", {"file": "m.pptx", "slides": [
+        {"title": "A", "bullets": ["a"]}, {"title": "B", "bullets": ["b"]}]})
+    r = run(ex, "pptx_set_text", {"file": "m.pptx", "items": [
+        {"slide": 0, "shape": 0, "text": "Mở đầu"}, {"slide": 1, "shape": 1, "text": "Ý 1\nÝ 2"}]})
+    assert r.ok and r.data["updated"] == [[0, 0], [1, 1]]
+    f = next(x for x in chat.files if x.name == "m.pptx")
+    prs = Presentation(store.working_path(f))
+    assert prs.slides[0].shapes.title.text == "Mở đầu"
+    assert prs.slides[1].placeholders[1].text_frame.text == "Ý 1\nÝ 2"

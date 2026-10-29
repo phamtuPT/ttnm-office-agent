@@ -248,6 +248,7 @@ async def run_case(case: dict, provider, inputs_builders: dict) -> dict:
         "checks": "; ".join(f"{'✓' if ok else '✗'} {c['type']} {note}".strip() for c, ok, note in results),
         "error": err, "integrity": integrity([store.working_path(f) for f in fs]),
         "steps": stats.steps, "tool_calls": len(logs), "tool_ok": sum(1 for x in logs if x.ok),
+        "tools": " ".join(x.name + ("" if x.ok else "✗") for x in sorted(logs, key=lambda x: x.created_at)),
         "first_token_ms": stats.first_token_ms, "duration_ms": duration,
         "input_tokens": stats.input_tokens, "output_tokens": stats.output_tokens, "reply": reply[:300],
     }
@@ -298,12 +299,18 @@ def main() -> None:
     cases = [c for c in json.loads((HERE / "cases.json").read_text(encoding="utf-8")) if args.only in c["id"]]
     builders = make_inputs()
     rows = []
-    for rep in range(args.repeat):
-        for case in cases:
-            r = asyncio.run(run_case(case, provider, builders))
-            r.update({"run": rep + 1, "provider": provider.name, "model": provider.model})
-            rows.append(r)
-            print(f"{'ĐẠT ' if r['passed'] else 'TRƯỢT'} {r['id']:<28} {r['duration_ms']:>6} ms  {r['checks']} {r['error']}")
+
+    async def run_all():
+        # Một event loop cho cả lượt chạy: client async của SDK gắn với loop đầu tiên nó dùng
+        for rep in range(args.repeat):
+            for case in cases:
+                r = await run_case(case, provider, builders)
+                r.update({"run": rep + 1, "provider": provider.name, "model": provider.model})
+                rows.append(r)
+                print(f"{'ĐẠT ' if r['passed'] else 'TRƯỢT'} {r['id']:<28} {r['duration_ms']:>6} ms {r['steps']:>2} bước  "
+                      f"{r['checks']} {r['error']}\n      tool: {r['tools']}", flush=True)
+
+    asyncio.run(run_all())
 
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
