@@ -1,0 +1,22 @@
+# Bí mật
+.env
+*.env.local
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+
+# Node
+node_modules/
+dist/
+
+# Dữ liệu chạy thử (tệp người dùng tải lên, DB)
+storage/
+
+# Công cụ cá nhân
+.claude/
+.vscode/
+.idea/
+~$*
