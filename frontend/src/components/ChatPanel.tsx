@@ -23,6 +23,13 @@ interface Props {
 const MAX_IMAGE_MB = 10;
 const IMAGE_TYPES = ["image/png", "image/jpeg", "image/webp", "image/heic", "image/gif"];
 
+/** Một ô Excel đơn lẻ chỉ là vị trí con trỏ (điểm neo), không giới hạn vùng trợ lý được sửa. */
+export function isAnchor(s: Selection) {
+  if (!s.range) return false;
+  const [a, b] = s.range.replaceAll("$", "").toUpperCase().split(":");
+  return !b || a === b;
+}
+
 export function describeSelection(s: Selection) {
   if (s.range) return `${s.file} › ${s.sheet}!${s.range}`;
   if (s.paragraphs) return `${s.file} › đoạn ${s.paragraphs.map((i) => i + 1).join(", ")}`;
@@ -109,12 +116,17 @@ export function ChatPanel(p: Props) {
         {p.activeFile && !p.selection && (
           <span className="chip muted" title="Không nói tệp nào thì trợ lý làm trên tệp đang mở">Tệp đang mở: <b>{p.activeFile}</b></span>
         )}
-        {p.selection && (
-          <span className="chip">
+        {p.selection && (isAnchor(p.selection) ? (
+          <span className="chip muted" title="Một ô chỉ là vị trí bắt đầu, trợ lý vẫn được ghi ra các ô khác. Kéo chọn nhiều ô để giới hạn vùng sửa.">
+            Ô đang chọn: <b>{describeSelection(p.selection)}</b>
+            <button onClick={p.onClearSelection} aria-label="Bỏ ô đang chọn"><X size={14} aria-hidden /></button>
+          </span>
+        ) : (
+          <span className="chip" title="Trợ lý chỉ được sửa trong vùng này">
             Chỉ sửa trong: <b>{describeSelection(p.selection)}</b>
             <button onClick={p.onClearSelection} aria-label="Bỏ vùng chọn"><X size={14} aria-hidden /></button>
           </span>
-        )}
+        ))}
         {images.map((x, i) => (
           <span className="chip img" key={i}>
             <img src={x.url} alt="" />

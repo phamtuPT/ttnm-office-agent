@@ -240,6 +240,13 @@ button, select, textarea, input { font: inherit; color: inherit; border-radius: 
 .grid tbody th { position: sticky; left: 0; }
 .grid th, .grid td { border: 1px solid var(--border); padding: 3px 8px; min-width: 72px; height: 26px; white-space: nowrap; }
 .grid td.formula { font-family: var(--font-mono); font-size: 12px; color: var(--sky); }
+.grid td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.grid td.error { color: var(--danger); font-family: var(--font-mono); font-size: 12px; }
+.grid td.active { outline: 2px solid var(--coral); outline-offset: -2px; }
+.formula-bar { display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--border); background: var(--surface); padding: 4px 8px; min-height: 32px; }
+.formula-bar .name-box { min-width: 64px; padding: 3px 8px; border: 1px solid var(--border); background: var(--bg); font-family: var(--font-mono); font-size: 12px; color: var(--text-2); }
+.formula-bar .fx { color: var(--text-3); flex: none; }
+.formula-bar .formula-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--font-mono); font-size: 12.5px; }
 .grid td.changed { background: var(--changed-bg); }
 .grid td.sel { background: var(--sel-bg); outline: 1px solid var(--sky); outline-offset: -1px; }
 

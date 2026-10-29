@@ -20,8 +20,10 @@ function splitRef(ref: string): [string | null, string] {
   return [ref.slice(0, i).replace(/^'|'$/g, ""), ref.slice(i + 1).replaceAll("$", "")];
 }
 
-/** Đọc các giá trị của một vùng ô trong workbook. Công thức chưa có giá trị đã tính → null. */
-export function readRange(wb: XLSX.WorkBook, ref: string | null, fallbackSheet: string): (string | number | null)[] {
+type Evaluate = (sheet: string, r: number, c: number, formula: string) => { value: unknown; error?: string; unsupported?: boolean };
+
+/** Đọc các giá trị của một vùng ô trong workbook. Ô công thức được tính nếu có `evaluate`, không thì → null. */
+export function readRange(wb: XLSX.WorkBook, ref: string | null, fallbackSheet: string, evaluate?: Evaluate): (string | number | null)[] {
   if (!ref) return [];
   const [sheetName, rng] = splitRef(ref);
   const ws = wb.Sheets[sheetName ?? fallbackSheet];
@@ -31,22 +33,27 @@ export function readRange(wb: XLSX.WorkBook, ref: string | null, fallbackSheet: 
   for (let row = r.s.r; row <= r.e.r; row++)
     for (let col = r.s.c; col <= r.e.c; col++) {
       const c = ws[XLSX.utils.encode_cell({ r: row, c: col })] as XLSX.CellObject | undefined;
+      if (c?.f && evaluate) {
+        const res = evaluate(sheetName ?? fallbackSheet, row, col, c.f);
+        out.push(res.error || res.unsupported ? null : (res.value as string | number | null));
+        continue;
+      }
       out.push(c && c.t !== "z" && c.v !== undefined && c.v !== "" ? (c.v as string | number) : null);
     }
   return out;
 }
 
-export function ChartView({ chart, wb, sheet }: { chart: ChartInfo; wb: XLSX.WorkBook; sheet: string }) {
+export function ChartView({ chart, wb, sheet, evaluate }: { chart: ChartInfo; wb: XLSX.WorkBook; sheet: string; evaluate?: Evaluate }) {
   const series = chart.series.map((s, i) => ({
-    name: String(readRange(wb, s.name, sheet)[0] ?? `Chuỗi ${i + 1}`),
-    values: readRange(wb, s.values, sheet).map((v) => (typeof v === "number" ? v : Number(v) || 0)),
+    name: String(readRange(wb, s.name, sheet, evaluate)[0] ?? `Chuỗi ${i + 1}`),
+    values: readRange(wb, s.values, sheet, evaluate).map((v) => (typeof v === "number" ? v : Number(v) || 0)),
     color: COLORS[i % COLORS.length],
   }));
   const n = Math.max(0, ...series.map((s) => s.values.length));
-  const cats = readRange(wb, chart.series[0]?.categories ?? null, sheet).map((c, i) => String(c ?? i + 1));
+  const cats = readRange(wb, chart.series[0]?.categories ?? null, sheet, evaluate).map((c, i) => String(c ?? i + 1));
   const labels = Array.from({ length: n }, (_, i) => cats[i] ?? String(i + 1));
   const title = chart.title || "Biểu đồ";
-  const hasFormulaGaps = chart.series.some((s) => readRange(wb, s.values, sheet).some((v) => v === null));
+  const hasFormulaGaps = chart.series.some((s) => readRange(wb, s.values, sheet, evaluate).some((v) => v === null));
 
   return (
     <figure className="chart-card" aria-label={`${title}: biểu đồ ${chart.type}`}>

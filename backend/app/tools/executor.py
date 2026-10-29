@@ -61,7 +61,8 @@ class ToolExecutor:
         self.db = db
         self.session_id = session_id
         self.confirm = confirm
-        self.selection = selection
+        # Ô đơn chỉ là điểm neo cho prompt, không phải giới hạn → không áp các kiểm tra phạm vi
+        self.selection = None if selection is not None and selection.is_anchor else selection
         self.turn_id = turn_id
 
     def _files(self) -> list[File]:

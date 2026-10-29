@@ -240,3 +240,21 @@ def test_write_succeeds_while_preview_is_reading_the_file(db, chat):
     assert r.ok and r.changes[0].version == 2
     assert ws_of(f)["B2"].value == 7
     assert not list(store.working_path(f).parent.glob(".tmp-*"))
+
+
+
+def test_single_cell_selection_is_anchor_not_limit(db, chat):
+    """Bấm một ô (A1) rồi yêu cầu tạo bảng: trước đây bị từ chối "nằm ngoài vùng chọn"."""
+    f = store.create_file(db, chat.id, "anchor.xlsx", xlsx_bytes())
+    for rng in ("A1", "$A$1", "C3:C3"):
+        assert Selection(file=f.name, sheet="Doanh thu", range=rng).is_anchor
+    assert not Selection(file=f.name, sheet="Doanh thu", range="A1:B2").is_anchor
+    assert not Selection(file=f.name, paragraphs=[0]).is_anchor
+    ex = ToolExecutor(db, chat.id, _always, Selection(file=f.name, sheet="Doanh thu", range="A1"), turn_id="t1")
+    r = run(ex, "excel_write_cells", {"file": f.name, "sheet": "Doanh thu",
+                                      "cells": [{"ref": "A6", "value": "Mã NV"}, {"ref": "E12", "value": 1}]})
+    assert r.ok, r.data
+    # Vùng nhiều ô vẫn khoá phạm vi như cũ
+    ex2 = ToolExecutor(db, chat.id, _always, Selection(file=f.name, sheet="Doanh thu", range="A1:B2"))
+    assert not run(ex2, "excel_write_cells", {"file": f.name, "sheet": "Doanh thu",
+                                             "cells": [{"ref": "E12", "value": 2}]}).ok

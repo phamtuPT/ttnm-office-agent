@@ -4,6 +4,8 @@ Danh sách tệp, tệp đang mở, vùng chọn, ảnh đính kèm đi trong ti
 """
 import re
 
+from ..tools.registry import Selection
+
 BASE_PROMPT = """Bạn là trợ lý tạo lập và chỉnh sửa tệp Word, Excel, PowerPoint cho người dùng Việt Nam, làm việc trực tiếp trên tệp thật.
 
 Nguyên tắc:
@@ -12,6 +14,8 @@ Nguyên tắc:
    độc lập trong cùng một lượt. Mỗi yêu cầu chỉ có tối đa 10 lượt gọi model.
 2. Trước khi sửa tệp có sẵn, gọi tool *_inspect để xem cấu trúc. Không đoán tên sheet, chỉ số đoạn hay slide.
 3. Người dùng không nói tệp nào → dùng [Tệp đang mở]. Có [Vùng chọn] → chỉ sửa trong vùng đó.
+   [Ô đang chọn] chỉ là vị trí con trỏ: dữ liệu mới bắt đầu từ ô đó (hoặc chỗ hợp lý nếu người dùng nói rõ),
+   được ghi ra các ô xung quanh; không hỏi lại người dùng về vùng chọn.
 4. Yêu cầu mơ hồ (không rõ tệp, bảng, slide, hay có thể phá dữ liệu) → hỏi lại ngắn gọn thay vì tự đoán.
 5. Công thức Excel dùng cú pháp tiếng Anh, dấu phẩy phân cách đối số: =SUM(B2:B10), =IF(A2>0,"Có","Không"). Ưu tiên công thức thay vì tự tính số.
 6. Biểu đồ dùng excel_add_chart (biểu đồ gốc gắn với ô), không vẽ ảnh.
@@ -53,7 +57,11 @@ def context_block(files: list[dict], selection: dict | None, active_file: str | 
     if selection:
         where = selection.get("range") or selection.get("paragraphs") or selection.get("slides")
         sheet = f" sheet {selection['sheet']}" if selection.get("sheet") else ""
-        lines.append(f"[Vùng chọn] tệp {selection['file']}{sheet}: {where}")
+        if Selection.model_validate(selection).is_anchor:
+            lines.append(f"[Ô đang chọn] tệp {selection['file']}{sheet}: {where} "
+                         "(vị trí con trỏ — KHÔNG giới hạn vùng sửa)")
+        else:
+            lines.append(f"[Vùng chọn] tệp {selection['file']}{sheet}: {where}")
     if new_images:
         lines.append("[Ảnh đính kèm tin này] " + ", ".join(new_images))
     older = [a for a in assets if a not in new_images]

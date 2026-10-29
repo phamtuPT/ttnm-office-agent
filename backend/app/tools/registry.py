@@ -30,13 +30,24 @@ class ToolError(Exception):
 
 
 class Selection(BaseModel):
-    """Vùng người dùng đã chọn trên giao diện. Tool ghi chỉ được sửa trong vùng này."""
+    """Vùng người dùng đã chọn trên giao diện. Tool ghi chỉ được sửa trong vùng này.
+
+    Ngoại lệ: chọn đúng MỘT ô Excel chỉ là điểm neo (vị trí con trỏ / chỗ bắt đầu điền dữ liệu), giống bấm vào một ô
+    trong Excel — không giới hạn vùng sửa. Chỉ khi kéo chọn từ hai ô trở lên mới khoá phạm vi sửa.
+    """
 
     file: str
     sheet: str | None = None
     range: str | None = None  # Excel, ví dụ "B2:D10"
     paragraphs: list[int] | None = None  # Word, chỉ số đoạn
     slides: list[int] | None = None  # PowerPoint, chỉ số slide (từ 0)
+
+    @property
+    def is_anchor(self) -> bool:
+        if not self.range or self.paragraphs is not None or self.slides is not None:
+            return False
+        start, _, end = self.range.replace("$", "").upper().partition(":")
+        return not end or start == end
 
 
 @dataclass

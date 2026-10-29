@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { ChatPanel, describeSelection, toBlocks } from "../components/ChatPanel";
+import { ChatPanel, describeSelection, isAnchor, toBlocks } from "../components/ChatPanel";
 import type { ChatItem } from "../types";
 
 afterEach(cleanup);
@@ -28,6 +28,24 @@ describe("toBlocks", () => {
     const blocks = toBlocks(items);
     expect(blocks.map((b) => b.kind)).toEqual(["text", "tools", "text"]);
     expect(blocks[1].kind === "tools" && blocks[1].items.length).toBe(2);
+  });
+});
+
+describe("isAnchor", () => {
+  it("một ô là điểm neo, vùng nhiều ô hoặc đoạn/slide là giới hạn", () => {
+    expect(isAnchor({ file: "a.xlsx", sheet: "S", range: "A1" })).toBe(true);
+    expect(isAnchor({ file: "a.xlsx", sheet: "S", range: "C3:C3" })).toBe(true);
+    expect(isAnchor({ file: "a.xlsx", sheet: "S", range: "B2:D10" })).toBe(false);
+    expect(isAnchor({ file: "a.docx", paragraphs: [0] })).toBe(false);
+  });
+
+  it("nhãn khác nhau cho ô đang chọn và vùng giới hạn", () => {
+    const { rerender } = render(<ChatPanel {...base} items={[]} onSend={() => {}}
+      selection={{ file: "a.xlsx", sheet: "S", range: "A1" }} />);
+    expect(screen.getByText(/Ô đang chọn/)).toBeTruthy();
+    expect(screen.queryByText(/Chỉ sửa trong/)).toBeNull();
+    rerender(<ChatPanel {...base} items={[]} onSend={() => {}} selection={{ file: "a.xlsx", sheet: "S", range: "B2:D10" }} />);
+    expect(screen.getByText(/Chỉ sửa trong/)).toBeTruthy();
   });
 });
 

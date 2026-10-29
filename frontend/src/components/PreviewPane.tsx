@@ -1,11 +1,13 @@
 import { Download, History, ListTree, Printer, Redo2, Undo2 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { SquareFunction } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import * as XLSX from "xlsx";
 import { renderAsync } from "docx-preview";
 import { api } from "../api";
 import type { FileDiff, OfficeFile, Selection } from "../types";
 import { type ChartInfo, ChartView } from "./ChartView";
 import { FileKindIcon } from "./icons";
+import { createEvaluator, formatValue } from "../formulas";
 
 interface Props {
   file: OfficeFile;
@@ -39,7 +41,7 @@ export function PreviewPane(p: Props) {
         <a className="btn primary" href={api.fileContentUrl(file.id)} download={file.name}><Download size={16} aria-hidden /> Tải về</a>
       </header>
       <p className="hint">
-        {file.kind === "xlsx" && "Kéo chuột để chọn vùng ô cho trợ lý sửa."}
+        {file.kind === "xlsx" && "Bấm một ô để đặt vị trí bắt đầu. Kéo chọn nhiều ô để giới hạn vùng trợ lý được sửa."}
         {file.kind === "docx" && !printView && "Bấm vào đoạn để chọn (Ctrl+bấm để chọn nhiều)."}
         {file.kind === "pptx" && "Bấm vào slide để chọn (Ctrl+bấm để chọn nhiều)."}
       </p>
@@ -62,6 +64,8 @@ function XlsxView({ file, reloadKey, diff, selection, onSelect }: Props) {
   const [sheet, setSheet] = useState<string>("");
   const [drag, setDrag] = useState<{ a: XLSX.CellAddress; b: XLSX.CellAddress } | null>(null);
   const [charts, setCharts] = useState<Record<string, ChartInfo[]>>({});
+  const [active, setActive] = useState<XLSX.CellAddress | null>(null);
+  const evaluator = useMemo(() => (wb ? createEvaluator(wb) : null), [wb]);
 
   useEffect(() => {
     api.outline(file.id)
@@ -70,13 +74,13 @@ function XlsxView({ file, reloadKey, diff, selection, onSelect }: Props) {
     fetch(api.fileContentUrl(file.id))
       .then((r) => r.arrayBuffer())
       .then((buf) => {
-        const book = XLSX.read(buf, { cellFormula: true, sheetStubs: true });
+        const book = XLSX.read(buf, { cellFormula: true, sheetStubs: true, cellNF: true });
         setWb(book);
         setSheet((s) => (book.SheetNames.includes(s) ? s : book.SheetNames[0]));
       });
   }, [file.id, reloadKey]);
 
-  if (!wb) return <p className="hint">Đang tải…</p>;
+  if (!wb || !evaluator) return <p className="hint">Đang tải…</p>;
   const ws = wb.Sheets[sheet];
   const range = XLSX.utils.decode_range(ws?.["!ref"] ?? "A1");
   // Luôn hiện tối thiểu một lưới 30×8 để bảng tính trống vẫn trông như bảng tính
@@ -95,20 +99,36 @@ function XlsxView({ file, reloadKey, diff, selection, onSelect }: Props) {
     setDrag(null);
   };
 
-  const show = (addr: string): string => {
-    const c = ws?.[addr] as XLSX.CellObject | undefined;
-    if (!c) return "";
-    // openpyxl không lưu giá trị đã tính của công thức → hiển thị công thức
-    if (c.f && (c.t === "z" || c.v === undefined || c.v === "")) return `=${c.f}`;
-    return c.w ?? (c.v !== undefined ? String(c.v) : "");
+  /** Nội dung hiển thị của ô: ô công thức hiện KẾT QUẢ (như Excel); công thức nằm ở thanh công thức. */
+  const show = (r: number, c: number): { text: string; cls: string } => {
+    const cell = ws?.[XLSX.utils.encode_cell({ r, c })] as XLSX.CellObject | undefined;
+    if (!cell) return { text: "", cls: "" };
+    if (cell.f) {
+      const res = evaluator.cell(sheet, r, c, cell.f);
+      if (res.unsupported) return { text: `=${cell.f}`, cls: "formula" }; // hàm chưa tính được → hiện công thức
+      if (res.error) return { text: res.error, cls: "error" };
+      return { text: formatValue(res.value, cell.z), cls: typeof res.value === "number" ? "num" : "" };
+    }
+    if (cell.t === "z") return { text: "", cls: "" };
+    return { text: cell.w ?? (cell.v !== undefined ? String(cell.v) : ""), cls: cell.t === "n" ? "num" : "" };
   };
+
+  // Thanh công thức: địa chỉ ô đang chọn + công thức (hoặc giá trị gốc) của ô đó
+  const activeAddr = active ? XLSX.utils.encode_cell(active) : "";
+  const activeCell = active ? (ws?.[activeAddr] as XLSX.CellObject | undefined) : undefined;
+  const activeContent = activeCell?.f ? `=${activeCell.f.replace(/_xlfn\./gi, "")}` : activeCell && activeCell.t !== "z" ? String(activeCell.v ?? "") : "";
 
   return (
     <div className="sheet-wrap" onMouseUp={finish} onMouseLeave={finish}>
       <div className="tabs">
         {wb.SheetNames.map((n) => (
-          <button key={n} className={n === sheet ? "active" : ""} onClick={() => setSheet(n)}>{n}</button>
+          <button key={n} className={n === sheet ? "active" : ""} onClick={() => { setSheet(n); setActive(null); }}>{n}</button>
         ))}
+      </div>
+      <div className="formula-bar" aria-label="Thanh công thức">
+        <span className="name-box" aria-label="Ô đang chọn">{activeAddr}</span>
+        <SquareFunction size={16} className="fx" aria-hidden />
+        <span className="formula-text" title={activeContent}>{activeContent}</span>
       </div>
       <div className="grid-scroll">
         <table className="grid">
@@ -124,12 +144,13 @@ function XlsxView({ file, reloadKey, diff, selection, onSelect }: Props) {
                 <th>{r + 1}</th>
                 {Array.from({ length: cols + 1 }, (_, c) => {
                   const addr = XLSX.utils.encode_cell({ r, c });
-                  const text = show(addr);
+                  const { text, cls } = show(r, c);
+                  const isActive = active?.r === r && active?.c === c;
                   return (
                     <td
                       key={c}
-                      className={`${inSel(r, c) ? "sel" : ""} ${changed.has(addr) ? "changed" : ""} ${text.startsWith("=") ? "formula" : ""}`}
-                      onMouseDown={(e) => { e.preventDefault(); setDrag({ a: { r, c }, b: { r, c } }); }}
+                      className={`${inSel(r, c) ? "sel" : ""} ${changed.has(addr) ? "changed" : ""} ${cls} ${isActive ? "active" : ""}`}
+                      onMouseDown={(e) => { e.preventDefault(); setActive({ r, c }); setDrag({ a: { r, c }, b: { r, c } }); }}
                       onMouseEnter={() => drag && setDrag({ ...drag, b: { r, c } })}
                     >
                       {text}
@@ -144,7 +165,7 @@ function XlsxView({ file, reloadKey, diff, selection, onSelect }: Props) {
       {range.e.r >= MAX_ROWS && <p className="hint">Chỉ hiển thị {MAX_ROWS} dòng đầu.</p>}
       {(charts[sheet]?.length ?? 0) > 0 && (
         <div className="charts" aria-label="Biểu đồ trong sheet">
-          {charts[sheet].map((ch, i) => <ChartView key={i} chart={ch} wb={wb} sheet={sheet} />)}
+          {charts[sheet].map((ch, i) => <ChartView key={i} chart={ch} wb={wb} sheet={sheet} evaluate={evaluator.cell} />)}
         </div>
       )}
     </div>

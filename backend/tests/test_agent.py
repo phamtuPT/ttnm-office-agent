@@ -101,3 +101,13 @@ def test_first_token_counts_tool_only_turn(db, chat):
     _, _, stats = _run(provider, ToolExecutor(db, chat.id, _always))
     # Mốc tính ngay khi model trả lời gọi tool (trước khi tool chạy), không đợi tới chữ ở lượt sau
     assert stats.first_token_ms is not None and stats.first_token_ms < 1000
+
+
+
+def test_context_marks_single_cell_as_cursor():
+    from app.agent.prompts import context_block
+    files = [{"name": "a.xlsx", "kind": "xlsx", "version": 1}]
+    one = context_block(files, {"file": "a.xlsx", "sheet": "S", "range": "A1"}, "a.xlsx", [], [])
+    many = context_block(files, {"file": "a.xlsx", "sheet": "S", "range": "B2:D10"}, "a.xlsx", [], [])
+    assert "[Ô đang chọn]" in one and "KHÔNG giới hạn" in one and "[Vùng chọn]" not in one
+    assert "[Vùng chọn] tệp a.xlsx sheet S: B2:D10" in many
