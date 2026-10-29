@@ -496,3 +496,88 @@ def _suggest(doc, index: int, text: str) -> None:
     new_r.append(t)
     inserted.append(new_r)
     deleted.addnext(inserted)
+
+
+class CopyStyleArgs(BaseModel):
+    file: str = FILE
+    source: str = Field(description="Tệp .docx mẫu trong phiên (lấy phong cách từ tệp này)")
+    page_setup: bool = Field(True, description="Chép cả khổ giấy, hướng giấy và lề trang")
+    reset_direct_formatting: bool = Field(
+        False, description="Xoá phông/cỡ/màu chữ và giãn dòng gõ tay trong tệp đích để kiểu chữ mới có hiệu lực "
+                           "(giữ in đậm/nghiêng/gạch chân)")
+
+
+_DIRECT_RUN = ("w:rFonts", "w:sz", "w:szCs", "w:color")
+_DIRECT_PARA = ("w:spacing", "w:ind", "w:jc")
+
+
+@tool("word_copy_style", "Sao chép phong cách của một tài liệu Word khác sang tệp này: kiểu chữ (Normal, Heading, "
+      "Title, danh sách, bảng), phông chữ chủ đề, khổ giấy và lề. Dùng khi người dùng muốn định dạng 'giống tài liệu "
+      "mẫu'. Nội dung giữ nguyên.", CopyStyleArgs, kind="docx", writes=True)
+def word_copy_style(args: CopyStyleArgs, ctx: ToolCtx) -> dict:
+    from docx.opc.constants import RELATIONSHIP_TYPE as RT
+
+    from .session_files import session_file
+
+    if args.source == args.file:
+        raise ToolError("Tệp mẫu phải khác tệp đang sửa")
+    src = Document(session_file(ctx, args.source, "docx"))
+    doc = Document(ctx.path)
+    dst_styles, src_styles = doc.styles.element, src.styles.element
+
+    # Định dạng mặc định của cả tài liệu (phông, cỡ chữ, giãn dòng)
+    src_defaults = src_styles.find(qn("w:docDefaults"))
+    if src_defaults is not None:
+        old = dst_styles.find(qn("w:docDefaults"))
+        if old is not None:
+            old.addprevious(copy.deepcopy(src_defaults))
+            dst_styles.remove(old)
+        else:
+            dst_styles.insert(0, copy.deepcopy(src_defaults))
+
+    existing = {s.get(qn("w:styleId")): s for s in dst_styles.findall(qn("w:style"))}
+    copied = []
+    for style in src_styles.findall(qn("w:style")):
+        sid = style.get(qn("w:styleId"))
+        new = copy.deepcopy(style)
+        # Kiểu danh sách trỏ tới định nghĩa đánh số (numbering.xml) của tệp mẫu → giữ đánh số của tệp đích
+        new_ppr = new.find(qn("w:pPr"))
+        num = new_ppr.find(qn("w:numPr")) if new_ppr is not None else None
+        if num is not None:
+            new_ppr.remove(num)
+            old_ppr = existing[sid].find(qn("w:pPr")) if sid in existing else None
+            old_num = old_ppr.find(qn("w:numPr")) if old_ppr is not None else None
+            if old_num is not None:
+                new_ppr.insert(0, copy.deepcopy(old_num))
+        if sid in existing:
+            existing[sid].addprevious(new)
+            dst_styles.remove(existing[sid])
+        else:
+            dst_styles.append(new)
+        copied.append(sid)
+
+    # Phông "chủ đề" (+Body, +Headings) mà kiểu chữ tham chiếu nằm trong theme
+    try:
+        doc.part.part_related_by(RT.THEME)._blob = src.part.part_related_by(RT.THEME).blob
+        theme = True
+    except KeyError:
+        theme = False
+
+    if args.page_setup and src.sections:
+        s0 = src.sections[0]
+        for sec in doc.sections:
+            sec.orientation, sec.page_width, sec.page_height = s0.orientation, s0.page_width, s0.page_height
+            sec.left_margin, sec.right_margin = s0.left_margin, s0.right_margin
+            sec.top_margin, sec.bottom_margin = s0.top_margin, s0.bottom_margin
+
+    cleared = 0
+    if args.reset_direct_formatting:
+        for el in doc.element.body.iter(qn("w:rPr"), qn("w:pPr")):  # gồm cả w:rPr của dấu đoạn
+            names = _DIRECT_RUN if el.tag == qn("w:rPr") else _DIRECT_PARA
+            for name in names:
+                for child in el.findall(qn(name)):
+                    el.remove(child)
+                    cleared += 1
+    doc.save(ctx.path)
+    return {"styles_copied": len(copied), "theme_fonts": theme, "page_setup": args.page_setup,
+            "direct_formatting_removed": cleared}

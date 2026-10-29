@@ -131,6 +131,7 @@ export const TOOL_LABELS: Record<string, string> = {
   word_insert_table: "Chèn bảng Word",
   word_find_replace: "Tìm và thay",
   word_rewrite_paragraphs: "Viết lại các đoạn",
+  word_copy_style: "Sao chép phong cách tài liệu",
   word_add_comment: "Ghi nhận xét",
   word_suggest_edit: "Đề xuất sửa (Track Changes)",
   format_keywords: "Nhấn mạnh từ khoá",

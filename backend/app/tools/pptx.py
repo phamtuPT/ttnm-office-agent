@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field
 from .assets import asset_path
 from .pptx_design import BUILT_IN, find_layout, new_presentation
 from .pptx_math import all_shapes, finalize, shape_markup, write_text
+from .session_files import session_file
 from .registry import ToolCtx, ToolError, tool
 
 FILE = Field(description="Tên tệp .pptx trong phiên")
@@ -85,7 +86,7 @@ def pptx_create_presentation(args: CreateArgs, ctx: ToolCtx) -> dict:
     if args.template in BUILT_IN:
         template, palette = BUILT_IN[args.template], args.theme
     else:  # mẫu của người dùng: giữ nguyên màu của họ
-        template, palette = _session_pptx(ctx, args.template), None
+        template, palette = session_file(ctx, args.template, "pptx"), None
     prs = new_presentation(template, palette)
     for spec in args.slides:
         s = prs.slides.add_slide(find_layout(prs, spec.layout))
@@ -94,17 +95,6 @@ def pptx_create_presentation(args: CreateArgs, ctx: ToolCtx) -> dict:
     prs.save(ctx.path)
     return {"created": args.file, "slides": len(args.slides), "template": args.template,
             "theme": palette or "theo mẫu"}
-
-
-def _session_pptx(ctx: ToolCtx, name: str):
-    from ..versioning import store  # import muộn: versioning dùng tools
-    match = next((f for f in ctx.files if f["name"] == name and f["kind"] == "pptx"), None)
-    if match is None:
-        pptx_files = [f["name"] for f in ctx.files if f["kind"] == "pptx"]
-        raise ToolError(f"Không có mẫu '{name}'. Dùng 'default_theme', 'default_plain' hoặc một tệp: {pptx_files}")
-    from ..db import File, SessionLocal
-    with SessionLocal() as db:
-        return store.working_path(db.get(File, match["id"]))
 
 
 class TextItem(BaseModel):
