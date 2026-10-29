@@ -9,6 +9,7 @@ from ..config import get_settings
 from ..db import File, Turn
 from ..preview import render, thumbnail
 from ..tools.registry import REGISTRY, ToolCtx
+from ..tools.word import document_equations
 from ..versioning import store
 from .deps import get_db, get_file_or_404, get_session_or_404, iso
 
@@ -78,6 +79,13 @@ def file_outline(file_id: str, db: Session = Depends(get_db)):
     tool = REGISTRY[OUTLINE_TOOL[f.kind]]
     args = tool.args_model(file=f.name, **({"limit": 10_000} if f.kind == "docx" else {}))
     return tool.handler(args, ToolCtx(path=store.working_path(f), selection=None))
+
+
+@router.get("/files/{file_id}/equations")
+def file_equations(file_id: str, db: Session = Depends(get_db)):
+    """Công thức toán trong tài liệu Word (LaTeX, theo thứ tự) — bản in dùng để vẽ lại công thức bằng KaTeX."""
+    f = get_file_or_404(db, file_id)
+    return document_equations(store.working_path(f)) if f.kind == "docx" else []
 
 
 @router.get("/files/{file_id}/thumbnail.png")

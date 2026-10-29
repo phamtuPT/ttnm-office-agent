@@ -106,6 +106,8 @@ def _para_key(p) -> str:
 
 
 def _docx(before: Path, after: Path) -> dict:
+    from ..tools.word import para_markup  # import muộn: tránh vòng import tools ↔ versioning
+
     da, db = Document(before), Document(after)
     pa, pb = da.paragraphs, db.paragraphs
     ka, kb = [_para_key(p) for p in pa], [_para_key(p) for p in pb]
@@ -113,7 +115,7 @@ def _docx(before: Path, after: Path) -> dict:
     for tag, i1, i2, j1, j2 in difflib.SequenceMatcher(a=ka, b=kb, autojunk=False).get_opcodes():
         if tag != "equal":
             ops.append({"op": tag, "before_index": i1, "after_index": j1,
-                        "before": [p.text for p in pa[i1:i2]], "after": [p.text for p in pb[j1:j2]]})
+                        "before": [para_markup(p) for p in pa[i1:i2]], "after": [para_markup(p) for p in pb[j1:j2]]})
     out = {"paragraphs": ops[:MAX_ITEMS]}
     if [t._tbl.xml for t in da.tables] != [t._tbl.xml for t in db.tables]:
         out["tables"] = {"before": len(da.tables), "after": len(db.tables)}

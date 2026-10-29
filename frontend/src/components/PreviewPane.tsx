@@ -7,6 +7,7 @@ import { api } from "../api";
 import type { FileDiff, OfficeFile, Selection } from "../types";
 import { type ChartInfo, ChartView } from "./ChartView";
 import { FileKindIcon } from "./icons";
+import { MathText, replaceDocxMath } from "./MathText";
 import { createEvaluator, formatValue } from "../formulas";
 
 interface Props {
@@ -179,7 +180,10 @@ function DocxPrint({ file, reloadKey }: Props) {
   useEffect(() => {
     fetch(api.fileContentUrl(file.id))
       .then((r) => r.blob())
-      .then((b) => ref.current && renderAsync(b, ref.current, undefined, { inWrapper: true }));
+      .then((b) => ref.current && renderAsync(b, ref.current, undefined, { inWrapper: true }))
+      .then(() => api.equations(file.id))
+      .then((eqs) => ref.current && eqs.length && replaceDocxMath(ref.current, eqs))
+      .catch(() => undefined); // công thức vẽ lại thất bại: vẫn còn bản của docx-preview
   }, [file.id, reloadKey]);
   return <div ref={ref} className="docx-print" />;
 }
@@ -257,7 +261,7 @@ function OutlineView({ file, reloadKey, diff, selection, onSelect }: Props) {
           onClick={(e) => toggle(it.index, e.ctrlKey || e.metaKey)}
         >
           <small>{it.label}</small>
-          <div>{it.body}</div>
+          <div><MathText text={it.body} /></div>
         </li>
       ))}
     </ol>

@@ -14,6 +14,7 @@ Nguyên tắc:
    độc lập trong cùng một lượt. Mỗi yêu cầu chỉ có tối đa 10 lượt gọi model.
 2. Trước khi sửa tệp có sẵn, gọi tool *_inspect để xem cấu trúc. Không đoán tên sheet, chỉ số đoạn hay slide.
 3. Người dùng không nói tệp nào → dùng [Tệp đang mở]. Có [Vùng chọn] → chỉ sửa trong vùng đó.
+   Tệp đang mở còn trống (vừa tạo) → ghi thẳng vào tệp đó, không tạo tệp mới cùng loại.
    [Ô đang chọn] chỉ là vị trí con trỏ: dữ liệu mới bắt đầu từ ô đó (hoặc chỗ hợp lý nếu người dùng nói rõ),
    được ghi ra các ô xung quanh; không hỏi lại người dùng về vùng chọn.
 4. Yêu cầu mơ hồ (không rõ tệp, bảng, slide, hay có thể phá dữ liệu) → hỏi lại ngắn gọn thay vì tự đoán.
@@ -30,7 +31,12 @@ Nguyên tắc:
     vào báo cáo bằng word_insert_image. Tính toán đơn giản thì dùng công thức Excel.
 14. So sánh hai phiên bản/hai tệp → compare_versions / compare_files rồi tóm tắt khác biệt bằng lời.
 15. Nhãn dạng ⟦EMAIL_1⟧, ⟦PHONE_2⟧ là thông tin đã được che: giữ nguyên nhãn khi ghi vào tệp, hệ thống tự điền lại.
-16. Khi xong: trả lời ngắn gọn bằng tiếng Việt — đã làm gì, ở đâu (tệp, sheet/ô, đoạn, slide). Người dùng có thể bấm Hoàn tác.
+16. Công thức toán trong Word/PowerPoint: viết LaTeX trong text của tool — $...$ trong dòng, cả đoạn $$...$$ thành
+    công thức riêng dòng — hệ thống chuyển thành công thức Office thật (sửa được trong Word/PowerPoint).
+    Ví dụ: "Nghiệm: $x_{1,2} = \\frac{-b \\pm \\sqrt{\\Delta}}{2a}$". Không viết công thức bằng chữ thường (x^2, sqrt(x)).
+    *_inspect trả công thức có sẵn dạng $...$: khi dịch/viết lại phải giữ nguyên các $...$. Người dùng muốn đổi công
+    thức gõ tay thành công thức thật → viết lại đoạn đó với $...$. Câu trả lời trong chat cũng dùng $...$.
+17. Khi xong: trả lời ngắn gọn bằng tiếng Việt — đã làm gì, ở đâu (tệp, sheet/ô, đoạn, slide). Người dùng có thể bấm Hoàn tác.
 """
 
 PPTX_GUIDE = """

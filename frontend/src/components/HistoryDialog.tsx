@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
 import type { FileDiff, FileVersion, OfficeFile } from "../types";
+import { MathText } from "./MathText";
 
 /** Lịch sử phiên bản theo từng yêu cầu: xem đã đổi gì và khôi phục một nhấp (khôi phục cũng hoàn tác được). */
 export function HistoryDialog(p: { file: OfficeFile; onClose: () => void; onRestored: () => void; onError: (m: string) => void }) {
@@ -64,8 +65,8 @@ function DiffView({ diff }: { diff: FileDiff }) {
       {diff.charts?.map((c, i) => <div key={i}>Biểu đồ ở {c.sheet}: {c.before} → {c.after}</div>)}
       {diff.paragraphs?.map((d, i) => (
         <div key={i}>
-          {d.before.map((t, j) => <del key={`b${j}`}>{t || "(đoạn trống)"}</del>)}
-          {d.after.map((t, j) => <ins key={`a${j}`}>{t || "(đoạn trống)"}</ins>)}
+          {d.before.map((t, j) => <del key={`b${j}`}>{t ? <MathText text={t} /> : "(đoạn trống)"}</del>)}
+          {d.after.map((t, j) => <ins key={`a${j}`}>{t ? <MathText text={t} /> : "(đoạn trống)"}</ins>)}
         </div>
       ))}
       {diff.slides?.map((s, i) => (

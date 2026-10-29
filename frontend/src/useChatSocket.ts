@@ -91,7 +91,7 @@ export function useChatSocket(sessionId: string | null, handlers: Handlers) {
         );
         break;
       case "file.changed":
-        setItems((xs) => [...xs, { kind: "change", fileId: ev.file_id, fileName: ev.file_name, version: ev.version, summary: ev.summary }]);
+        setItems((xs) => addChange(xs, { kind: "change", fileId: ev.file_id, fileName: ev.file_name, version: ev.version, summary: ev.summary }));
         h.current.onFileChanged(ev.file_id, ev.diff);
         break;
       case "confirm.request":
@@ -124,4 +124,19 @@ export function useChatSocket(sessionId: string | null, handlers: Handlers) {
   }, []);
 
   return { items, busy, connected, confirm, send, cancel, answerConfirm };
+}
+
+/**
+ * Mọi thay đổi trong cùng một yêu cầu được gộp vào một phiên bản tệp (backend) → chỉ giữ một thẻ cho mỗi
+ * tệp + phiên bản trong lượt hiện tại, cập nhật tóm tắt mới nhất, thay vì một thẻ cho mỗi lần gọi tool.
+ */
+export function addChange(items: ChatItem[], change: Extract<ChatItem, { kind: "change" }>): ChatItem[] {
+  for (let i = items.length - 1; i >= 0; i--) {
+    const it = items[i];
+    if (it.kind === "text" && it.role === "user") break;
+    if (it.kind === "change" && it.fileId === change.fileId && it.version === change.version) {
+      return [...items.slice(0, i), ...items.slice(i + 1), change];
+    }
+  }
+  return [...items, change];
 }

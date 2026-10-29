@@ -10,6 +10,7 @@ from docx.shared import Cm
 from docx.text.paragraph import Paragraph
 from pydantic import BaseModel, Field
 
+from . import omml
 from .assets import asset_path
 from .registry import ToolCtx, ToolError, tool
 
@@ -40,6 +41,69 @@ def para_text(p) -> str:
     return "".join(t.text or "" for t in p._p.xpath(".//w:t[not(ancestor::w:del)]"))
 
 
+_MATH_TAGS = {qn("m:oMath"), qn("m:oMathPara")}
+
+
+def _markup(el) -> str:
+    out = []
+    for c in el:
+        if c.tag == qn("m:oMathPara"):
+            out.append("$$" + omml.to_latex(c) + "$$")
+        elif c.tag == qn("m:oMath"):
+            out.append("$" + omml.to_latex(c) + "$")
+        elif c.tag == qn("w:r"):
+            out += [t.text or "" for t in c.iter(qn("w:t"))]
+            out += ["\t" for _ in c.iter(qn("w:tab"))]
+        elif c.tag in (qn("w:ins"), qn("w:hyperlink"), qn("w:smartTag"), qn("w:sdt"), qn("w:sdtContent"),
+                       qn("w:fldSimple")):
+            out.append(_markup(c))
+    return "".join(out)
+
+
+def para_markup(p) -> str:
+    """Chữ của đoạn kèm công thức dạng LaTeX: $...$ trong dòng, $$...$$ đứng riêng (giữ nguyên khi viết lại)."""
+    return _markup(p._p)
+
+
+def document_equations(path) -> list[dict]:
+    """Mọi công thức trong thân tài liệu theo thứ tự xuất hiện (cả trong bảng) — để giao diện vẽ lại bằng KaTeX."""
+    body = Document(path).element.body
+    return [{"latex": omml.to_latex(m), "display": m.getparent().tag == qn("m:oMathPara")}
+            for m in body.iter(qn("m:oMath"))]
+
+
+def has_equations(p) -> bool:
+    return any(c.tag in _MATH_TAGS for c in p._p.iter())
+
+
+def write_paragraph(p, text: str) -> None:
+    """Thay toàn bộ nội dung đoạn, giữ định dạng run đầu. $...$ / $$...$$ → công thức Word thật (OMML)."""
+    template = next(iter(p._p.iter(qn("w:r"))), None)
+    rpr = template.find(qn("w:rPr")) if template is not None else None
+    for c in list(p._p):
+        if c.tag != qn("w:pPr"):
+            p._p.remove(c)
+    try:
+        parts = omml.split_math(text)
+        if len(parts) == 1 and parts[0][0] == "display":
+            p._p.append(omml.latex_to_omml_para(parts[0][1]))
+            return
+        for kind, value in parts:
+            if kind == "text":
+                r = OxmlElement("w:r")
+                if rpr is not None:
+                    r.append(copy.deepcopy(rpr))
+                t = OxmlElement("w:t")
+                t.set(qn("xml:space"), "preserve")
+                t.text = value
+                r.append(t)
+                p._p.append(r)
+            else:  # công thức giữa câu luôn là công thức trong dòng
+                p._p.append(omml.latex_to_omml(value))
+    except omml.MathError as e:
+        raise ToolError(f"{e}. Viết lại công thức LaTeX (ví dụ $\\frac{{a}}{{b}}$, $x^2$, $\\sqrt{{x}}$)")
+
+
 def _pending(p) -> dict | None:
     deleted = "".join(t.text or "" for t in p._p.xpath(".//w:delText"))
     inserted = "".join(t.text or "" for t in p._p.xpath(".//w:ins//w:t"))
@@ -47,6 +111,7 @@ def _pending(p) -> dict | None:
 
 
 @tool("word_inspect", "Xem dàn ý tài liệu: các đoạn văn kèm chỉ số, style và nội dung (cắt ở 300 ký tự); "
+      "công thức toán hiện dạng LaTeX $...$ (trong dòng) hoặc $$...$$ (riêng dòng); "
       "đoạn có đề xuất Track Changes đang chờ duyệt có thêm pending_suggestion. Luôn gọi trước khi sửa.",
       InspectArgs, kind="docx")
 def word_inspect(args: InspectArgs, ctx: ToolCtx) -> dict:
@@ -54,7 +119,7 @@ def word_inspect(args: InspectArgs, ctx: ToolCtx) -> dict:
     paras = doc.paragraphs
     items = []
     for i, p in enumerate(paras[args.start:args.start + args.limit], start=args.start):
-        item = {"index": i, "style": p.style.name, "text": para_text(p)[:300]}
+        item = {"index": i, "style": p.style.name, "text": para_markup(p)[:300]}
         if (pending := _pending(p)) is not None:
             item["pending_suggestion"] = pending  # đề xuất Track Changes chờ người dùng duyệt
         items.append(item)
@@ -65,60 +130,66 @@ def word_inspect(args: InspectArgs, ctx: ToolCtx) -> dict:
 class ReplaceArgs(BaseModel):
     file: str = FILE
     index: int = Field(description="Chỉ số đoạn cần thay (từ 0)")
-    text: str = Field(description="Nội dung mới của cả đoạn")
+    text: str = Field(description="Nội dung mới của cả đoạn. Công thức toán viết LaTeX: $...$ trong dòng, "
+                                  "cả đoạn là $$...$$ (công thức riêng dòng)")
 
 
-@tool("word_replace_paragraph", "Thay toàn bộ nội dung một đoạn văn, giữ định dạng của run đầu tiên.",
-      ReplaceArgs, kind="docx", writes=True)
+@tool("word_replace_paragraph", "Thay toàn bộ nội dung một đoạn văn, giữ định dạng của run đầu tiên. "
+      "$...$ / $$...$$ thành công thức toán Word thật.", ReplaceArgs, kind="docx", writes=True)
 def word_replace_paragraph(args: ReplaceArgs, ctx: ToolCtx) -> dict:
     _check_selection(ctx, args.index)
     doc = Document(ctx.path)
-    p = _paragraph(doc, args.index)
-    if p.runs:
-        p.runs[0].text = args.text
-        for r in p.runs[1:]:
-            r._r.getparent().remove(r._r)
-    else:
-        p.add_run(args.text)
+    write_paragraph(_paragraph(doc, args.index), args.text)
     doc.save(ctx.path)
     return {"replaced": args.index}
+
+
+class ParagraphSpec(BaseModel):
+    text: str = Field(description="Nội dung; công thức toán viết LaTeX $...$ hoặc cả đoạn $$...$$")
+    style: str | None = Field(None, description="'Title', 'Heading 1'..'Heading 3', 'List Bullet', 'List Number'; "
+                                                "bỏ trống = Normal")
 
 
 class InsertArgs(BaseModel):
     file: str = FILE
     after_index: int = Field(description="Chèn sau đoạn này; -1 để chèn lên đầu tài liệu")
-    text: str
-    style: str | None = Field(None, description="Tên style, ví dụ 'Heading 1', 'List Bullet'. Bỏ trống = Normal")
+    paragraphs: list[ParagraphSpec] = Field(
+        description="Các đoạn chèn theo thứ tự — gộp TẤT CẢ đoạn cần chèn vào MỘT lần gọi. Công thức toán viết "
+                    "LaTeX: $...$ trong dòng; cả đoạn là $$...$$ → công thức riêng dòng, căn giữa")
 
 
-@tool("word_insert_paragraph", "Chèn một đoạn văn mới.", InsertArgs, kind="docx", writes=True)
+@tool("word_insert_paragraph", "Chèn một hoặc nhiều đoạn văn liên tiếp (đề mục, danh sách, công thức toán "
+      "$...$ / $$...$$). Tài liệu trống thì nội dung bắt đầu từ đoạn đầu tiên.", InsertArgs, kind="docx", writes=True)
 def word_insert_paragraph(args: InsertArgs, ctx: ToolCtx) -> dict:
+    if not args.paragraphs:
+        raise ToolError("Cần ít nhất một đoạn")
     _check_selection(ctx, args.after_index)
     doc = Document(ctx.path)
-    try:
-        if args.after_index == -1:
-            if doc.paragraphs:
-                doc.paragraphs[0].insert_paragraph_before(args.text, args.style)
+    paras = doc.paragraphs
+    # Tài liệu mới chỉ có một đoạn trống → điền vào đó thay vì để lại dòng trống thừa
+    blank = len(paras) == 1 and not para_markup(paras[0]).strip() and not doc.tables
+    prev = None  # đoạn vừa chèn: đoạn sau nối tiếp nó
+    for i, spec in enumerate(args.paragraphs):
+        try:
+            if i == 0 and not paras:
+                para = doc.add_paragraph("")  # tài liệu chưa có đoạn nào: after_index nào cũng là đầu tài liệu
+            elif i == 0 and blank:
+                para = paras[0]
+            elif i == 0 and args.after_index == -1:
+                para = paras[0].insert_paragraph_before("") if paras else doc.add_paragraph("")
             else:
-                doc.add_paragraph(args.text, args.style)
-        else:
-            anchor = _paragraph(doc, args.after_index)
-            new_p = OxmlElement("w:p")
-            anchor._p.addnext(new_p)
-            para = Paragraph(new_p, anchor._parent)
-            para.add_run(args.text)
-            if args.style:
-                para.style = args.style
-    except KeyError:
-        raise ToolError(f"Tài liệu không có style '{args.style}'")
+                anchor = prev if prev is not None else _paragraph(doc, args.after_index)
+                new_p = OxmlElement("w:p")
+                anchor._p.addnext(new_p)
+                para = Paragraph(new_p, anchor._parent)
+            if spec.style:
+                para.style = spec.style
+        except KeyError:
+            raise ToolError(f"Tài liệu không có style '{spec.style}'")
+        write_paragraph(para, spec.text)
+        prev = para
     doc.save(ctx.path)
-    return {"inserted_after": args.after_index}
-
-
-class ParagraphSpec(BaseModel):
-    text: str
-    style: str | None = Field(None, description="'Title', 'Heading 1'..'Heading 3', 'List Bullet', 'List Number'; "
-                                                "bỏ trống = Normal")
+    return {"inserted_after": args.after_index, "paragraphs": len(args.paragraphs)}
 
 
 class CreateArgs(BaseModel):
@@ -126,13 +197,13 @@ class CreateArgs(BaseModel):
     paragraphs: list[ParagraphSpec] = Field(description="Nội dung theo thứ tự")
 
 
-@tool("word_create_document", "Tạo tài liệu Word mới có đề mục, đoạn văn, danh sách.", CreateArgs,
-      kind="docx", creates=True)
+@tool("word_create_document", "Tạo tài liệu Word mới có đề mục, đoạn văn, danh sách, công thức toán.",
+      CreateArgs, kind="docx", creates=True)
 def word_create_document(args: CreateArgs, ctx: ToolCtx) -> dict:
     doc = Document()
     for p in args.paragraphs:
         try:
-            doc.add_paragraph(p.text, p.style)
+            write_paragraph(doc.add_paragraph("", p.style), p.text)
         except KeyError:
             raise ToolError(f"Không có style '{p.style}'")
     doc.save(ctx.path)
@@ -290,6 +361,15 @@ class RewriteArgs(BaseModel):
 _NUMBER = re.compile(r"\d+(?:[.,/:\-]\d+)*")
 
 
+def _lost_equations(p, new: str) -> list[str]:
+    """Công thức có trong đoạn cũ mà bản mới không còn (so LaTeX đã bỏ khoảng trắng)."""
+    def norm(x: str) -> str:
+        return "".join(x.split())
+    old = [v for k, v in omml.split_math(para_markup(p)) if k != "text"]
+    new_eqs = [norm(v) for k, v in omml.split_math(new) if k != "text"]
+    return [e for e in old if norm(e) not in new_eqs]
+
+
 def _changed_numbers(old: str, new: str) -> list[str]:
     """Các số/ngày có trong đoạn cũ nhưng không còn nguyên dạng trong đoạn mới (bất kể thứ tự)."""
     remaining = _NUMBER.findall(new)
@@ -303,7 +383,8 @@ def _changed_numbers(old: str, new: str) -> list[str]:
 
 
 @tool("word_rewrite_paragraphs", "Viết lại nhiều đoạn một lần (dịch tài liệu, sửa chính tả, đổi giọng văn), "
-      "giữ style và định dạng run đầu của từng đoạn. Tự kiểm tra số/ngày/tiền không bị đổi.", RewriteArgs,
+      "giữ style và định dạng run đầu của từng đoạn. Tự kiểm tra số/ngày/tiền và công thức $...$ không bị đổi.",
+      RewriteArgs,
       kind="docx", writes=True)
 def word_rewrite_paragraphs(args: RewriteArgs, ctx: ToolCtx) -> dict:
     for it in args.items:
@@ -311,19 +392,17 @@ def word_rewrite_paragraphs(args: RewriteArgs, ctx: ToolCtx) -> dict:
     doc = Document(ctx.path)
     if not args.allow_number_changes:
         problems = {it.index: miss for it in args.items
-                    if (miss := _changed_numbers(para_text(_paragraph(doc, it.index)), it.text))}
+                    if (miss := _changed_numbers(para_markup(_paragraph(doc, it.index)), it.text))}
         if problems:
             # Không ghi gì: số liệu sai trong hợp đồng/báo cáo là lỗi nghiêm trọng
             raise ToolError("Số/ngày/tiền bị thay đổi, chưa ghi đoạn nào. Hãy giữ nguyên ĐÚNG từng ký tự (kể cả dấu "
                             f"phân cách hàng nghìn) rồi gọi lại: {problems}")
+    lost = {it.index: miss for it in args.items if (miss := _lost_equations(_paragraph(doc, it.index), it.text))}
+    if lost:
+        raise ToolError(f"Bản viết lại làm mất công thức, chưa ghi đoạn nào: {lost}. Giữ nguyên các $...$ như "
+                        "word_inspect trả về (chỉ dịch/sửa phần chữ) rồi gọi lại.")
     for it in args.items:
-        p = _paragraph(doc, it.index)
-        if p.runs:
-            p.runs[0].text = it.text
-            for r in p.runs[1:]:
-                r._r.getparent().remove(r._r)
-        else:
-            p.add_run(it.text)
+        write_paragraph(_paragraph(doc, it.index), it.text)
     doc.save(ctx.path)
     return {"rewritten": len(args.items)}
 
@@ -393,6 +472,9 @@ def _suggest(doc, index: int, text: str) -> None:
     p = _paragraph(doc, index)
     if _pending(p) is not None:
         raise ToolError(f"Đoạn {index} đã có đề xuất sửa đang chờ duyệt — dùng word_add_comment để góp ý thêm")
+    if has_equations(p) or omml.has_math(text):
+        raise ToolError(f"Đoạn {index} có công thức toán — Track Changes không áp dụng cho công thức; "
+                        "dùng word_add_comment để góp ý, hoặc word_replace_paragraph nếu người dùng muốn sửa thẳng")
     runs = list(p.runs)
     if not runs:
         raise ToolError(f"Đoạn {index} trống — dùng word_replace_paragraph thay vì đề xuất sửa")

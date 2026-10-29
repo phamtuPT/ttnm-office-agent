@@ -107,12 +107,14 @@ def _xlsx(path: Path) -> Image.Image:
 
 
 def _docx(path: Path) -> Image.Image:
+    from ..tools.word import para_markup
+
     img = Image.new("RGB", (W, H), PAGE)
     d = ImageDraw.Draw(img)
     doc = Document(path)
     x, y, width = 48, 26, W - 96
     for p in doc.paragraphs[:40]:
-        text = _t(p.text).strip()
+        text = _t(para_markup(p)).strip()
         style = p.style.name if p.style is not None else ""
         if style == "Title" or style.startswith("Heading 1"):
             font, gap, color = _font(17, True), 6, INK

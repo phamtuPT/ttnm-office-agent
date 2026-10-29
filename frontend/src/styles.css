@@ -262,6 +262,10 @@ button, select, textarea, input { font: inherit; color: inherit; }
 .md blockquote { margin: 0 0 8px; padding-left: 10px; border-left: 3px solid var(--line); color: var(--ink-2); }
 .md a { color: var(--blue); }
 .md hr { border: 0; border-top: 1px solid var(--line); margin: 10px 0; }
+/* Công thức toán (KaTeX): công thức riêng dòng cuộn ngang khi dài thay vì tràn khung */
+.katex { font-size: 1.06em; }
+.katex-display, .math-display { display: block; margin: 6px 0; overflow-x: auto; overflow-y: hidden; text-align: center; }
+.katex-display > .katex { white-space: nowrap; }
 .md-table { overflow-x: auto; margin: 0 0 8px; border-radius: 12px; border: 1px solid var(--line); }
 .md table { border-collapse: collapse; font-size: 13px; width: 100%; }
 .md th, .md td { border-bottom: 1px solid var(--line); padding: 6px 10px; text-align: left; }

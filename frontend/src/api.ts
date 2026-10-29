@@ -37,6 +37,7 @@ export const api = {
   },
   fileContentUrl: (fid: string) => `/api/files/${fid}/content`,
   outline: (fid: string) => request<any>(`/api/files/${fid}/outline`),
+  equations: (fid: string) => request<{ latex: string; display: boolean }[]>(`/api/files/${fid}/equations`),
   pages: (fid: string) => request<{ available: boolean; pages: number; version?: number }>(`/api/files/${fid}/pages`),
   pageUrl: (fid: string, i: number, version: number) => `/api/files/${fid}/pages/${i}.png?v=${version}`,
   thumbnailUrl: (fid: string, version: number) => `/api/files/${fid}/thumbnail.png?v=${version}`,
