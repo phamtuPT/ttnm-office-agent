@@ -10,6 +10,21 @@ Ollama (cục bộ — dữ liệu không rời máy).
 - API REST + WebSocket: [docs/API.md](docs/API.md) · Cơ sở dữ liệu: [docs/DATABASE.md](docs/DATABASE.md)
 - Mô hình AI, chi phí, lưu ý: [docs/LLM.md](docs/LLM.md) · Kết quả đánh giá: [docs/EVAL.md](docs/EVAL.md) · Hệ thống thiết kế giao diện: [docs/DESIGN.md](docs/DESIGN.md)
 
+## Tính năng chính
+
+- **Excel:** bảng, công thức (kiểm tra #NAME?/#REF! trước khi ghi), định dạng, tô màu có điều kiện, biểu đồ gốc,
+  sắp xếp, lọc. Lưới xem trước hiện kết quả công thức + thanh công thức, dùng được bằng bàn phím và **sửa ô trực tiếp**.
+- **Word:** soạn tài liệu, sửa/chèn đoạn, bảng, ảnh, tìm-thay, Track Changes, nhận xét, dịch giữ số liệu,
+  **sao chép phong cách** từ tài liệu mẫu.
+- **Công thức toán** trong Word và PowerPoint: trợ lý viết LaTeX `$...$`, hệ thống chuyển thành công thức Office
+  thật (sửa được trong Word/PowerPoint); đọc lại công thức có sẵn; hiển thị bằng KaTeX trong chat và khung xem trước.
+- **PowerPoint:** tạo từ **mẫu thiết kế** 16:9 (hoặc mẫu .pptx của người dùng), 3 bảng màu, hình khối/sơ đồ, bảng,
+  biểu đồ gốc, ghi chú; **tự kiểm tra bố cục** (chữ tràn, chồng lấn, ra ngoài slide) không cần LibreOffice.
+- **Đa phương thức:** gõ, nói (Web Speech API + dự phòng máy chủ), gửi ảnh (đọc hoá đơn/bảng thành Excel/Word).
+- **An toàn:** ghi nguyên tử, 20 thế hệ sao lưu, xem khác biệt, hoàn tác theo yêu cầu; che PII trước khi gửi lên đám mây.
+- **Nhiều người dùng (tuỳ chọn):** `AUTH_ENABLED=true` → đăng nhập, mỗi người chỉ thấy phiên của mình.
+- **Đánh giá:** 101 yêu cầu mẫu, 50 ảnh đo OCR, 15 câu lệnh giọng nói, phiếu SUS trong ứng dụng (`#/sus`).
+
 ## Cấu trúc
 
 ```
@@ -66,13 +81,19 @@ Backend chạy cổng khác: `BACKEND_URL=http://localhost:8010 npm run dev`.
 cd backend && python -m pytest --cov=app
 cd backend && TEST_DATABASE_URL=postgresql://office@localhost:5432/postgres python -m pytest   # trên Postgres
 cd frontend && npm test && npm run build
+cd frontend && npm run e2e      # Playwright: tự chạy backend (trợ lý giả, SQLite tạm) + Vite, dùng Edge/Chrome có sẵn
 ```
 
 **Đánh giá theo mục 8 của đề xuất** (chạy bộ yêu cầu mẫu, xuất CSV + tóm tắt chỉ số vào `backend/eval/results/`)
 
 ```bash
-cd backend && python -m eval.run_eval --provider gemini --repeat 3
+cd backend && python -m eval.run_eval --provider gemini --repeat 3     # 101 yêu cầu (--group "Công thức toán" để chạy một nhóm)
+cd backend && python -m eval.ocr_eval run --provider gemini           # 50 ảnh có nhãn → CER, độ chính xác trích bảng
+cd backend && python -m eval.voice_eval synth && python -m eval.voice_eval run   # 15 câu lệnh giọng nói → WER
+cd backend && python -m eval.layout_eval                              # tỉ lệ phát hiện lỗi bố cục slide
 ```
+
+Phiếu SUS cho buổi thử nghiệm với người dùng: mở `http://localhost:5173/#/sus`, kết quả ở `#/sus/ket-qua`.
 
 ## Quy ước
 

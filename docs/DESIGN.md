@@ -67,6 +67,21 @@ nối, nhãn PII khi đang ẩn danh), nút sáng/tối.
   vùng sửa; biểu đồ SVG, dàn ý Word/bản in, ảnh slide. Kéo thả tệp để tải lên.
 - **Hộp thoại:** thẻ trắng bo 22 px trên lớp phủ mờ; lựa chọn nhà cung cấp đang bật viền xanh.
 
+**Lưới Excel** (mẫu ARIA grid): mũi tên di chuyển, Shift + mũi tên chọn vùng, gõ / F2 / nhấp đúp để sửa ô (Enter,
+Tab lưu và đi tiếp; Esc huỷ), Delete xoá; ô đang sửa chỉ một viền vuông. Bộ gõ IME (key = "Process") mở ô nhập ngay
+để không mất chữ đầu. Mỗi lần sửa tay là một phiên bản, hoàn tác được như thay đổi của trợ lý.
+
+**Công thức toán:** KaTeX trong chat (Markdown + `$...$`), dàn ý Word/PowerPoint và lịch sử; bản in Word vẽ lại từng công
+thức trong Shadow DOM để CSS của docx-preview không làm vỡ bố cục. Giá tiền như "$100" không bị hiểu là công thức.
+
+**Phiếu SUS** (`#/sus`): 10 câu, mỗi câu 5 nút tròn 1–5 (radio thật, có nhãn cho trình đọc màn hình); nút Gửi chỉ bật khi
+đủ 10 câu. **Tổng hợp** (`#/sus/ket-qua`): 4 thẻ số (số phiếu, trung bình, độ lệch, đạt mục tiêu ≥ 70) + thanh điểm từng câu.
+
+**Đăng nhập** (chỉ khi bật `AUTH_ENABLED`): thẻ giữa màn hình, chuyển Đăng nhập / Tạo tài khoản; thanh trên cùng hiện tên
+người dùng và nút Đăng xuất.
+
+**Thanh cuộn:** 6 px, không mũi tên, bo tròn (Chrome/Edge qua `::-webkit-scrollbar`; Firefox `scrollbar-width: thin`).
+
 ## Khả năng tiếp cận
 
 - Mọi nút biểu tượng có `aria-label`; hộp thoại có `role="dialog"`, `aria-modal`; nhật ký tool có `role="log"`.

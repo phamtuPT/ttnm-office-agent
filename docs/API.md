@@ -37,9 +37,32 @@ Lỗi trả về dạng `{"detail": "thông báo tiếng Việt"}`.
 | POST | `/api/files/{fid}/undo` | Lùi về phiên bản trước (= hoàn tác yêu cầu gần nhất trên tệp) |
 | POST | `/api/files/{fid}/redo` | Tiến tới phiên bản sau |
 | POST | `/api/files/{fid}/restore/{n}` | Khôi phục nội dung phiên bản n thành **phiên bản mới** (hoàn tác được) |
+| PUT | `/api/files/{fid}/cells` | Người dùng sửa ô trực tiếp trên lưới: `{sheet, cells: [{ref, value}]}` (≤ 500 ô). `"=..."` là công thức, `"3,5"`/`"3.5"` thành số, `""`/`null` xoá ô. Ghi qua `excel_write_cells` (kiểm tra công thức, ghi nguyên tử) → mỗi lần là một phiên bản. Trả `{file, diff, summary}`; công thức lỗi → 422 |
+| GET | `/api/files/{fid}/equations` | Công thức toán trong tệp Word theo thứ tự: `[{latex, display}]` — bản in vẽ lại bằng KaTeX |
 
 `OfficeFile = {id, name, kind: xlsx|docx|pptx, current_version, oldest_version, latest_version}`
 — nút Hoàn tác bật khi `current > oldest`, Làm lại bật khi `current < latest`.
+
+### Tài khoản (chỉ khi `AUTH_ENABLED=true`)
+
+| Method | Đường dẫn | Mô tả |
+|---|---|---|
+| GET | `/api/auth/me` | `{enabled, user, can_register}` — `enabled=false`: chạy một người, không cần đăng nhập |
+| POST | `/api/auth/register` | `{email, name, password ≥ 8 ký tự}` → đặt cookie `oa_session` (HttpOnly, SameSite=Lax). Người đầu tiên là quản trị |
+| POST | `/api/auth/login` | `{email, password}` → cookie. Sai → 401 (cùng thông báo cho email sai và mật khẩu sai) |
+| POST | `/api/auth/logout` | Thu hồi token, xoá cookie |
+
+Khi bật: mọi API phiên/tệp/WebSocket cần đăng nhập (401) và chỉ thấy phiên của mình (của người khác → 404);
+`PUT /api/settings`, `GET /api/sus/summary`, `/api/sus/export.csv` chỉ dành cho quản trị (403).
+
+### Phiếu SUS
+
+| Method | Đường dẫn | Mô tả |
+|---|---|---|
+| GET | `/api/sus/questions` | 10 câu SUS tiếng Việt + nhãn thang 1–5 |
+| POST | `/api/sus` | `{answers: [10 số 1–5], participant, comment}` → `{id, score}` (câu lẻ: điểm − 1, câu chẵn: 5 − điểm, tổng × 2,5) |
+| GET | `/api/sus/summary` | `{n, mean, sd, min, max, target: 70, meets_target, per_question, responses}` |
+| GET | `/api/sus/export.csv` | Xuất toàn bộ phiếu (UTF-8 có BOM để Excel mở đúng tiếng Việt) |
 
 ### Cài đặt
 
