@@ -1,0 +1,1832 @@
+[
+ {
+  "file": "hoa-don-01-ro-net.jpg",
+  "kind": "hoa-don",
+  "condition": "ro-net",
+  "text": "Công ty TNHH Kỹ thuật Sao Việt\nHOÁ ĐƠN BÁN HÀNG số 8226\nNgày 08/01/2026\nSản phẩm SL Đơn giá Thành tiền\nNồi chiên không dầu 1 490.000 490.000\nMáy xay sinh tố 5 1.890.000 9.450.000\nNồi cơm điện 5 1.250.000 6.250.000\nMáy sấy tóc 5 1.890.000 9.450.000\nTổng cộng: 25.640.000 đồng",
+  "table": [
+   [
+    "Sản phẩm",
+    "SL",
+    "Đơn giá",
+    "Thành tiền"
+   ],
+   [
+    "Nồi chiên không dầu",
+    "1",
+    "490.000",
+    "490.000"
+   ],
+   [
+    "Máy xay sinh tố",
+    "5",
+    "1.890.000",
+    "9.450.000"
+   ],
+   [
+    "Nồi cơm điện",
+    "5",
+    "1.250.000",
+    "6.250.000"
+   ],
+   [
+    "Máy sấy tóc",
+    "5",
+    "1.890.000",
+    "9.450.000"
+   ]
+  ]
+ },
+ {
+  "file": "hoa-don-02-toi.jpg",
+  "kind": "hoa-don",
+  "condition": "toi",
+  "text": "Công ty TNHH Kỹ thuật Sao Việt\nHOÁ ĐƠN BÁN HÀNG số 5120\nNgày 12/06/2026\nSản phẩm SL Đơn giá Thành tiền\nMáy sấy tóc 1 1.250.000 1.250.000\nNồi chiên không dầu 1 4.500.000 4.500.000\nBếp từ đôi 4 3.200.000 12.800.000\nẤm siêu tốc 3 490.000 1.470.000\nTổng cộng: 20.020.000 đồng",
+  "table": [
+   [
+    "Sản phẩm",
+    "SL",
+    "Đơn giá",
+    "Thành tiền"
+   ],
+   [
+    "Máy sấy tóc",
+    "1",
+    "1.250.000",
+    "1.250.000"
+   ],
+   [
+    "Nồi chiên không dầu",
+    "1",
+    "4.500.000",
+    "4.500.000"
+   ],
+   [
+    "Bếp từ đôi",
+    "4",
+    "3.200.000",
+    "12.800.000"
+   ],
+   [
+    "Ấm siêu tốc",
+    "3",
+    "490.000",
+    "1.470.000"
+   ]
+  ]
+ },
+ {
+  "file": "hoa-don-03-nghieng.jpg",
+  "kind": "hoa-don",
+  "condition": "nghieng",
+  "text": "Cửa hàng Điện máy Hưng Thịnh\nHOÁ ĐƠN BÁN HÀNG số 1405\nNgày 28/12/2026\nSản phẩm SL Đơn giá Thành tiền\nĐèn bàn LED 1 1.890.000 1.890.000\nNồi cơm điện 5 820.000 4.100.000\nNồi chiên không dầu 3 1.250.000 3.750.000\nMáy xay sinh tố 2 3.200.000 6.400.000\nTổng cộng: 16.140.000 đồng",
+  "table": [
+   [
+    "Sản phẩm",
+    "SL",
+    "Đơn giá",
+    "Thành tiền"
+   ],
+   [
+    "Đèn bàn LED",
+    "1",
+    "1.890.000",
+    "1.890.000"
+   ],
+   [
+    "Nồi cơm điện",
+    "5",
+    "820.000",
+    "4.100.000"
+   ],
+   [
+    "Nồi chiên không dầu",
+    "3",
+    "1.250.000",
+    "3.750.000"
+   ],
+   [
+    "Máy xay sinh tố",
+    "2",
+    "3.200.000",
+    "6.400.000"
+   ]
+  ]
+ },
+ {
+  "file": "hoa-don-04-mo.jpg",
+  "kind": "hoa-don",
+  "condition": "mo",
+  "text": "Công ty TNHH Kỹ thuật Sao Việt\nHOÁ ĐƠN BÁN HÀNG số 7523\nNgày 17/05/2026\nSản phẩm SL Đơn giá Thành tiền\nMáy xay sinh tố 4 1.890.000 7.560.000\nBình giữ nhiệt 5 1.250.000 6.250.000\nĐèn bàn LED 1 1.250.000 1.250.000\nNồi chiên không dầu 5 4.500.000 22.500.000\nTổng cộng: 37.560.000 đồng",
+  "table": [
+   [
+    "Sản phẩm",
+    "SL",
+    "Đơn giá",
+    "Thành tiền"
+   ],
+   [
+    "Máy xay sinh tố",
+    "4",
+    "1.890.000",
+    "7.560.000"
+   ],
+   [
+    "Bình giữ nhiệt",
+    "5",
+    "1.250.000",
+    "6.250.000"
+   ],
+   [
+    "Đèn bàn LED",
+    "1",
+    "1.250.000",
+    "1.250.000"
+   ],
+   [
+    "Nồi chiên không dầu",
+    "5",
+    "4.500.000",
+    "22.500.000"
+   ]
+  ]
+ },
+ {
+  "file": "hoa-don-05-nhieu-bong.jpg",
+  "kind": "hoa-don",
+  "condition": "nhieu-bong",
+  "text": "Công ty TNHH Minh Phát\nHOÁ ĐƠN BÁN HÀNG số 9572\nNgày 22/02/2026\nSản phẩm SL Đơn giá Thành tiền\nĐèn bàn LED 5 4.500.000 22.500.000\nMáy sấy tóc 1 1.890.000 1.890.000\nBình giữ nhiệt 2 4.500.000 9.000.000\nNồi cơm điện 2 4.500.000 9.000.000\nTổng cộng: 42.390.000 đồng",
+  "table": [
+   [
+    "Sản phẩm",
+    "SL",
+    "Đơn giá",
+    "Thành tiền"
+   ],
+   [
+    "Đèn bàn LED",
+    "5",
+    "4.500.000",
+    "22.500.000"
+   ],
+   [
+    "Máy sấy tóc",
+    "1",
+    "1.890.000",
+    "1.890.000"
+   ],
+   [
+    "Bình giữ nhiệt",
+    "2",
+    "4.500.000",
+    "9.000.000"
+   ],
+   [
+    "Nồi cơm điện",
+    "2",
+    "4.500.000",
+    "9.000.000"
+   ]
+  ]
+ },
+ {
+  "file": "hoa-don-06-ro-net.jpg",
+  "kind": "hoa-don",
+  "condition": "ro-net",
+  "text": "Công ty TNHH Kỹ thuật Sao Việt\nHOÁ ĐƠN BÁN HÀNG số 9939\nNgày 09/09/2026\nSản phẩm SL Đơn giá Thành tiền\nLò vi sóng 2 1.250.000 2.500.000\nMáy sấy tóc 2 4.500.000 9.000.000\nĐèn bàn LED 1 3.200.000 3.200.000\nBình giữ nhiệt 4 3.200.000 12.800.000\nTổng cộng: 27.500.000 đồng",
+  "table": [
+   [
+    "Sản phẩm",
+    "SL",
+    "Đơn giá",
+    "Thành tiền"
+   ],
+   [
+    "Lò vi sóng",
+    "2",
+    "1.250.000",
+    "2.500.000"
+   ],
+   [
+    "Máy sấy tóc",
+    "2",
+    "4.500.000",
+    "9.000.000"
+   ],
+   [
+    "Đèn bàn LED",
+    "1",
+    "3.200.000",
+    "3.200.000"
+   ],
+   [
+    "Bình giữ nhiệt",
+    "4",
+    "3.200.000",
+    "12.800.000"
+   ]
+  ]
+ },
+ {
+  "file": "hoa-don-07-toi.jpg",
+  "kind": "hoa-don",
+  "condition": "toi",
+  "text": "Cửa hàng Điện máy Hưng Thịnh\nHOÁ ĐƠN BÁN HÀNG số 1151\nNgày 02/03/2026\nSản phẩm SL Đơn giá Thành tiền\nĐèn bàn LED 5 3.200.000 16.000.000\nBếp từ đôi 4 4.500.000 18.000.000\nẤm siêu tốc 4 1.250.000 5.000.000\nNồi cơm điện 2 820.000 1.640.000\nTổng cộng: 40.640.000 đồng",
+  "table": [
+   [
+    "Sản phẩm",
+    "SL",
+    "Đơn giá",
+    "Thành tiền"
+   ],
+   [
+    "Đèn bàn LED",
+    "5",
+    "3.200.000",
+    "16.000.000"
+   ],
+   [
+    "Bếp từ đôi",
+    "4",
+    "4.500.000",
+    "18.000.000"
+   ],
+   [
+    "Ấm siêu tốc",
+    "4",
+    "1.250.000",
+    "5.000.000"
+   ],
+   [
+    "Nồi cơm điện",
+    "2",
+    "820.000",
+    "1.640.000"
+   ]
+  ]
+ },
+ {
+  "file": "hoa-don-08-nghieng.jpg",
+  "kind": "hoa-don",
+  "condition": "nghieng",
+  "text": "Công ty TNHH Kỹ thuật Sao Việt\nHOÁ ĐƠN BÁN HÀNG số 8114\nNgày 18/11/2026\nSản phẩm SL Đơn giá Thành tiền\nBếp từ đôi 4 820.000 3.280.000\nMáy sấy tóc 2 820.000 1.640.000\nBình giữ nhiệt 4 1.250.000 5.000.000\nNồi cơm điện 5 4.500.000 22.500.000\nTổng cộng: 32.420.000 đồng",
+  "table": [
+   [
+    "Sản phẩm",
+    "SL",
+    "Đơn giá",
+    "Thành tiền"
+   ],
+   [
+    "Bếp từ đôi",
+    "4",
+    "820.000",
+    "3.280.000"
+   ],
+   [
+    "Máy sấy tóc",
+    "2",
+    "820.000",
+    "1.640.000"
+   ],
+   [
+    "Bình giữ nhiệt",
+    "4",
+    "1.250.000",
+    "5.000.000"
+   ],
+   [
+    "Nồi cơm điện",
+    "5",
+    "4.500.000",
+    "22.500.000"
+   ]
+  ]
+ },
+ {
+  "file": "hoa-don-09-mo.jpg",
+  "kind": "hoa-don",
+  "condition": "mo",
+  "text": "Công ty TNHH Kỹ thuật Sao Việt\nHOÁ ĐƠN BÁN HÀNG số 2053\nNgày 21/05/2026\nSản phẩm SL Đơn giá Thành tiền\nẤm siêu tốc 4 3.200.000 12.800.000\nMáy xay sinh tố 5 820.000 4.100.000\nBình giữ nhiệt 4 490.000 1.960.000\nNồi chiên không dầu 4 4.500.000 18.000.000\nTổng cộng: 36.860.000 đồng",
+  "table": [
+   [
+    "Sản phẩm",
+    "SL",
+    "Đơn giá",
+    "Thành tiền"
+   ],
+   [
+    "Ấm siêu tốc",
+    "4",
+    "3.200.000",
+    "12.800.000"
+   ],
+   [
+    "Máy xay sinh tố",
+    "5",
+    "820.000",
+    "4.100.000"
+   ],
+   [
+    "Bình giữ nhiệt",
+    "4",
+    "490.000",
+    "1.960.000"
+   ],
+   [
+    "Nồi chiên không dầu",
+    "4",
+    "4.500.000",
+    "18.000.000"
+   ]
+  ]
+ },
+ {
+  "file": "hoa-don-10-nhieu-bong.jpg",
+  "kind": "hoa-don",
+  "condition": "nhieu-bong",
+  "text": "Công ty TNHH Minh Phát\nHOÁ ĐƠN BÁN HÀNG số 4257\nNgày 08/02/2026\nSản phẩm SL Đơn giá Thành tiền\nBình giữ nhiệt 4 490.000 1.960.000\nMáy xay sinh tố 4 350.000 1.400.000\nNồi chiên không dầu 1 350.000 350.000\nBàn là hơi nước 4 1.890.000 7.560.000\nTổng cộng: 11.270.000 đồng",
+  "table": [
+   [
+    "Sản phẩm",
+    "SL",
+    "Đơn giá",
+    "Thành tiền"
+   ],
+   [
+    "Bình giữ nhiệt",
+    "4",
+    "490.000",
+    "1.960.000"
+   ],
+   [
+    "Máy xay sinh tố",
+    "4",
+    "350.000",
+    "1.400.000"
+   ],
+   [
+    "Nồi chiên không dầu",
+    "1",
+    "350.000",
+    "350.000"
+   ],
+   [
+    "Bàn là hơi nước",
+    "4",
+    "1.890.000",
+    "7.560.000"
+   ]
+  ]
+ },
+ {
+  "file": "hoa-don-11-ro-net.jpg",
+  "kind": "hoa-don",
+  "condition": "ro-net",
+  "text": "Công ty CP Thương mại Đông Á\nHOÁ ĐƠN BÁN HÀNG số 9942\nNgày 08/08/2026\nSản phẩm SL Đơn giá Thành tiền\nMáy sấy tóc 3 490.000 1.470.000\nMáy lọc nước 1 820.000 820.000\nNồi cơm điện 5 1.890.000 9.450.000\nẤm siêu tốc 4 3.200.000 12.800.000\nTổng cộng: 24.540.000 đồng",
+  "table": [
+   [
+    "Sản phẩm",
+    "SL",
+    "Đơn giá",
+    "Thành tiền"
+   ],
+   [
+    "Máy sấy tóc",
+    "3",
+    "490.000",
+    "1.470.000"
+   ],
+   [
+    "Máy lọc nước",
+    "1",
+    "820.000",
+    "820.000"
+   ],
+   [
+    "Nồi cơm điện",
+    "5",
+    "1.890.000",
+    "9.450.000"
+   ],
+   [
+    "Ấm siêu tốc",
+    "4",
+    "3.200.000",
+    "12.800.000"
+   ]
+  ]
+ },
+ {
+  "file": "hoa-don-12-toi.jpg",
+  "kind": "hoa-don",
+  "condition": "toi",
+  "text": "Công ty TNHH Kỹ thuật Sao Việt\nHOÁ ĐƠN BÁN HÀNG số 7396\nNgày 26/03/2026\nSản phẩm SL Đơn giá Thành tiền\nMáy sấy tóc 3 350.000 1.050.000\nQuạt điều hoà 4 3.200.000 12.800.000\nLò vi sóng 2 490.000 980.000\nNồi cơm điện 5 820.000 4.100.000\nTổng cộng: 18.930.000 đồng",
+  "table": [
+   [
+    "Sản phẩm",
+    "SL",
+    "Đơn giá",
+    "Thành tiền"
+   ],
+   [
+    "Máy sấy tóc",
+    "3",
+    "350.000",
+    "1.050.000"
+   ],
+   [
+    "Quạt điều hoà",
+    "4",
+    "3.200.000",
+    "12.800.000"
+   ],
+   [
+    "Lò vi sóng",
+    "2",
+    "490.000",
+    "980.000"
+   ],
+   [
+    "Nồi cơm điện",
+    "5",
+    "820.000",
+    "4.100.000"
+   ]
+  ]
+ },
+ {
+  "file": "hoa-don-13-nghieng.jpg",
+  "kind": "hoa-don",
+  "condition": "nghieng",
+  "text": "Công ty TNHH Minh Phát\nHOÁ ĐƠN BÁN HÀNG số 1419\nNgày 17/08/2026\nSản phẩm SL Đơn giá Thành tiền\nNồi cơm điện 1 1.250.000 1.250.000\nBàn là hơi nước 1 350.000 350.000\nĐèn bàn LED 3 3.200.000 9.600.000\nMáy lọc nước 3 4.500.000 13.500.000\nTổng cộng: 24.700.000 đồng",
+  "table": [
+   [
+    "Sản phẩm",
+    "SL",
+    "Đơn giá",
+    "Thành tiền"
+   ],
+   [
+    "Nồi cơm điện",
+    "1",
+    "1.250.000",
+    "1.250.000"
+   ],
+   [
+    "Bàn là hơi nước",
+    "1",
+    "350.000",
+    "350.000"
+   ],
+   [
+    "Đèn bàn LED",
+    "3",
+    "3.200.000",
+    "9.600.000"
+   ],
+   [
+    "Máy lọc nước",
+    "3",
+    "4.500.000",
+    "13.500.000"
+   ]
+  ]
+ },
+ {
+  "file": "hoa-don-14-mo.jpg",
+  "kind": "hoa-don",
+  "condition": "mo",
+  "text": "Công ty CP Thương mại Đông Á\nHOÁ ĐƠN BÁN HÀNG số 8104\nNgày 20/06/2026\nSản phẩm SL Đơn giá Thành tiền\nBếp từ đôi 1 1.250.000 1.250.000\nẤm siêu tốc 4 1.890.000 7.560.000\nBình giữ nhiệt 5 4.500.000 22.500.000\nMáy xay sinh tố 2 490.000 980.000\nTổng cộng: 32.290.000 đồng",
+  "table": [
+   [
+    "Sản phẩm",
+    "SL",
+    "Đơn giá",
+    "Thành tiền"
+   ],
+   [
+    "Bếp từ đôi",
+    "1",
+    "1.250.000",
+    "1.250.000"
+   ],
+   [
+    "Ấm siêu tốc",
+    "4",
+    "1.890.000",
+    "7.560.000"
+   ],
+   [
+    "Bình giữ nhiệt",
+    "5",
+    "4.500.000",
+    "22.500.000"
+   ],
+   [
+    "Máy xay sinh tố",
+    "2",
+    "490.000",
+    "980.000"
+   ]
+  ]
+ },
+ {
+  "file": "hoa-don-15-nhieu-bong.jpg",
+  "kind": "hoa-don",
+  "condition": "nhieu-bong",
+  "text": "Công ty TNHH Minh Phát\nHOÁ ĐƠN BÁN HÀNG số 8402\nNgày 28/11/2026\nSản phẩm SL Đơn giá Thành tiền\nBình giữ nhiệt 5 1.250.000 6.250.000\nMáy sấy tóc 1 490.000 490.000\nBàn là hơi nước 2 350.000 700.000\nNồi chiên không dầu 5 4.500.000 22.500.000\nTổng cộng: 29.940.000 đồng",
+  "table": [
+   [
+    "Sản phẩm",
+    "SL",
+    "Đơn giá",
+    "Thành tiền"
+   ],
+   [
+    "Bình giữ nhiệt",
+    "5",
+    "1.250.000",
+    "6.250.000"
+   ],
+   [
+    "Máy sấy tóc",
+    "1",
+    "490.000",
+    "490.000"
+   ],
+   [
+    "Bàn là hơi nước",
+    "2",
+    "350.000",
+    "700.000"
+   ],
+   [
+    "Nồi chiên không dầu",
+    "5",
+    "4.500.000",
+    "22.500.000"
+   ]
+  ]
+ },
+ {
+  "file": "bang-gia-01-ro-net.jpg",
+  "kind": "bang-gia",
+  "condition": "ro-net",
+  "text": "BẢNG GIÁ THAM KHẢO\nÁp dụng từ 28/10/2026\nSTT Tên hàng Đơn vị Giá bán\n1 Bàn là hơi nước Chiếc 4.730.000\n2 Bình giữ nhiệt Cái 970.000\n3 Máy lọc nước Chiếc 4.470.000\n4 Quạt điều hoà Cái 2.140.000\n5 Lò vi sóng Bộ 2.320.000\n6 Đèn bàn LED Chiếc 2.270.000",
+  "table": [
+   [
+    "STT",
+    "Tên hàng",
+    "Đơn vị",
+    "Giá bán"
+   ],
+   [
+    "1",
+    "Bàn là hơi nước",
+    "Chiếc",
+    "4.730.000"
+   ],
+   [
+    "2",
+    "Bình giữ nhiệt",
+    "Cái",
+    "970.000"
+   ],
+   [
+    "3",
+    "Máy lọc nước",
+    "Chiếc",
+    "4.470.000"
+   ],
+   [
+    "4",
+    "Quạt điều hoà",
+    "Cái",
+    "2.140.000"
+   ],
+   [
+    "5",
+    "Lò vi sóng",
+    "Bộ",
+    "2.320.000"
+   ],
+   [
+    "6",
+    "Đèn bàn LED",
+    "Chiếc",
+    "2.270.000"
+   ]
+  ]
+ },
+ {
+  "file": "bang-gia-02-toi.jpg",
+  "kind": "bang-gia",
+  "condition": "toi",
+  "text": "BẢNG GIÁ THAM KHẢO\nÁp dụng từ 04/10/2026\nSTT Tên hàng Đơn vị Giá bán\n1 Nồi chiên không dầu Bộ 2.520.000\n2 Đèn bàn LED Bộ 4.140.000\n3 Ấm siêu tốc Bộ 1.620.000\n4 Quạt điều hoà Bộ 1.050.000\n5 Máy xay sinh tố Bộ 2.800.000\n6 Lò vi sóng Bộ 2.420.000",
+  "table": [
+   [
+    "STT",
+    "Tên hàng",
+    "Đơn vị",
+    "Giá bán"
+   ],
+   [
+    "1",
+    "Nồi chiên không dầu",
+    "Bộ",
+    "2.520.000"
+   ],
+   [
+    "2",
+    "Đèn bàn LED",
+    "Bộ",
+    "4.140.000"
+   ],
+   [
+    "3",
+    "Ấm siêu tốc",
+    "Bộ",
+    "1.620.000"
+   ],
+   [
+    "4",
+    "Quạt điều hoà",
+    "Bộ",
+    "1.050.000"
+   ],
+   [
+    "5",
+    "Máy xay sinh tố",
+    "Bộ",
+    "2.800.000"
+   ],
+   [
+    "6",
+    "Lò vi sóng",
+    "Bộ",
+    "2.420.000"
+   ]
+  ]
+ },
+ {
+  "file": "bang-gia-03-nghieng.jpg",
+  "kind": "bang-gia",
+  "condition": "nghieng",
+  "text": "BẢNG GIÁ THAM KHẢO\nÁp dụng từ 01/10/2026\nSTT Tên hàng Đơn vị Giá bán\n1 Nồi cơm điện Cái 5.030.000\n2 Lò vi sóng Cái 4.640.000\n3 Ấm siêu tốc Bộ 3.450.000\n4 Nồi chiên không dầu Bộ 2.230.000\n5 Bàn là hơi nước Chiếc 4.160.000\n6 Bếp từ đôi Chiếc 1.080.000",
+  "table": [
+   [
+    "STT",
+    "Tên hàng",
+    "Đơn vị",
+    "Giá bán"
+   ],
+   [
+    "1",
+    "Nồi cơm điện",
+    "Cái",
+    "5.030.000"
+   ],
+   [
+    "2",
+    "Lò vi sóng",
+    "Cái",
+    "4.640.000"
+   ],
+   [
+    "3",
+    "Ấm siêu tốc",
+    "Bộ",
+    "3.450.000"
+   ],
+   [
+    "4",
+    "Nồi chiên không dầu",
+    "Bộ",
+    "2.230.000"
+   ],
+   [
+    "5",
+    "Bàn là hơi nước",
+    "Chiếc",
+    "4.160.000"
+   ],
+   [
+    "6",
+    "Bếp từ đôi",
+    "Chiếc",
+    "1.080.000"
+   ]
+  ]
+ },
+ {
+  "file": "bang-gia-04-mo.jpg",
+  "kind": "bang-gia",
+  "condition": "mo",
+  "text": "BẢNG GIÁ THAM KHẢO\nÁp dụng từ 18/10/2026\nSTT Tên hàng Đơn vị Giá bán\n1 Quạt điều hoà Chiếc 3.810.000\n2 Máy xay sinh tố Bộ 2.990.000\n3 Nồi cơm điện Chiếc 3.890.000\n4 Máy sấy tóc Cái 3.060.000\n5 Bàn là hơi nước Bộ 3.030.000\n6 Máy lọc nước Bộ 3.580.000",
+  "table": [
+   [
+    "STT",
+    "Tên hàng",
+    "Đơn vị",
+    "Giá bán"
+   ],
+   [
+    "1",
+    "Quạt điều hoà",
+    "Chiếc",
+    "3.810.000"
+   ],
+   [
+    "2",
+    "Máy xay sinh tố",
+    "Bộ",
+    "2.990.000"
+   ],
+   [
+    "3",
+    "Nồi cơm điện",
+    "Chiếc",
+    "3.890.000"
+   ],
+   [
+    "4",
+    "Máy sấy tóc",
+    "Cái",
+    "3.060.000"
+   ],
+   [
+    "5",
+    "Bàn là hơi nước",
+    "Bộ",
+    "3.030.000"
+   ],
+   [
+    "6",
+    "Máy lọc nước",
+    "Bộ",
+    "3.580.000"
+   ]
+  ]
+ },
+ {
+  "file": "bang-gia-05-nhieu-bong.jpg",
+  "kind": "bang-gia",
+  "condition": "nhieu-bong",
+  "text": "BẢNG GIÁ THAM KHẢO\nÁp dụng từ 09/10/2026\nSTT Tên hàng Đơn vị Giá bán\n1 Quạt điều hoà Cái 3.650.000\n2 Nồi chiên không dầu Cái 4.030.000\n3 Ấm siêu tốc Bộ 3.840.000\n4 Bếp từ đôi Cái 3.450.000\n5 Đèn bàn LED Chiếc 690.000\n6 Nồi cơm điện Chiếc 1.750.000",
+  "table": [
+   [
+    "STT",
+    "Tên hàng",
+    "Đơn vị",
+    "Giá bán"
+   ],
+   [
+    "1",
+    "Quạt điều hoà",
+    "Cái",
+    "3.650.000"
+   ],
+   [
+    "2",
+    "Nồi chiên không dầu",
+    "Cái",
+    "4.030.000"
+   ],
+   [
+    "3",
+    "Ấm siêu tốc",
+    "Bộ",
+    "3.840.000"
+   ],
+   [
+    "4",
+    "Bếp từ đôi",
+    "Cái",
+    "3.450.000"
+   ],
+   [
+    "5",
+    "Đèn bàn LED",
+    "Chiếc",
+    "690.000"
+   ],
+   [
+    "6",
+    "Nồi cơm điện",
+    "Chiếc",
+    "1.750.000"
+   ]
+  ]
+ },
+ {
+  "file": "bang-gia-06-ro-net.jpg",
+  "kind": "bang-gia",
+  "condition": "ro-net",
+  "text": "BẢNG GIÁ THAM KHẢO\nÁp dụng từ 04/10/2026\nSTT Tên hàng Đơn vị Giá bán\n1 Máy sấy tóc Bộ 470.000\n2 Nồi chiên không dầu Cái 2.250.000\n3 Ấm siêu tốc Bộ 2.270.000\n4 Máy xay sinh tố Cái 440.000\n5 Quạt điều hoà Cái 1.350.000\n6 Bình giữ nhiệt Cái 1.730.000",
+  "table": [
+   [
+    "STT",
+    "Tên hàng",
+    "Đơn vị",
+    "Giá bán"
+   ],
+   [
+    "1",
+    "Máy sấy tóc",
+    "Bộ",
+    "470.000"
+   ],
+   [
+    "2",
+    "Nồi chiên không dầu",
+    "Cái",
+    "2.250.000"
+   ],
+   [
+    "3",
+    "Ấm siêu tốc",
+    "Bộ",
+    "2.270.000"
+   ],
+   [
+    "4",
+    "Máy xay sinh tố",
+    "Cái",
+    "440.000"
+   ],
+   [
+    "5",
+    "Quạt điều hoà",
+    "Cái",
+    "1.350.000"
+   ],
+   [
+    "6",
+    "Bình giữ nhiệt",
+    "Cái",
+    "1.730.000"
+   ]
+  ]
+ },
+ {
+  "file": "bang-gia-07-toi.jpg",
+  "kind": "bang-gia",
+  "condition": "toi",
+  "text": "BẢNG GIÁ THAM KHẢO\nÁp dụng từ 20/10/2026\nSTT Tên hàng Đơn vị Giá bán\n1 Nồi chiên không dầu Bộ 3.250.000\n2 Bếp từ đôi Chiếc 3.500.000\n3 Nồi cơm điện Chiếc 3.290.000\n4 Máy xay sinh tố Cái 4.880.000\n5 Máy sấy tóc Bộ 1.760.000\n6 Đèn bàn LED Chiếc 1.250.000",
+  "table": [
+   [
+    "STT",
+    "Tên hàng",
+    "Đơn vị",
+    "Giá bán"
+   ],
+   [
+    "1",
+    "Nồi chiên không dầu",
+    "Bộ",
+    "3.250.000"
+   ],
+   [
+    "2",
+    "Bếp từ đôi",
+    "Chiếc",
+    "3.500.000"
+   ],
+   [
+    "3",
+    "Nồi cơm điện",
+    "Chiếc",
+    "3.290.000"
+   ],
+   [
+    "4",
+    "Máy xay sinh tố",
+    "Cái",
+    "4.880.000"
+   ],
+   [
+    "5",
+    "Máy sấy tóc",
+    "Bộ",
+    "1.760.000"
+   ],
+   [
+    "6",
+    "Đèn bàn LED",
+    "Chiếc",
+    "1.250.000"
+   ]
+  ]
+ },
+ {
+  "file": "bang-gia-08-nghieng.jpg",
+  "kind": "bang-gia",
+  "condition": "nghieng",
+  "text": "BẢNG GIÁ THAM KHẢO\nÁp dụng từ 10/10/2026\nSTT Tên hàng Đơn vị Giá bán\n1 Bình giữ nhiệt Bộ 4.990.000\n2 Đèn bàn LED Bộ 440.000\n3 Nồi chiên không dầu Chiếc 3.810.000\n4 Máy xay sinh tố Bộ 4.640.000\n5 Ấm siêu tốc Cái 1.590.000\n6 Bàn là hơi nước Chiếc 1.840.000",
+  "table": [
+   [
+    "STT",
+    "Tên hàng",
+    "Đơn vị",
+    "Giá bán"
+   ],
+   [
+    "1",
+    "Bình giữ nhiệt",
+    "Bộ",
+    "4.990.000"
+   ],
+   [
+    "2",
+    "Đèn bàn LED",
+    "Bộ",
+    "440.000"
+   ],
+   [
+    "3",
+    "Nồi chiên không dầu",
+    "Chiếc",
+    "3.810.000"
+   ],
+   [
+    "4",
+    "Máy xay sinh tố",
+    "Bộ",
+    "4.640.000"
+   ],
+   [
+    "5",
+    "Ấm siêu tốc",
+    "Cái",
+    "1.590.000"
+   ],
+   [
+    "6",
+    "Bàn là hơi nước",
+    "Chiếc",
+    "1.840.000"
+   ]
+  ]
+ },
+ {
+  "file": "bang-gia-09-mo.jpg",
+  "kind": "bang-gia",
+  "condition": "mo",
+  "text": "BẢNG GIÁ THAM KHẢO\nÁp dụng từ 20/10/2026\nSTT Tên hàng Đơn vị Giá bán\n1 Ấm siêu tốc Chiếc 430.000\n2 Đèn bàn LED Chiếc 720.000\n3 Máy xay sinh tố Cái 3.310.000\n4 Máy lọc nước Cái 750.000\n5 Máy sấy tóc Cái 790.000\n6 Nồi chiên không dầu Chiếc 1.960.000",
+  "table": [
+   [
+    "STT",
+    "Tên hàng",
+    "Đơn vị",
+    "Giá bán"
+   ],
+   [
+    "1",
+    "Ấm siêu tốc",
+    "Chiếc",
+    "430.000"
+   ],
+   [
+    "2",
+    "Đèn bàn LED",
+    "Chiếc",
+    "720.000"
+   ],
+   [
+    "3",
+    "Máy xay sinh tố",
+    "Cái",
+    "3.310.000"
+   ],
+   [
+    "4",
+    "Máy lọc nước",
+    "Cái",
+    "750.000"
+   ],
+   [
+    "5",
+    "Máy sấy tóc",
+    "Cái",
+    "790.000"
+   ],
+   [
+    "6",
+    "Nồi chiên không dầu",
+    "Chiếc",
+    "1.960.000"
+   ]
+  ]
+ },
+ {
+  "file": "bang-gia-10-nhieu-bong.jpg",
+  "kind": "bang-gia",
+  "condition": "nhieu-bong",
+  "text": "BẢNG GIÁ THAM KHẢO\nÁp dụng từ 18/10/2026\nSTT Tên hàng Đơn vị Giá bán\n1 Bếp từ đôi Cái 1.970.000\n2 Lò vi sóng Bộ 2.110.000\n3 Ấm siêu tốc Bộ 1.370.000\n4 Máy lọc nước Bộ 3.540.000\n5 Đèn bàn LED Cái 4.110.000\n6 Máy sấy tóc Cái 1.080.000",
+  "table": [
+   [
+    "STT",
+    "Tên hàng",
+    "Đơn vị",
+    "Giá bán"
+   ],
+   [
+    "1",
+    "Bếp từ đôi",
+    "Cái",
+    "1.970.000"
+   ],
+   [
+    "2",
+    "Lò vi sóng",
+    "Bộ",
+    "2.110.000"
+   ],
+   [
+    "3",
+    "Ấm siêu tốc",
+    "Bộ",
+    "1.370.000"
+   ],
+   [
+    "4",
+    "Máy lọc nước",
+    "Bộ",
+    "3.540.000"
+   ],
+   [
+    "5",
+    "Đèn bàn LED",
+    "Cái",
+    "4.110.000"
+   ],
+   [
+    "6",
+    "Máy sấy tóc",
+    "Cái",
+    "1.080.000"
+   ]
+  ]
+ },
+ {
+  "file": "bang-gia-11-ro-net.jpg",
+  "kind": "bang-gia",
+  "condition": "ro-net",
+  "text": "BẢNG GIÁ THAM KHẢO\nÁp dụng từ 21/10/2026\nSTT Tên hàng Đơn vị Giá bán\n1 Máy lọc nước Cái 1.310.000\n2 Bếp từ đôi Cái 230.000\n3 Nồi cơm điện Bộ 2.920.000\n4 Máy sấy tóc Bộ 2.280.000\n5 Đèn bàn LED Bộ 5.050.000\n6 Quạt điều hoà Bộ 850.000",
+  "table": [
+   [
+    "STT",
+    "Tên hàng",
+    "Đơn vị",
+    "Giá bán"
+   ],
+   [
+    "1",
+    "Máy lọc nước",
+    "Cái",
+    "1.310.000"
+   ],
+   [
+    "2",
+    "Bếp từ đôi",
+    "Cái",
+    "230.000"
+   ],
+   [
+    "3",
+    "Nồi cơm điện",
+    "Bộ",
+    "2.920.000"
+   ],
+   [
+    "4",
+    "Máy sấy tóc",
+    "Bộ",
+    "2.280.000"
+   ],
+   [
+    "5",
+    "Đèn bàn LED",
+    "Bộ",
+    "5.050.000"
+   ],
+   [
+    "6",
+    "Quạt điều hoà",
+    "Bộ",
+    "850.000"
+   ]
+  ]
+ },
+ {
+  "file": "bang-gia-12-toi.jpg",
+  "kind": "bang-gia",
+  "condition": "toi",
+  "text": "BẢNG GIÁ THAM KHẢO\nÁp dụng từ 08/10/2026\nSTT Tên hàng Đơn vị Giá bán\n1 Máy sấy tóc Chiếc 4.340.000\n2 Nồi chiên không dầu Bộ 1.890.000\n3 Quạt điều hoà Chiếc 2.810.000\n4 Nồi cơm điện Chiếc 1.770.000\n5 Máy lọc nước Cái 3.510.000\n6 Máy xay sinh tố Cái 3.360.000",
+  "table": [
+   [
+    "STT",
+    "Tên hàng",
+    "Đơn vị",
+    "Giá bán"
+   ],
+   [
+    "1",
+    "Máy sấy tóc",
+    "Chiếc",
+    "4.340.000"
+   ],
+   [
+    "2",
+    "Nồi chiên không dầu",
+    "Bộ",
+    "1.890.000"
+   ],
+   [
+    "3",
+    "Quạt điều hoà",
+    "Chiếc",
+    "2.810.000"
+   ],
+   [
+    "4",
+    "Nồi cơm điện",
+    "Chiếc",
+    "1.770.000"
+   ],
+   [
+    "5",
+    "Máy lọc nước",
+    "Cái",
+    "3.510.000"
+   ],
+   [
+    "6",
+    "Máy xay sinh tố",
+    "Cái",
+    "3.360.000"
+   ]
+  ]
+ },
+ {
+  "file": "bang-gia-13-nghieng.jpg",
+  "kind": "bang-gia",
+  "condition": "nghieng",
+  "text": "BẢNG GIÁ THAM KHẢO\nÁp dụng từ 21/10/2026\nSTT Tên hàng Đơn vị Giá bán\n1 Bình giữ nhiệt Bộ 3.770.000\n2 Máy lọc nước Bộ 5.010.000\n3 Bàn là hơi nước Cái 3.020.000\n4 Nồi cơm điện Bộ 1.900.000\n5 Quạt điều hoà Cái 2.060.000\n6 Máy xay sinh tố Bộ 2.500.000",
+  "table": [
+   [
+    "STT",
+    "Tên hàng",
+    "Đơn vị",
+    "Giá bán"
+   ],
+   [
+    "1",
+    "Bình giữ nhiệt",
+    "Bộ",
+    "3.770.000"
+   ],
+   [
+    "2",
+    "Máy lọc nước",
+    "Bộ",
+    "5.010.000"
+   ],
+   [
+    "3",
+    "Bàn là hơi nước",
+    "Cái",
+    "3.020.000"
+   ],
+   [
+    "4",
+    "Nồi cơm điện",
+    "Bộ",
+    "1.900.000"
+   ],
+   [
+    "5",
+    "Quạt điều hoà",
+    "Cái",
+    "2.060.000"
+   ],
+   [
+    "6",
+    "Máy xay sinh tố",
+    "Bộ",
+    "2.500.000"
+   ]
+  ]
+ },
+ {
+  "file": "bang-gia-14-mo.jpg",
+  "kind": "bang-gia",
+  "condition": "mo",
+  "text": "BẢNG GIÁ THAM KHẢO\nÁp dụng từ 02/10/2026\nSTT Tên hàng Đơn vị Giá bán\n1 Nồi cơm điện Chiếc 2.250.000\n2 Bình giữ nhiệt Cái 2.630.000\n3 Máy sấy tóc Cái 5.010.000\n4 Ấm siêu tốc Bộ 4.310.000\n5 Bàn là hơi nước Chiếc 3.740.000\n6 Nồi chiên không dầu Bộ 4.220.000",
+  "table": [
+   [
+    "STT",
+    "Tên hàng",
+    "Đơn vị",
+    "Giá bán"
+   ],
+   [
+    "1",
+    "Nồi cơm điện",
+    "Chiếc",
+    "2.250.000"
+   ],
+   [
+    "2",
+    "Bình giữ nhiệt",
+    "Cái",
+    "2.630.000"
+   ],
+   [
+    "3",
+    "Máy sấy tóc",
+    "Cái",
+    "5.010.000"
+   ],
+   [
+    "4",
+    "Ấm siêu tốc",
+    "Bộ",
+    "4.310.000"
+   ],
+   [
+    "5",
+    "Bàn là hơi nước",
+    "Chiếc",
+    "3.740.000"
+   ],
+   [
+    "6",
+    "Nồi chiên không dầu",
+    "Bộ",
+    "4.220.000"
+   ]
+  ]
+ },
+ {
+  "file": "bang-gia-15-nhieu-bong.jpg",
+  "kind": "bang-gia",
+  "condition": "nhieu-bong",
+  "text": "BẢNG GIÁ THAM KHẢO\nÁp dụng từ 10/10/2026\nSTT Tên hàng Đơn vị Giá bán\n1 Bếp từ đôi Chiếc 1.500.000\n2 Quạt điều hoà Cái 3.800.000\n3 Nồi chiên không dầu Chiếc 660.000\n4 Ấm siêu tốc Cái 2.880.000\n5 Máy xay sinh tố Cái 4.500.000\n6 Nồi cơm điện Chiếc 3.130.000",
+  "table": [
+   [
+    "STT",
+    "Tên hàng",
+    "Đơn vị",
+    "Giá bán"
+   ],
+   [
+    "1",
+    "Bếp từ đôi",
+    "Chiếc",
+    "1.500.000"
+   ],
+   [
+    "2",
+    "Quạt điều hoà",
+    "Cái",
+    "3.800.000"
+   ],
+   [
+    "3",
+    "Nồi chiên không dầu",
+    "Chiếc",
+    "660.000"
+   ],
+   [
+    "4",
+    "Ấm siêu tốc",
+    "Cái",
+    "2.880.000"
+   ],
+   [
+    "5",
+    "Máy xay sinh tố",
+    "Cái",
+    "4.500.000"
+   ],
+   [
+    "6",
+    "Nồi cơm điện",
+    "Chiếc",
+    "3.130.000"
+   ]
+  ]
+ },
+ {
+  "file": "cong-van-01-ro-net.jpg",
+  "kind": "cong-van",
+  "condition": "ro-net",
+  "text": "Công ty TNHH Kỹ thuật Sao Việt\nTHÔNG BÁO\nCăn cứ kế hoạch công tác năm 2026 của đơn vị,\nPhòng Hành chính thông báo lịch họp giao ban tháng 11\nvào lúc 8 giờ 30 ngày 05/11/2026 tại phòng họp tầng 3.\nĐề nghị các phòng ban cử đại diện tham dự đầy đủ,\nchuẩn bị báo cáo kết quả thực hiện nhiệm vụ quý III\nvà đề xuất kế hoạch quý IV gửi về trước ngày 03/11/2026.\nMọi thắc mắc xin liên hệ chị Võ Thị Mai, số máy lẻ 215.\nNgười ký: Phạm Minh Tuấn",
+  "table": null
+ },
+ {
+  "file": "cong-van-02-toi.jpg",
+  "kind": "cong-van",
+  "condition": "toi",
+  "text": "Công ty TNHH Minh Phát\nTHÔNG BÁO\nCăn cứ kế hoạch công tác năm 2026 của đơn vị,\nPhòng Hành chính thông báo lịch họp giao ban tháng 11\nvào lúc 8 giờ 30 ngày 05/11/2026 tại phòng họp tầng 3.\nĐề nghị các phòng ban cử đại diện tham dự đầy đủ,\nchuẩn bị báo cáo kết quả thực hiện nhiệm vụ quý III\nvà đề xuất kế hoạch quý IV gửi về trước ngày 03/11/2026.\nMọi thắc mắc xin liên hệ chị Võ Thị Mai, số máy lẻ 215.\nNgười ký: Nguyễn Văn An",
+  "table": null
+ },
+ {
+  "file": "cong-van-03-nghieng.jpg",
+  "kind": "cong-van",
+  "condition": "nghieng",
+  "text": "Cửa hàng Điện máy Hưng Thịnh\nTHÔNG BÁO\nCăn cứ kế hoạch công tác năm 2026 của đơn vị,\nPhòng Hành chính thông báo lịch họp giao ban tháng 11\nvào lúc 8 giờ 30 ngày 05/11/2026 tại phòng họp tầng 3.\nĐề nghị các phòng ban cử đại diện tham dự đầy đủ,\nchuẩn bị báo cáo kết quả thực hiện nhiệm vụ quý III\nvà đề xuất kế hoạch quý IV gửi về trước ngày 03/11/2026.\nMọi thắc mắc xin liên hệ chị Võ Thị Mai, số máy lẻ 215.\nNgười ký: Võ Thị Mai",
+  "table": null
+ },
+ {
+  "file": "cong-van-04-mo.jpg",
+  "kind": "cong-van",
+  "condition": "mo",
+  "text": "Công ty CP Thương mại Đông Á\nTHÔNG BÁO\nCăn cứ kế hoạch công tác năm 2026 của đơn vị,\nPhòng Hành chính thông báo lịch họp giao ban tháng 11\nvào lúc 8 giờ 30 ngày 05/11/2026 tại phòng họp tầng 3.\nĐề nghị các phòng ban cử đại diện tham dự đầy đủ,\nchuẩn bị báo cáo kết quả thực hiện nhiệm vụ quý III\nvà đề xuất kế hoạch quý IV gửi về trước ngày 03/11/2026.\nMọi thắc mắc xin liên hệ chị Võ Thị Mai, số máy lẻ 215.\nNgười ký: Trần Thị Bích",
+  "table": null
+ },
+ {
+  "file": "cong-van-05-nhieu-bong.jpg",
+  "kind": "cong-van",
+  "condition": "nhieu-bong",
+  "text": "Cửa hàng Điện máy Hưng Thịnh\nTHÔNG BÁO\nCăn cứ kế hoạch công tác năm 2026 của đơn vị,\nPhòng Hành chính thông báo lịch họp giao ban tháng 11\nvào lúc 8 giờ 30 ngày 05/11/2026 tại phòng họp tầng 3.\nĐề nghị các phòng ban cử đại diện tham dự đầy đủ,\nchuẩn bị báo cáo kết quả thực hiện nhiệm vụ quý III\nvà đề xuất kế hoạch quý IV gửi về trước ngày 03/11/2026.\nMọi thắc mắc xin liên hệ chị Võ Thị Mai, số máy lẻ 215.\nNgười ký: Lê Hoàng Nam",
+  "table": null
+ },
+ {
+  "file": "cong-van-06-ro-net.jpg",
+  "kind": "cong-van",
+  "condition": "ro-net",
+  "text": "Công ty CP Thương mại Đông Á\nTHÔNG BÁO\nCăn cứ kế hoạch công tác năm 2026 của đơn vị,\nPhòng Hành chính thông báo lịch họp giao ban tháng 11\nvào lúc 8 giờ 30 ngày 05/11/2026 tại phòng họp tầng 3.\nĐề nghị các phòng ban cử đại diện tham dự đầy đủ,\nchuẩn bị báo cáo kết quả thực hiện nhiệm vụ quý III\nvà đề xuất kế hoạch quý IV gửi về trước ngày 03/11/2026.\nMọi thắc mắc xin liên hệ chị Võ Thị Mai, số máy lẻ 215.\nNgười ký: Đặng Quốc Bảo",
+  "table": null
+ },
+ {
+  "file": "cong-van-07-toi.jpg",
+  "kind": "cong-van",
+  "condition": "toi",
+  "text": "Công ty TNHH Kỹ thuật Sao Việt\nTHÔNG BÁO\nCăn cứ kế hoạch công tác năm 2026 của đơn vị,\nPhòng Hành chính thông báo lịch họp giao ban tháng 11\nvào lúc 8 giờ 30 ngày 05/11/2026 tại phòng họp tầng 3.\nĐề nghị các phòng ban cử đại diện tham dự đầy đủ,\nchuẩn bị báo cáo kết quả thực hiện nhiệm vụ quý III\nvà đề xuất kế hoạch quý IV gửi về trước ngày 03/11/2026.\nMọi thắc mắc xin liên hệ chị Võ Thị Mai, số máy lẻ 215.\nNgười ký: Phạm Minh Tuấn",
+  "table": null
+ },
+ {
+  "file": "cong-van-08-nghieng.jpg",
+  "kind": "cong-van",
+  "condition": "nghieng",
+  "text": "Công ty TNHH Minh Phát\nTHÔNG BÁO\nCăn cứ kế hoạch công tác năm 2026 của đơn vị,\nPhòng Hành chính thông báo lịch họp giao ban tháng 11\nvào lúc 8 giờ 30 ngày 05/11/2026 tại phòng họp tầng 3.\nĐề nghị các phòng ban cử đại diện tham dự đầy đủ,\nchuẩn bị báo cáo kết quả thực hiện nhiệm vụ quý III\nvà đề xuất kế hoạch quý IV gửi về trước ngày 03/11/2026.\nMọi thắc mắc xin liên hệ chị Võ Thị Mai, số máy lẻ 215.\nNgười ký: Trần Thị Bích",
+  "table": null
+ },
+ {
+  "file": "cong-van-09-mo.jpg",
+  "kind": "cong-van",
+  "condition": "mo",
+  "text": "Công ty CP Thương mại Đông Á\nTHÔNG BÁO\nCăn cứ kế hoạch công tác năm 2026 của đơn vị,\nPhòng Hành chính thông báo lịch họp giao ban tháng 11\nvào lúc 8 giờ 30 ngày 05/11/2026 tại phòng họp tầng 3.\nĐề nghị các phòng ban cử đại diện tham dự đầy đủ,\nchuẩn bị báo cáo kết quả thực hiện nhiệm vụ quý III\nvà đề xuất kế hoạch quý IV gửi về trước ngày 03/11/2026.\nMọi thắc mắc xin liên hệ chị Võ Thị Mai, số máy lẻ 215.\nNgười ký: Nguyễn Văn An",
+  "table": null
+ },
+ {
+  "file": "cong-van-10-nhieu-bong.jpg",
+  "kind": "cong-van",
+  "condition": "nhieu-bong",
+  "text": "Cửa hàng Điện máy Hưng Thịnh\nTHÔNG BÁO\nCăn cứ kế hoạch công tác năm 2026 của đơn vị,\nPhòng Hành chính thông báo lịch họp giao ban tháng 11\nvào lúc 8 giờ 30 ngày 05/11/2026 tại phòng họp tầng 3.\nĐề nghị các phòng ban cử đại diện tham dự đầy đủ,\nchuẩn bị báo cáo kết quả thực hiện nhiệm vụ quý III\nvà đề xuất kế hoạch quý IV gửi về trước ngày 03/11/2026.\nMọi thắc mắc xin liên hệ chị Võ Thị Mai, số máy lẻ 215.\nNgười ký: Nguyễn Văn An",
+  "table": null
+ },
+ {
+  "file": "bang-tinh-01-ro-net.jpg",
+  "kind": "bang-tinh",
+  "condition": "ro-net",
+  "text": "A B C D\nMã NV Họ tên Phòng Lương\nNV01 Lê Hoàng Nam Kinh doanh 19.000.000\nNV02 Đặng Quốc Bảo Kế toán 15.000.000\nNV03 Trần Thị Bích Kỹ thuật 27.000.000\nNV04 Võ Thị Mai Kế toán 14.000.000\nNV05 Nguyễn Văn An Kỹ thuật 20.000.000",
+  "table": [
+   [
+    "Mã NV",
+    "Họ tên",
+    "Phòng",
+    "Lương"
+   ],
+   [
+    "NV01",
+    "Lê Hoàng Nam",
+    "Kinh doanh",
+    "19.000.000"
+   ],
+   [
+    "NV02",
+    "Đặng Quốc Bảo",
+    "Kế toán",
+    "15.000.000"
+   ],
+   [
+    "NV03",
+    "Trần Thị Bích",
+    "Kỹ thuật",
+    "27.000.000"
+   ],
+   [
+    "NV04",
+    "Võ Thị Mai",
+    "Kế toán",
+    "14.000.000"
+   ],
+   [
+    "NV05",
+    "Nguyễn Văn An",
+    "Kỹ thuật",
+    "20.000.000"
+   ]
+  ]
+ },
+ {
+  "file": "bang-tinh-02-toi.jpg",
+  "kind": "bang-tinh",
+  "condition": "toi",
+  "text": "A B C D\nMã NV Họ tên Phòng Lương\nNV01 Võ Thị Mai Kỹ thuật 15.000.000\nNV02 Lê Hoàng Nam Kinh doanh 28.000.000\nNV03 Nguyễn Văn An Kế toán 23.000.000\nNV04 Trần Thị Bích Kinh doanh 26.000.000\nNV05 Đặng Quốc Bảo Kinh doanh 23.000.000",
+  "table": [
+   [
+    "Mã NV",
+    "Họ tên",
+    "Phòng",
+    "Lương"
+   ],
+   [
+    "NV01",
+    "Võ Thị Mai",
+    "Kỹ thuật",
+    "15.000.000"
+   ],
+   [
+    "NV02",
+    "Lê Hoàng Nam",
+    "Kinh doanh",
+    "28.000.000"
+   ],
+   [
+    "NV03",
+    "Nguyễn Văn An",
+    "Kế toán",
+    "23.000.000"
+   ],
+   [
+    "NV04",
+    "Trần Thị Bích",
+    "Kinh doanh",
+    "26.000.000"
+   ],
+   [
+    "NV05",
+    "Đặng Quốc Bảo",
+    "Kinh doanh",
+    "23.000.000"
+   ]
+  ]
+ },
+ {
+  "file": "bang-tinh-03-nghieng.jpg",
+  "kind": "bang-tinh",
+  "condition": "nghieng",
+  "text": "A B C D\nMã NV Họ tên Phòng Lương\nNV01 Nguyễn Văn An Kỹ thuật 19.000.000\nNV02 Đặng Quốc Bảo Kế toán 22.000.000\nNV03 Võ Thị Mai Kỹ thuật 28.000.000\nNV04 Trần Thị Bích Kinh doanh 22.000.000\nNV05 Lê Hoàng Nam Kỹ thuật 27.000.000",
+  "table": [
+   [
+    "Mã NV",
+    "Họ tên",
+    "Phòng",
+    "Lương"
+   ],
+   [
+    "NV01",
+    "Nguyễn Văn An",
+    "Kỹ thuật",
+    "19.000.000"
+   ],
+   [
+    "NV02",
+    "Đặng Quốc Bảo",
+    "Kế toán",
+    "22.000.000"
+   ],
+   [
+    "NV03",
+    "Võ Thị Mai",
+    "Kỹ thuật",
+    "28.000.000"
+   ],
+   [
+    "NV04",
+    "Trần Thị Bích",
+    "Kinh doanh",
+    "22.000.000"
+   ],
+   [
+    "NV05",
+    "Lê Hoàng Nam",
+    "Kỹ thuật",
+    "27.000.000"
+   ]
+  ]
+ },
+ {
+  "file": "bang-tinh-04-mo.jpg",
+  "kind": "bang-tinh",
+  "condition": "mo",
+  "text": "A B C D\nMã NV Họ tên Phòng Lương\nNV01 Lê Hoàng Nam Kinh doanh 23.000.000\nNV02 Trần Thị Bích Kỹ thuật 25.000.000\nNV03 Võ Thị Mai Kinh doanh 24.000.000\nNV04 Phạm Minh Tuấn Kế toán 16.000.000\nNV05 Nguyễn Văn An Kỹ thuật 30.000.000",
+  "table": [
+   [
+    "Mã NV",
+    "Họ tên",
+    "Phòng",
+    "Lương"
+   ],
+   [
+    "NV01",
+    "Lê Hoàng Nam",
+    "Kinh doanh",
+    "23.000.000"
+   ],
+   [
+    "NV02",
+    "Trần Thị Bích",
+    "Kỹ thuật",
+    "25.000.000"
+   ],
+   [
+    "NV03",
+    "Võ Thị Mai",
+    "Kinh doanh",
+    "24.000.000"
+   ],
+   [
+    "NV04",
+    "Phạm Minh Tuấn",
+    "Kế toán",
+    "16.000.000"
+   ],
+   [
+    "NV05",
+    "Nguyễn Văn An",
+    "Kỹ thuật",
+    "30.000.000"
+   ]
+  ]
+ },
+ {
+  "file": "bang-tinh-05-nhieu-bong.jpg",
+  "kind": "bang-tinh",
+  "condition": "nhieu-bong",
+  "text": "A B C D\nMã NV Họ tên Phòng Lương\nNV01 Đặng Quốc Bảo Kế toán 22.000.000\nNV02 Trần Thị Bích Kỹ thuật 26.000.000\nNV03 Phạm Minh Tuấn Kỹ thuật 16.000.000\nNV04 Võ Thị Mai Kinh doanh 20.000.000\nNV05 Lê Hoàng Nam Kế toán 22.000.000",
+  "table": [
+   [
+    "Mã NV",
+    "Họ tên",
+    "Phòng",
+    "Lương"
+   ],
+   [
+    "NV01",
+    "Đặng Quốc Bảo",
+    "Kế toán",
+    "22.000.000"
+   ],
+   [
+    "NV02",
+    "Trần Thị Bích",
+    "Kỹ thuật",
+    "26.000.000"
+   ],
+   [
+    "NV03",
+    "Phạm Minh Tuấn",
+    "Kỹ thuật",
+    "16.000.000"
+   ],
+   [
+    "NV04",
+    "Võ Thị Mai",
+    "Kinh doanh",
+    "20.000.000"
+   ],
+   [
+    "NV05",
+    "Lê Hoàng Nam",
+    "Kế toán",
+    "22.000.000"
+   ]
+  ]
+ },
+ {
+  "file": "bang-tinh-06-ro-net.jpg",
+  "kind": "bang-tinh",
+  "condition": "ro-net",
+  "text": "A B C D\nMã NV Họ tên Phòng Lương\nNV01 Trần Thị Bích Kinh doanh 26.000.000\nNV02 Võ Thị Mai Kinh doanh 24.000.000\nNV03 Nguyễn Văn An Kỹ thuật 12.000.000\nNV04 Đặng Quốc Bảo Kinh doanh 22.000.000\nNV05 Lê Hoàng Nam Kinh doanh 25.000.000",
+  "table": [
+   [
+    "Mã NV",
+    "Họ tên",
+    "Phòng",
+    "Lương"
+   ],
+   [
+    "NV01",
+    "Trần Thị Bích",
+    "Kinh doanh",
+    "26.000.000"
+   ],
+   [
+    "NV02",
+    "Võ Thị Mai",
+    "Kinh doanh",
+    "24.000.000"
+   ],
+   [
+    "NV03",
+    "Nguyễn Văn An",
+    "Kỹ thuật",
+    "12.000.000"
+   ],
+   [
+    "NV04",
+    "Đặng Quốc Bảo",
+    "Kinh doanh",
+    "22.000.000"
+   ],
+   [
+    "NV05",
+    "Lê Hoàng Nam",
+    "Kinh doanh",
+    "25.000.000"
+   ]
+  ]
+ },
+ {
+  "file": "bang-tinh-07-toi.jpg",
+  "kind": "bang-tinh",
+  "condition": "toi",
+  "text": "A B C D\nMã NV Họ tên Phòng Lương\nNV01 Lê Hoàng Nam Kỹ thuật 23.000.000\nNV02 Nguyễn Văn An Kinh doanh 22.000.000\nNV03 Phạm Minh Tuấn Kế toán 24.000.000\nNV04 Đặng Quốc Bảo Kinh doanh 17.000.000\nNV05 Võ Thị Mai Kế toán 20.000.000",
+  "table": [
+   [
+    "Mã NV",
+    "Họ tên",
+    "Phòng",
+    "Lương"
+   ],
+   [
+    "NV01",
+    "Lê Hoàng Nam",
+    "Kỹ thuật",
+    "23.000.000"
+   ],
+   [
+    "NV02",
+    "Nguyễn Văn An",
+    "Kinh doanh",
+    "22.000.000"
+   ],
+   [
+    "NV03",
+    "Phạm Minh Tuấn",
+    "Kế toán",
+    "24.000.000"
+   ],
+   [
+    "NV04",
+    "Đặng Quốc Bảo",
+    "Kinh doanh",
+    "17.000.000"
+   ],
+   [
+    "NV05",
+    "Võ Thị Mai",
+    "Kế toán",
+    "20.000.000"
+   ]
+  ]
+ },
+ {
+  "file": "bang-tinh-08-nghieng.jpg",
+  "kind": "bang-tinh",
+  "condition": "nghieng",
+  "text": "A B C D\nMã NV Họ tên Phòng Lương\nNV01 Võ Thị Mai Kỹ thuật 27.000.000\nNV02 Lê Hoàng Nam Kỹ thuật 12.000.000\nNV03 Trần Thị Bích Kế toán 19.000.000\nNV04 Phạm Minh Tuấn Kinh doanh 15.000.000\nNV05 Đặng Quốc Bảo Kinh doanh 20.000.000",
+  "table": [
+   [
+    "Mã NV",
+    "Họ tên",
+    "Phòng",
+    "Lương"
+   ],
+   [
+    "NV01",
+    "Võ Thị Mai",
+    "Kỹ thuật",
+    "27.000.000"
+   ],
+   [
+    "NV02",
+    "Lê Hoàng Nam",
+    "Kỹ thuật",
+    "12.000.000"
+   ],
+   [
+    "NV03",
+    "Trần Thị Bích",
+    "Kế toán",
+    "19.000.000"
+   ],
+   [
+    "NV04",
+    "Phạm Minh Tuấn",
+    "Kinh doanh",
+    "15.000.000"
+   ],
+   [
+    "NV05",
+    "Đặng Quốc Bảo",
+    "Kinh doanh",
+    "20.000.000"
+   ]
+  ]
+ },
+ {
+  "file": "bang-tinh-09-mo.jpg",
+  "kind": "bang-tinh",
+  "condition": "mo",
+  "text": "A B C D\nMã NV Họ tên Phòng Lương\nNV01 Nguyễn Văn An Kinh doanh 23.000.000\nNV02 Trần Thị Bích Kế toán 29.000.000\nNV03 Phạm Minh Tuấn Kinh doanh 18.000.000\nNV04 Lê Hoàng Nam Kinh doanh 12.000.000\nNV05 Võ Thị Mai Kế toán 16.000.000",
+  "table": [
+   [
+    "Mã NV",
+    "Họ tên",
+    "Phòng",
+    "Lương"
+   ],
+   [
+    "NV01",
+    "Nguyễn Văn An",
+    "Kinh doanh",
+    "23.000.000"
+   ],
+   [
+    "NV02",
+    "Trần Thị Bích",
+    "Kế toán",
+    "29.000.000"
+   ],
+   [
+    "NV03",
+    "Phạm Minh Tuấn",
+    "Kinh doanh",
+    "18.000.000"
+   ],
+   [
+    "NV04",
+    "Lê Hoàng Nam",
+    "Kinh doanh",
+    "12.000.000"
+   ],
+   [
+    "NV05",
+    "Võ Thị Mai",
+    "Kế toán",
+    "16.000.000"
+   ]
+  ]
+ },
+ {
+  "file": "bang-tinh-10-nhieu-bong.jpg",
+  "kind": "bang-tinh",
+  "condition": "nhieu-bong",
+  "text": "A B C D\nMã NV Họ tên Phòng Lương\nNV01 Lê Hoàng Nam Kinh doanh 21.000.000\nNV02 Trần Thị Bích Kế toán 30.000.000\nNV03 Phạm Minh Tuấn Kỹ thuật 28.000.000\nNV04 Nguyễn Văn An Kinh doanh 30.000.000\nNV05 Đặng Quốc Bảo Kinh doanh 16.000.000",
+  "table": [
+   [
+    "Mã NV",
+    "Họ tên",
+    "Phòng",
+    "Lương"
+   ],
+   [
+    "NV01",
+    "Lê Hoàng Nam",
+    "Kinh doanh",
+    "21.000.000"
+   ],
+   [
+    "NV02",
+    "Trần Thị Bích",
+    "Kế toán",
+    "30.000.000"
+   ],
+   [
+    "NV03",
+    "Phạm Minh Tuấn",
+    "Kỹ thuật",
+    "28.000.000"
+   ],
+   [
+    "NV04",
+    "Nguyễn Văn An",
+    "Kinh doanh",
+    "30.000.000"
+   ],
+   [
+    "NV05",
+    "Đặng Quốc Bảo",
+    "Kinh doanh",
+    "16.000.000"
+   ]
+  ]
+ }
+]

@@ -26,3 +26,6 @@ backend/eval/results/
 # Playwright
 frontend/test-results/
 frontend/playwright-report/
+
+# Bản ghi giọng nói tổng hợp (tạo lại bằng python -m eval.voice_eval synth)
+backend/eval/voice_dataset/tts/

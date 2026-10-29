@@ -73,7 +73,92 @@ def make_inputs() -> dict:
         prs.save(buf)
         return "gioi-thieu.pptx", buf.getvalue()
 
-    return {"xlsx_loi_nhuan": xlsx_loi_nhuan, "docx_hop_dong": docx_hop_dong, "pptx_gioi_thieu": pptx_gioi_thieu}
+    def xlsx_nhan_su():
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Nhân sự"
+        ws.append(["Mã NV", "Họ tên", "Phòng ban", "Lương", "Ngày vào làm"])
+        rows = [("NV01", "Nguyễn Văn An", "Kinh doanh", 18000000, "2021-03-01"),
+                ("NV02", "Trần Thị Bích", "Kế toán", 15500000, "2019-07-15"),
+                ("NV03", "Lê Hoàng Nam", "Kỹ thuật", 24000000, "2020-01-10"),
+                ("NV04", "Phạm Minh Tuấn", "Kỹ thuật", 21000000, "2022-05-20"),
+                ("NV05", "Võ Thị Mai", "Nhân sự", 14000000, "2018-11-02"),
+                ("NV06", "Đặng Quốc Bảo", "Kinh doanh", 19500000, "2023-02-14"),
+                ("NV07", "Hoàng Thùy Linh", "Kế toán", 16000000, "2021-09-09"),
+                ("NV08", "Bùi Đức Thịnh", "Kỹ thuật", 26500000, "2017-04-03")]
+        for r in rows:
+            ws.append(list(r))
+        buf = io.BytesIO()
+        wb.save(buf)
+        return "nhan-su.xlsx", buf.getvalue()
+
+    def xlsx_ban_hang():
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Bán hàng"
+        ws.append(["Ngày", "Sản phẩm", "Số lượng", "Đơn giá"])
+        items = [("Máy lọc nước", 4500000), ("Nồi chiên", 1800000), ("Quạt điều hoà", 3200000)]
+        for d in range(1, 16):
+            name, price = items[d % 3]
+            ws.append([f"2026-10-{d:02d}", name, (d * 7) % 9 + 1, price])
+        buf = io.BytesIO()
+        wb.save(buf)
+        return "ban-hang.xlsx", buf.getvalue()
+
+    def docx_bao_cao():
+        doc = Document()
+        doc.add_heading("BÁO CÁO HOẠT ĐỘNG QUÝ III/2026", 1)
+        doc.add_heading("1. Tổng quan", 2)
+        doc.add_paragraph("Doanh thu quý III đạt 4,2 tỷ đồng, tăng 12% so với quý II nhờ mở rộng kênh trực tuyến.")
+        doc.add_heading("2. Kết quả", 2)
+        doc.add_paragraph("Số khách hàng mới là 1.250 người. Tỉ lệ giữ chân khách hàng đạt 78%.")
+        doc.add_paragraph("Chi phí marketing chiếm 15% doanh thu, cao hơn kế hoạch 3 điểm phần trăm.")
+        doc.add_heading("3. Kiến nghị", 2)
+        doc.add_paragraph("Tập trung ngân sách vào các kênh có tỉ lệ chuyển đổi cao.")
+        buf = io.BytesIO()
+        doc.save(buf)
+        return "bao-cao.docx", buf.getvalue()
+
+    def docx_mau():
+        from docx.shared import Pt, RGBColor
+        doc = Document()
+        h1 = doc.styles["Heading 1"].font
+        h1.size, h1.color.rgb, h1.name = Pt(20), RGBColor(0xC0, 0x00, 0x00), "Times New Roman"
+        doc.styles["Normal"].font.size = Pt(13)
+        doc.add_heading("Mẫu trình bày của công ty", 1)
+        doc.add_paragraph("Đoạn văn mẫu.")
+        buf = io.BytesIO()
+        doc.save(buf)
+        return "mau-cong-ty.docx", buf.getvalue()
+
+    def docx_de_toan():
+        from app.tools.word import write_paragraph
+        doc = Document()
+        doc.add_heading("ĐỀ KIỂM TRA TOÁN 15 PHÚT", 1)
+        write_paragraph(doc.add_paragraph(), "Câu 1. Giải phương trình $x^2 - 5x + 6 = 0$.")
+        write_paragraph(doc.add_paragraph(), r"Câu 2. Tính tích phân $\int_0^1 2x\,dx$.")
+        write_paragraph(doc.add_paragraph(), "Câu 3. Cho tam giác vuông có hai cạnh góc vuông 3 và 4. Tính cạnh huyền.")
+        buf = io.BytesIO()
+        doc.save(buf)
+        return "de-toan.docx", buf.getvalue()
+
+    def pptx_tran_chu():
+        from app.tools.pptx_design import BUILT_IN, find_layout, new_presentation
+        prs = new_presentation(BUILT_IN["default_theme"], "clean")
+        s = prs.slides.add_slide(find_layout(prs, "title_content"))
+        s.shapes.title.text = "Kế hoạch năm 2027"
+        body = s.placeholders[1].text_frame
+        long = "Mở rộng hệ thống phân phối tới các tỉnh miền Trung và Tây Nguyên trong nửa đầu năm"
+        body.text = long
+        for _ in range(9):
+            body.add_paragraph().text = long
+        buf = io.BytesIO()
+        prs.save(buf)
+        return "ke-hoach.pptx", buf.getvalue()
+
+    return {"xlsx_loi_nhuan": xlsx_loi_nhuan, "docx_hop_dong": docx_hop_dong, "pptx_gioi_thieu": pptx_gioi_thieu,
+            "xlsx_nhan_su": xlsx_nhan_su, "xlsx_ban_hang": xlsx_ban_hang, "docx_bao_cao": docx_bao_cao,
+            "docx_mau": docx_mau, "docx_de_toan": docx_de_toan, "pptx_tran_chu": pptx_tran_chu}
 
 
 # ---------- Kiểm tra ----------
@@ -105,6 +190,8 @@ def check(c: dict, ctx: dict) -> tuple[bool, str]:
         return all(v == 1 for v in ctx["versions"].values()) and not created, str(ctx["versions"])
     if t == "reply_asks_question":
         return "?" in ctx["reply"], ctx["reply"][:120]
+    if t == "reply_contains":
+        return any(x.lower() in ctx["reply"].lower() for x in c["any"]), ctx["reply"][:120]
 
     if t.startswith("xlsx"):
         p = path(c.get("file"), "xlsx")
@@ -133,6 +220,18 @@ def check(c: dict, ctx: dict) -> tuple[bool, str]:
             red = any((x.font.color is not None and str(x.font.color.rgb or "").upper().endswith(("FF0000", "C00000")))
                       for x in cells if isinstance(x.value, (int, float)) and x.value < 0)
             return has_cf or red, f"định dạng có điều kiện={has_cf}, tô đỏ trực tiếp={red}"
+        if t == "xlsx_sheet_exists":
+            return any(c["name"].lower() in ws.title.lower() for ws in wb.worksheets), str(wb.sheetnames)
+        if t == "xlsx_formula_count":
+            n = sum(1 for x in cells if isinstance(x.value, str) and x.value.startswith("=")
+                    and c.get("contains", "") in x.value.upper())
+            return n >= c["min"], f"{n} công thức"
+        if t == "xlsx_number_format":
+            return any(c["contains"] in (x.number_format or "") for x in cells if isinstance(x.value, (int, float))), ""
+        if t == "xlsx_filter_set":
+            return any(ws.auto_filter.ref for ws in sheets), ""
+        if t == "xlsx_bold_header":
+            return all(x.font.bold for x in next(sheets[0].iter_rows(min_row=1, max_row=1)) if x.value is not None), ""
         if t == "xlsx_unchanged_outside":
             orig = openpyxl.load_workbook(ctx["originals"][c["file"]])[c["sheet"]]
             c1, r1, c2, r2 = range_boundaries(c["range"])
@@ -144,8 +243,9 @@ def check(c: dict, ctx: dict) -> tuple[bool, str]:
         p = path(c.get("file"), "docx")
         if p is None:
             return False, "không có tệp docx"
+        from app.tools.word import para_markup
         doc = Document(p)
-        text = "\n".join(x.text for x in doc.paragraphs)
+        text = "\n".join(para_markup(x) for x in doc.paragraphs)  # công thức dạng $...$
         if t == "docx_contains":
             return c["text"] in text, ""
         if t == "docx_not_contains":
@@ -153,6 +253,17 @@ def check(c: dict, ctx: dict) -> tuple[bool, str]:
         if t == "docx_heading_count":
             n = sum(1 for x in doc.paragraphs if x.style.name.startswith("Heading"))
             return n >= c["min"], f"{n} đề mục"
+        if t == "docx_equation_count":
+            n = len(doc.element.body.findall(".//" + qn("m:oMath")))
+            return n >= c["min"], f"{n} công thức"
+        if t == "docx_table_count":
+            return len(doc.tables) >= c["min"], f"{len(doc.tables)} bảng"
+        if t == "docx_paragraph_count":
+            n = sum(1 for x in doc.paragraphs if x.text.strip() or para_markup(x).strip())
+            return n >= c["min"], f"{n} đoạn"
+        if t == "docx_style_size":
+            size = doc.styles[c["style"]].font.size
+            return size is not None and abs(size.pt - c["pt"]) < 0.6, f"{c['style']}: {size.pt if size else None} pt"
         if t == "docx_has_revisions_or_comments":
             body = doc.element.body
             n = len(body.findall(".//" + qn("w:ins"))) + len(list(doc.comments))
@@ -165,6 +276,36 @@ def check(c: dict, ctx: dict) -> tuple[bool, str]:
         prs = Presentation(p)
         if t == "pptx_slide_count":
             return len(prs.slides) >= c["min"], f"{len(prs.slides)} slide"
+        if t in ("pptx_equation_count", "pptx_shape_count", "pptx_contains", "pptx_layout_ok"):
+            from app.tools.layout_check import check_presentation
+            from app.tools.pptx_math import all_shapes, shape_markup
+            shapes = [sh for s in prs.slides for sh in all_shapes(s)]
+            if t == "pptx_equation_count":
+                from app.tools.omml import split_math
+                n = sum(1 for sh in shapes if sh.has_text_frame for k, _ in split_math(shape_markup(sh)) if k != "text")
+                return n >= c["min"], f"{n} công thức"
+            if t == "pptx_shape_count":
+                n = sum(1 for sh in shapes if not sh.is_placeholder and sh.shape_type is not None
+                        and sh.shape_type in (1, 17))  # AUTO_SHAPE, TEXT_BOX
+                return n >= c["min"], f"{n} hình"
+            if t == "pptx_contains":
+                text = "\n".join(shape_markup(sh) for sh in shapes if sh.has_text_frame)
+                return c["text"].lower() in text.lower(), ""
+            issues = check_presentation(prs)
+            return not issues, f"{len(issues)} lỗi bố cục: {[i['kind'] for i in issues][:5]}"
+        if t == "pptx_chart_count":
+            n = sum(1 for s in prs.slides for sh in s.shapes if getattr(sh, "has_chart", False) and sh.has_chart)
+            return n >= c["min"], f"{n} biểu đồ"
+        if t == "pptx_table_count":
+            n = sum(1 for s in prs.slides for sh in s.shapes if getattr(sh, "has_table", False) and sh.has_table)
+            return n >= c["min"], f"{n} bảng"
+        if t == "pptx_theme_bg":
+            from lxml import etree
+            from pptx.opc.constants import RELATIONSHIP_TYPE as RT
+            a = "{http://schemas.openxmlformats.org/drawingml/2006/main}"
+            theme = etree.fromstring(prs.slide_master.part.part_related_by(RT.THEME).blob)
+            val = theme.find(f".//{a}lt1/{a}srgbClr")
+            return val is not None and val.get("val") == c["value"], f"nền {val.get('val') if val is not None else None}"
         if t == "pptx_notes_count":
             n = sum(1 for s in prs.slides if s.has_notes_slide and s.notes_slide.notes_text_frame.text.strip())
             return n >= c["min"], f"{n} slide có ghi chú"
@@ -278,6 +419,7 @@ def main() -> None:
     ap.add_argument("--model", default="", help="Ghi đè model chính của nhà cung cấp")
     ap.add_argument("--repeat", type=int, default=1)
     ap.add_argument("--only", default="", help="Chỉ chạy case có id chứa chuỗi này")
+    ap.add_argument("--group", default="", help="Chỉ chạy một nhóm, ví dụ \"Công thức toán\"")
     ap.add_argument("--out", default=str(HERE / "results"))
     args = ap.parse_args()
     sys.stdout.reconfigure(encoding="utf-8")
@@ -297,7 +439,14 @@ def main() -> None:
     provider = get_provider(cfg)
     db.close()
 
-    cases = [c for c in json.loads((HERE / "cases.json").read_text(encoding="utf-8")) if args.only in c["id"]]
+    from app.config import get_settings
+    cases = [c for c in json.loads((HERE / "cases.json").read_text(encoding="utf-8"))
+             if args.only in c["id"] and (not args.group or c["group"] == args.group)]
+    if not get_settings().sandbox_url:
+        skipped = [c["id"] for c in cases if c.get("requires") == "sandbox"]
+        cases = [c for c in cases if c.get("requires") != "sandbox"]
+        if skipped:
+            print(f"Bỏ qua {len(skipped)} ca cần sandbox run_python (chưa đặt SANDBOX_URL): {skipped}")
     builders = make_inputs()
     rows = []
 

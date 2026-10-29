@@ -1,0 +1,17 @@
+[
+ {"id": "v01", "group": "Excel", "text": "Tạo bảng doanh thu mười hai tháng có dòng tổng và biểu đồ cột"},
+ {"id": "v02", "group": "Excel", "text": "Tô đỏ các giá trị âm trong vùng đang chọn"},
+ {"id": "v03", "group": "Excel", "text": "Sắp xếp bảng theo cột lương giảm dần"},
+ {"id": "v04", "group": "Excel", "text": "Ghi số 1250 vào ô B2"},
+ {"id": "v05", "group": "Word", "text": "Soạn báo cáo quý ba gồm ba mục tổng quan kết quả và kiến nghị"},
+ {"id": "v06", "group": "Word", "text": "Thay tất cả chữ khách hàng thành đối tác"},
+ {"id": "v07", "group": "Word", "text": "Dịch tài liệu sang tiếng Anh nhưng giữ nguyên ngày 15/01/2026"},
+ {"id": "v08", "group": "Word", "text": "Rà soát hợp đồng và ghi nhận xét vào những câu chưa rõ"},
+ {"id": "v09", "group": "PowerPoint", "text": "Làm năm slide giới thiệu máy lọc nước có ghi chú thuyết trình"},
+ {"id": "v10", "group": "PowerPoint", "text": "Đổi cả bài sang nền tối"},
+ {"id": "v11", "group": "PowerPoint", "text": "Thêm slide sơ đồ quy trình tuyển dụng bốn bước"},
+ {"id": "v12", "group": "Công thức toán", "text": "Viết công thức nghiệm của phương trình bậc hai vào tài liệu"},
+ {"id": "v13", "group": "Tên riêng", "text": "Gửi báo cáo cho chị Võ Thị Mai phòng Hành chính"},
+ {"id": "v14", "group": "Hoàn tác", "text": "Hoàn tác lần sửa vừa rồi"},
+ {"id": "v15", "group": "Xen tiếng Anh", "text": "Chèn biểu đồ chart doanh thu vào slide và căn giữa"}
+]

@@ -1,237 +1,1782 @@
 [
-  {
-    "id": "xlsx-01-tao-bang-bieu-do",
-    "group": "Excel",
-    "request": "Tạo bảng doanh thu 12 tháng (số liệu ví dụ), có dòng tổng và biểu đồ cột",
-    "inputs": [],
-    "checks": [
-      {
-        "type": "file_created",
-        "kind": "xlsx"
-      },
-      {
-        "type": "xlsx_any_formula",
-        "contains": "SUM"
-      },
-      {
-        "type": "xlsx_chart_count",
-        "min": 1
-      }
-    ]
+ {
+  "id": "xlsx-01-tao-bang-bieu-do",
+  "group": "Excel",
+  "request": "Tạo bảng doanh thu 12 tháng (số liệu ví dụ), có dòng tổng và biểu đồ cột",
+  "inputs": [],
+  "checks": [
+   {
+    "type": "file_created",
+    "kind": "xlsx"
+   },
+   {
+    "type": "xlsx_any_formula",
+    "contains": "SUM"
+   },
+   {
+    "type": "xlsx_chart_count",
+    "min": 1
+   }
+  ]
+ },
+ {
+  "id": "xlsx-02-to-do-am",
+  "group": "Sửa một phần",
+  "request": "Tô đỏ các giá trị âm",
+  "inputs": [
+   "xlsx_loi_nhuan"
+  ],
+  "selection": {
+   "file": "loi-nhuan.xlsx",
+   "sheet": "Lợi nhuận",
+   "range": "B2:D6"
   },
-  {
-    "id": "xlsx-02-to-do-am",
-    "group": "Sửa một phần",
-    "request": "Tô đỏ các giá trị âm",
-    "inputs": [
-      "xlsx_loi_nhuan"
-    ],
-    "selection": {
-      "file": "loi-nhuan.xlsx",
-      "sheet": "Lợi nhuận",
-      "range": "B2:D6"
-    },
-    "checks": [
-      {
-        "type": "xlsx_conditional_or_red",
-        "file": "loi-nhuan.xlsx",
-        "sheet": "Lợi nhuận",
-        "range": "B2:D6"
-      },
-      {
-        "type": "xlsx_unchanged_outside",
-        "file": "loi-nhuan.xlsx",
-        "sheet": "Lợi nhuận",
-        "range": "B2:D6"
-      }
+  "checks": [
+   {
+    "type": "xlsx_conditional_or_red",
+    "file": "loi-nhuan.xlsx",
+    "sheet": "Lợi nhuận",
+    "range": "B2:D6"
+   },
+   {
+    "type": "xlsx_unchanged_outside",
+    "file": "loi-nhuan.xlsx",
+    "sheet": "Lợi nhuận",
+    "range": "B2:D6"
+   }
+  ]
+ },
+ {
+  "id": "xlsx-03-dong-tong",
+  "group": "Excel",
+  "request": "Thêm dòng Tổng cuối bảng cho các cột Q1 đến Q3",
+  "inputs": [
+   "xlsx_loi_nhuan"
+  ],
+  "checks": [
+   {
+    "type": "xlsx_any_formula",
+    "file": "loi-nhuan.xlsx",
+    "contains": "SUM"
+   },
+   {
+    "type": "xlsx_contains_text",
+    "file": "loi-nhuan.xlsx",
+    "text": "Tổng"
+   }
+  ]
+ },
+ {
+  "id": "xlsx-04-sap-xep",
+  "group": "Excel",
+  "request": "Sắp xếp bảng theo cột Q1 giảm dần",
+  "inputs": [
+   "xlsx_loi_nhuan"
+  ],
+  "checks": [
+   {
+    "type": "xlsx_sorted_desc",
+    "file": "loi-nhuan.xlsx",
+    "sheet": "Lợi nhuận",
+    "col": "B",
+    "rows": [
+     2,
+     6
     ]
-  },
-  {
-    "id": "xlsx-03-dong-tong",
-    "group": "Excel",
-    "request": "Thêm dòng Tổng cuối bảng cho các cột Q1 đến Q3",
-    "inputs": [
-      "xlsx_loi_nhuan"
-    ],
-    "checks": [
-      {
-        "type": "xlsx_any_formula",
-        "file": "loi-nhuan.xlsx",
-        "contains": "SUM"
-      },
-      {
-        "type": "xlsx_contains_text",
-        "file": "loi-nhuan.xlsx",
-        "text": "Tổng"
-      }
+   }
+  ]
+ },
+ {
+  "id": "docx-01-bao-cao",
+  "group": "Word",
+  "request": "Soạn báo cáo ngắn về kết quả kinh doanh quý 3 gồm các đề mục: Tổng quan, Kết quả, Kiến nghị",
+  "inputs": [],
+  "checks": [
+   {
+    "type": "file_created",
+    "kind": "docx"
+   },
+   {
+    "type": "docx_heading_count",
+    "min": 3
+   }
+  ]
+ },
+ {
+  "id": "docx-02-tim-thay",
+  "group": "Word",
+  "request": "Thay tất cả chữ 'khách hàng' thành 'đối tác'",
+  "inputs": [
+   "docx_hop_dong"
+  ],
+  "checks": [
+   {
+    "type": "docx_not_contains",
+    "file": "hop-dong.docx",
+    "text": "khách hàng"
+   },
+   {
+    "type": "docx_contains",
+    "file": "hop-dong.docx",
+    "text": "đối tác"
+   }
+  ]
+ },
+ {
+  "id": "docx-03-ra-soat",
+  "group": "Rà soát",
+  "request": "Rà soát hợp đồng, đề xuất sửa câu chưa rõ dưới dạng Track Changes và ghi nhận xét",
+  "inputs": [
+   "docx_hop_dong"
+  ],
+  "checks": [
+   {
+    "type": "docx_has_revisions_or_comments",
+    "file": "hop-dong.docx"
+   }
+  ]
+ },
+ {
+  "id": "docx-04-dich",
+  "group": "Dịch",
+  "request": "Dịch tài liệu sang tiếng Anh, giữ nguyên số và ngày tháng",
+  "inputs": [
+   "docx_hop_dong"
+  ],
+  "checks": [
+   {
+    "type": "docx_contains",
+    "file": "hop-dong.docx",
+    "text": "15/01/2026"
+   },
+   {
+    "type": "docx_contains",
+    "file": "hop-dong.docx",
+    "text": "120.000.000"
+   },
+   {
+    "type": "docx_not_contains",
+    "file": "hop-dong.docx",
+    "text": "Hợp đồng ký ngày"
+   }
+  ]
+ },
+ {
+  "id": "pptx-01-gioi-thieu",
+  "group": "PowerPoint",
+  "request": "Làm 5 slide giới thiệu sản phẩm máy lọc nước, có ghi chú thuyết trình",
+  "inputs": [],
+  "checks": [
+   {
+    "type": "file_created",
+    "kind": "pptx"
+   },
+   {
+    "type": "pptx_slide_count",
+    "min": 5
+   },
+   {
+    "type": "pptx_notes_count",
+    "min": 3
+   }
+  ]
+ },
+ {
+  "id": "pptx-02-tu-khoa",
+  "group": "Định dạng từ khoá",
+  "request": "In đậm và tô cam chữ 'tiết kiệm' trên các slide",
+  "inputs": [
+   "pptx_gioi_thieu"
+  ],
+  "checks": [
+   {
+    "type": "file_changed",
+    "file": "gioi-thieu.pptx"
+   }
+  ]
+ },
+ {
+  "id": "undo-01",
+  "group": "Hoàn tác",
+  "request": "Hoàn tác lần sửa vừa rồi",
+  "inputs": [
+   "xlsx_loi_nhuan"
+  ],
+  "setup_request": "Ghi số 999 vào ô B2",
+  "checks": [
+   {
+    "type": "xlsx_cell_equals",
+    "file": "loi-nhuan.xlsx",
+    "sheet": "Lợi nhuận",
+    "ref": "B2",
+    "value": 120
+   },
+   {
+    "type": "has_redo",
+    "file": "loi-nhuan.xlsx"
+   }
+  ]
+ },
+ {
+  "id": "mo-ho-01",
+  "group": "Yêu cầu không rõ",
+  "request": "Sửa cái bảng kia đi",
+  "inputs": [
+   "xlsx_loi_nhuan",
+   "docx_hop_dong"
+  ],
+  "checks": [
+   {
+    "type": "no_file_changed"
+   },
+   {
+    "type": "reply_asks_question"
+   }
+  ]
+ },
+ {
+  "id": "xlsx-05-bang-luong",
+  "group": "Excel",
+  "request": "Tạo bảng lương 5 nhân viên gồm lương cơ bản, phụ cấp, thực lĩnh = lương + phụ cấp",
+  "inputs": [],
+  "checks": [
+   {
+    "type": "file_created",
+    "kind": "xlsx"
+   },
+   {
+    "type": "xlsx_formula_count",
+    "min": 5
+   }
+  ]
+ },
+ {
+  "id": "xlsx-06-dinh-dang-tien",
+  "group": "Excel",
+  "request": "Định dạng cột Lương thành số có dấu phân cách hàng nghìn",
+  "inputs": [
+   "xlsx_nhan_su"
+  ],
+  "checks": [
+   {
+    "type": "file_changed",
+    "file": "nhan-su.xlsx"
+   },
+   {
+    "type": "xlsx_number_format",
+    "file": "nhan-su.xlsx",
+    "contains": "#,##0"
+   }
+  ]
+ },
+ {
+  "id": "xlsx-07-loc",
+  "group": "Excel",
+  "request": "Bật bộ lọc cho bảng nhân sự",
+  "inputs": [
+   "xlsx_nhan_su"
+  ],
+  "checks": [
+   {
+    "type": "xlsx_filter_set",
+    "file": "nhan-su.xlsx"
+   }
+  ]
+ },
+ {
+  "id": "xlsx-08-trung-binh",
+  "group": "Excel",
+  "request": "Thêm dòng Trung bình lương ở cuối bảng",
+  "inputs": [
+   "xlsx_nhan_su"
+  ],
+  "checks": [
+   {
+    "type": "xlsx_any_formula",
+    "file": "nhan-su.xlsx",
+    "contains": "AVERAGE"
+   }
+  ]
+ },
+ {
+  "id": "xlsx-09-dem-phong",
+  "group": "Excel",
+  "request": "Tạo sheet Thống kê đếm số nhân viên theo từng phòng ban bằng công thức",
+  "inputs": [
+   "xlsx_nhan_su"
+  ],
+  "checks": [
+   {
+    "type": "xlsx_sheet_exists",
+    "file": "nhan-su.xlsx",
+    "name": "Thống kê"
+   },
+   {
+    "type": "xlsx_any_formula",
+    "file": "nhan-su.xlsx",
+    "contains": "COUNTIF"
+   }
+  ]
+ },
+ {
+  "id": "xlsx-10-thanh-tien",
+  "group": "Excel",
+  "request": "Thêm cột Thành tiền = Số lượng × Đơn giá cho mọi dòng",
+  "inputs": [
+   "xlsx_ban_hang"
+  ],
+  "checks": [
+   {
+    "type": "xlsx_formula_count",
+    "file": "ban-hang.xlsx",
+    "min": 15
+   }
+  ]
+ },
+ {
+  "id": "xlsx-11-tong-san-pham",
+  "group": "Excel",
+  "request": "Tính tổng doanh thu theo từng sản phẩm bằng SUMIF ở vùng bên phải bảng",
+  "inputs": [
+   "xlsx_ban_hang"
+  ],
+  "checks": [
+   {
+    "type": "xlsx_any_formula",
+    "file": "ban-hang.xlsx",
+    "contains": "SUMIF"
+   }
+  ]
+ },
+ {
+  "id": "xlsx-12-bieu-do-tron",
+  "group": "Excel",
+  "request": "Vẽ biểu đồ tròn tỉ trọng số lượng bán theo sản phẩm",
+  "inputs": [
+   "xlsx_ban_hang"
+  ],
+  "checks": [
+   {
+    "type": "xlsx_chart_count",
+    "file": "ban-hang.xlsx",
+    "min": 1
+   }
+  ]
+ },
+ {
+  "id": "xlsx-13-sap-xep-luong",
+  "group": "Excel",
+  "request": "Sắp xếp nhân viên theo lương giảm dần",
+  "inputs": [
+   "xlsx_nhan_su"
+  ],
+  "checks": [
+   {
+    "type": "xlsx_sorted_desc",
+    "file": "nhan-su.xlsx",
+    "sheet": "Nhân sự",
+    "col": "D",
+    "rows": [
+     2,
+     9
     ]
-  },
-  {
-    "id": "xlsx-04-sap-xep",
-    "group": "Excel",
-    "request": "Sắp xếp bảng theo cột Q1 giảm dần",
-    "inputs": [
-      "xlsx_loi_nhuan"
-    ],
-    "checks": [
-      {
-        "type": "xlsx_sorted_desc",
-        "file": "loi-nhuan.xlsx",
-        "sheet": "Lợi nhuận",
-        "col": "B",
-        "rows": [
-          2,
-          6
-        ]
-      }
-    ]
-  },
-  {
-    "id": "docx-01-bao-cao",
-    "group": "Word",
-    "request": "Soạn báo cáo ngắn về kết quả kinh doanh quý 3 gồm các đề mục: Tổng quan, Kết quả, Kiến nghị",
-    "inputs": [],
-    "checks": [
-      {
-        "type": "file_created",
-        "kind": "docx"
-      },
-      {
-        "type": "docx_heading_count",
-        "min": 3
-      }
-    ]
-  },
-  {
-    "id": "docx-02-tim-thay",
-    "group": "Word",
-    "request": "Thay tất cả chữ 'khách hàng' thành 'đối tác'",
-    "inputs": [
-      "docx_hop_dong"
-    ],
-    "checks": [
-      {
-        "type": "docx_not_contains",
-        "file": "hop-dong.docx",
-        "text": "khách hàng"
-      },
-      {
-        "type": "docx_contains",
-        "file": "hop-dong.docx",
-        "text": "đối tác"
-      }
-    ]
-  },
-  {
-    "id": "docx-03-ra-soat",
-    "group": "Rà soát",
-    "request": "Rà soát hợp đồng, đề xuất sửa câu chưa rõ dưới dạng Track Changes và ghi nhận xét",
-    "inputs": [
-      "docx_hop_dong"
-    ],
-    "checks": [
-      {
-        "type": "docx_has_revisions_or_comments",
-        "file": "hop-dong.docx"
-      }
-    ]
-  },
-  {
-    "id": "docx-04-dich",
-    "group": "Dịch",
-    "request": "Dịch tài liệu sang tiếng Anh, giữ nguyên số và ngày tháng",
-    "inputs": [
-      "docx_hop_dong"
-    ],
-    "checks": [
-      {
-        "type": "docx_contains",
-        "file": "hop-dong.docx",
-        "text": "15/01/2026"
-      },
-      {
-        "type": "docx_contains",
-        "file": "hop-dong.docx",
-        "text": "120.000.000"
-      },
-      {
-        "type": "docx_not_contains",
-        "file": "hop-dong.docx",
-        "text": "Hợp đồng ký ngày"
-      }
-    ]
-  },
-  {
-    "id": "pptx-01-gioi-thieu",
-    "group": "PowerPoint",
-    "request": "Làm 5 slide giới thiệu sản phẩm máy lọc nước, có ghi chú thuyết trình",
-    "inputs": [],
-    "checks": [
-      {
-        "type": "file_created",
-        "kind": "pptx"
-      },
-      {
-        "type": "pptx_slide_count",
-        "min": 5
-      },
-      {
-        "type": "pptx_notes_count",
-        "min": 3
-      }
-    ]
-  },
-  {
-    "id": "pptx-02-tu-khoa",
-    "group": "Định dạng từ khoá",
-    "request": "In đậm và tô cam chữ 'tiết kiệm' trên các slide",
-    "inputs": [
-      "pptx_gioi_thieu"
-    ],
-    "checks": [
-      {
-        "type": "file_changed",
-        "file": "gioi-thieu.pptx"
-      }
-    ]
-  },
-  {
-    "id": "undo-01",
-    "group": "Hoàn tác",
-    "request": "Hoàn tác lần sửa vừa rồi",
-    "inputs": [
-      "xlsx_loi_nhuan"
-    ],
-    "setup_request": "Ghi số 999 vào ô B2",
-    "checks": [
-      {
-        "type": "xlsx_cell_equals",
-        "file": "loi-nhuan.xlsx",
-        "sheet": "Lợi nhuận",
-        "ref": "B2",
-        "value": 120
-      },
-      {
-        "type": "has_redo",
-        "file": "loi-nhuan.xlsx"
-      }
-    ]
-  },
-  {
-    "id": "mo-ho-01",
-    "group": "Yêu cầu không rõ",
-    "request": "Sửa cái bảng kia đi",
-    "inputs": [
-      "xlsx_loi_nhuan",
-      "docx_hop_dong"
-    ],
-    "checks": [
-      {
-        "type": "no_file_changed"
-      },
-      {
-        "type": "reply_asks_question"
-      }
-    ]
+   }
+  ]
+ },
+ {
+  "id": "xlsx-14-tieu-de-dam",
+  "group": "Excel",
+  "request": "In đậm dòng tiêu đề và tô nền xanh nhạt",
+  "inputs": [
+   "xlsx_nhan_su"
+  ],
+  "checks": [
+   {
+    "type": "file_changed",
+    "file": "nhan-su.xlsx"
+   },
+   {
+    "type": "xlsx_bold_header",
+    "file": "nhan-su.xlsx"
+   }
+  ]
+ },
+ {
+  "id": "xlsx-15-xep-loai",
+  "group": "Excel",
+  "request": "Thêm cột Xếp loại: lương từ 20 triệu trở lên là 'Cao', còn lại 'Thường' bằng IF",
+  "inputs": [
+   "xlsx_nhan_su"
+  ],
+  "checks": [
+   {
+    "type": "xlsx_any_formula",
+    "file": "nhan-su.xlsx",
+    "contains": "IF("
+   }
+  ]
+ },
+ {
+  "id": "xlsx-16-ke-hoach-chi-tieu",
+  "group": "Excel",
+  "request": "Lập bảng kế hoạch chi tiêu gia đình 1 tháng có tổng và tỉ lệ phần trăm từng khoản",
+  "inputs": [],
+  "checks": [
+   {
+    "type": "file_created",
+    "kind": "xlsx"
+   },
+   {
+    "type": "xlsx_any_formula",
+    "contains": "SUM"
+   }
+  ]
+ },
+ {
+  "id": "xlsx-17-tham-nien",
+  "group": "Excel",
+  "request": "Thêm cột Thâm niên (năm) tính từ Ngày vào làm đến hôm nay",
+  "inputs": [
+   "xlsx_nhan_su"
+  ],
+  "checks": [
+   {
+    "type": "xlsx_formula_count",
+    "file": "nhan-su.xlsx",
+    "min": 8
+   }
+  ]
+ },
+ {
+  "id": "xlsx-18-bieu-do-duong",
+  "group": "Excel",
+  "request": "Vẽ biểu đồ đường lợi nhuận các chi nhánh qua 3 quý",
+  "inputs": [
+   "xlsx_loi_nhuan"
+  ],
+  "checks": [
+   {
+    "type": "xlsx_chart_count",
+    "file": "loi-nhuan.xlsx",
+    "min": 1
+   }
+  ]
+ },
+ {
+  "id": "xlsx-19-max-min",
+  "group": "Excel",
+  "request": "Ghi chú lương cao nhất và thấp nhất ở bên phải bảng bằng công thức",
+  "inputs": [
+   "xlsx_nhan_su"
+  ],
+  "checks": [
+   {
+    "type": "xlsx_any_formula",
+    "file": "nhan-su.xlsx",
+    "contains": "MAX"
+   },
+   {
+    "type": "xlsx_any_formula",
+    "file": "nhan-su.xlsx",
+    "contains": "MIN"
+   }
+  ]
+ },
+ {
+  "id": "part-01-to-xanh",
+  "group": "Sửa một phần",
+  "request": "Tô nền xanh lá cho các ô này",
+  "inputs": [
+   "xlsx_loi_nhuan"
+  ],
+  "checks": [
+   {
+    "type": "xlsx_unchanged_outside",
+    "file": "loi-nhuan.xlsx",
+    "sheet": "Lợi nhuận",
+    "range": "B2:B6"
+   }
+  ],
+  "selection": {
+   "file": "loi-nhuan.xlsx",
+   "sheet": "Lợi nhuận",
+   "range": "B2:B6"
   }
+ },
+ {
+  "id": "part-02-nhan-doi",
+  "group": "Sửa một phần",
+  "request": "Nhân đôi các giá trị trong vùng chọn",
+  "inputs": [
+   "xlsx_loi_nhuan"
+  ],
+  "checks": [
+   {
+    "type": "xlsx_cell_equals",
+    "file": "loi-nhuan.xlsx",
+    "sheet": "Lợi nhuận",
+    "ref": "C2",
+    "value": -30
+   },
+   {
+    "type": "xlsx_unchanged_outside",
+    "file": "loi-nhuan.xlsx",
+    "sheet": "Lợi nhuận",
+    "range": "C2:C6"
+   }
+  ],
+  "selection": {
+   "file": "loi-nhuan.xlsx",
+   "sheet": "Lợi nhuận",
+   "range": "C2:C6"
+  }
+ },
+ {
+  "id": "part-03-diem-neo",
+  "group": "Sửa một phần",
+  "request": "Điền tiêu đề 'Ghi chú' vào đây và chữ 'Kiểm tra' cho 5 dòng bên dưới",
+  "inputs": [
+   "xlsx_loi_nhuan"
+  ],
+  "checks": [
+   {
+    "type": "xlsx_contains_text",
+    "file": "loi-nhuan.xlsx",
+    "text": "Ghi chú"
+   }
+  ],
+  "selection": {
+   "file": "loi-nhuan.xlsx",
+   "sheet": "Lợi nhuận",
+   "range": "F1"
+  }
+ },
+ {
+  "id": "part-04-doan-word",
+  "group": "Sửa một phần",
+  "request": "Viết lại đoạn này cho trang trọng hơn",
+  "inputs": [
+   "docx_hop_dong"
+  ],
+  "checks": [
+   {
+    "type": "file_changed",
+    "file": "hop-dong.docx"
+   },
+   {
+    "type": "docx_contains",
+    "file": "hop-dong.docx",
+    "text": "Hợp đồng có hiệu lực kể từ ngày ký."
+   }
+  ],
+  "selection": {
+   "file": "hop-dong.docx",
+   "paragraphs": [
+    3
+   ]
+  }
+ },
+ {
+  "id": "part-05-slide",
+  "group": "Sửa một phần",
+  "request": "Thêm ghi chú thuyết trình cho slide này",
+  "inputs": [
+   "pptx_gioi_thieu"
+  ],
+  "checks": [
+   {
+    "type": "pptx_notes_count",
+    "file": "gioi-thieu.pptx",
+    "min": 1
+   }
+  ],
+  "selection": {
+   "file": "gioi-thieu.pptx",
+   "slides": [
+    1
+   ]
+  }
+ },
+ {
+  "id": "part-06-to-dam-luong",
+  "group": "Sửa một phần",
+  "request": "In đậm các ô lương này",
+  "inputs": [
+   "xlsx_nhan_su"
+  ],
+  "checks": [
+   {
+    "type": "xlsx_unchanged_outside",
+    "file": "nhan-su.xlsx",
+    "sheet": "Nhân sự",
+    "range": "D2:D5"
+   }
+  ],
+  "selection": {
+   "file": "nhan-su.xlsx",
+   "sheet": "Nhân sự",
+   "range": "D2:D5"
+  }
+ },
+ {
+  "id": "part-07-xoa-am",
+  "group": "Sửa một phần",
+  "request": "Thay các số âm trong vùng này bằng 0",
+  "inputs": [
+   "xlsx_loi_nhuan"
+  ],
+  "checks": [
+   {
+    "type": "xlsx_cell_equals",
+    "file": "loi-nhuan.xlsx",
+    "sheet": "Lợi nhuận",
+    "ref": "B3",
+    "value": 0
+   },
+   {
+    "type": "xlsx_unchanged_outside",
+    "file": "loi-nhuan.xlsx",
+    "sheet": "Lợi nhuận",
+    "range": "B2:B6"
+   }
+  ],
+  "selection": {
+   "file": "loi-nhuan.xlsx",
+   "sheet": "Lợi nhuận",
+   "range": "B2:B6"
+  }
+ },
+ {
+  "id": "ana-01-hoi-quy",
+  "group": "Phân tích",
+  "request": "Chạy hồi quy tuyến tính Số lượng theo Đơn giá và viết báo cáo Word ngắn kèm hình",
+  "inputs": [
+   "xlsx_ban_hang"
+  ],
+  "checks": [
+   {
+    "type": "file_created",
+    "kind": "docx"
+   }
+  ],
+  "requires": "sandbox"
+ },
+ {
+  "id": "ana-02-thong-ke-mo-ta",
+  "group": "Phân tích",
+  "request": "Thống kê mô tả cột Lương (trung bình, trung vị, độ lệch chuẩn) vào sheet mới",
+  "inputs": [
+   "xlsx_nhan_su"
+  ],
+  "checks": [
+   {
+    "type": "xlsx_sheet_exists",
+    "file": "nhan-su.xlsx",
+    "name": "Thống kê"
+   }
+  ],
+  "requires": "sandbox"
+ },
+ {
+  "id": "ana-03-anova",
+  "group": "Phân tích",
+  "request": "Kiểm định ANOVA lương giữa các phòng ban, báo kết luận",
+  "inputs": [
+   "xlsx_nhan_su"
+  ],
+  "checks": [
+   {
+    "type": "reply_contains",
+    "any": [
+     "ANOVA",
+     "p-value",
+     "p ="
+    ]
+   }
+  ],
+  "requires": "sandbox"
+ },
+ {
+  "id": "ana-04-du-bao",
+  "group": "Phân tích",
+  "request": "Dự báo số lượng bán 5 ngày tới và ghi vào sheet Dự báo",
+  "inputs": [
+   "xlsx_ban_hang"
+  ],
+  "checks": [
+   {
+    "type": "xlsx_sheet_exists",
+    "file": "ban-hang.xlsx",
+    "name": "Dự báo"
+   }
+  ],
+  "requires": "sandbox"
+ },
+ {
+  "id": "ana-05-tong-hop",
+  "group": "Phân tích",
+  "request": "Tóm tắt bằng lời: phòng ban nào có lương trung bình cao nhất?",
+  "inputs": [
+   "xlsx_nhan_su"
+  ],
+  "checks": [
+   {
+    "type": "reply_contains",
+    "any": [
+     "Kỹ thuật"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "ana-06-xu-huong",
+  "group": "Phân tích",
+  "request": "Chi nhánh nào có tổng lợi nhuận 3 quý cao nhất? Trả lời ngắn",
+  "inputs": [
+   "xlsx_loi_nhuan"
+  ],
+  "checks": [
+   {
+    "type": "reply_contains",
+    "any": [
+     "TP.HCM",
+     "Hồ Chí Minh"
+    ]
+   },
+   {
+    "type": "no_file_changed"
+   }
+  ]
+ },
+ {
+  "id": "docx-05-don-xin-nghi",
+  "group": "Word",
+  "request": "Soạn đơn xin nghỉ phép 3 ngày gửi trưởng phòng",
+  "inputs": [],
+  "checks": [
+   {
+    "type": "file_created",
+    "kind": "docx"
+   },
+   {
+    "type": "docx_paragraph_count",
+    "min": 5
+   }
+  ]
+ },
+ {
+  "id": "docx-06-bang",
+  "group": "Word",
+  "request": "Chèn bảng tóm tắt 3 chỉ số chính của báo cáo sau phần Tổng quan",
+  "inputs": [
+   "docx_bao_cao"
+  ],
+  "checks": [
+   {
+    "type": "docx_table_count",
+    "file": "bao-cao.docx",
+    "min": 1
+   }
+  ]
+ },
+ {
+  "id": "docx-07-them-muc",
+  "group": "Word",
+  "request": "Thêm mục '4. Kế hoạch quý IV' với 3 gạch đầu dòng ở cuối báo cáo",
+  "inputs": [
+   "docx_bao_cao"
+  ],
+  "checks": [
+   {
+    "type": "docx_contains",
+    "file": "bao-cao.docx",
+    "text": "Kế hoạch quý IV"
+   },
+   {
+    "type": "docx_heading_count",
+    "file": "bao-cao.docx",
+    "min": 5
+   }
+  ]
+ },
+ {
+  "id": "docx-08-tom-tat",
+  "group": "Word",
+  "request": "Viết một đoạn tóm tắt ngắn chèn ngay dưới tiêu đề báo cáo",
+  "inputs": [
+   "docx_bao_cao"
+  ],
+  "checks": [
+   {
+    "type": "file_changed",
+    "file": "bao-cao.docx"
+   },
+   {
+    "type": "docx_contains",
+    "file": "bao-cao.docx",
+    "text": "4,2 tỷ"
+   }
+  ]
+ },
+ {
+  "id": "docx-09-bien-ban",
+  "group": "Word",
+  "request": "Soạn biên bản họp với các mục: Thời gian, Thành phần, Nội dung, Kết luận",
+  "inputs": [],
+  "checks": [
+   {
+    "type": "file_created",
+    "kind": "docx"
+   },
+   {
+    "type": "docx_heading_count",
+    "min": 4
+   }
+  ]
+ },
+ {
+  "id": "docx-10-thay-ten",
+  "group": "Word",
+  "request": "Đổi 'công ty A' thành 'Công ty TNHH Minh Phát' trong toàn bộ hợp đồng",
+  "inputs": [
+   "docx_hop_dong"
+  ],
+  "checks": [
+   {
+    "type": "docx_contains",
+    "file": "hop-dong.docx",
+    "text": "Công ty TNHH Minh Phát"
+   },
+   {
+    "type": "docx_not_contains",
+    "file": "hop-dong.docx",
+    "text": "công ty A "
+   }
+  ]
+ },
+ {
+  "id": "docx-11-giu-so",
+  "group": "Word",
+  "request": "Rút gọn đoạn Kết quả cho súc tích hơn",
+  "inputs": [
+   "docx_bao_cao"
+  ],
+  "checks": [
+   {
+    "type": "file_changed",
+    "file": "bao-cao.docx"
+   },
+   {
+    "type": "docx_contains",
+    "file": "bao-cao.docx",
+    "text": "1.250"
+   }
+  ]
+ },
+ {
+  "id": "docx-12-cv",
+  "group": "Word",
+  "request": "Tạo CV xin việc vị trí kế toán có các mục Thông tin, Học vấn, Kinh nghiệm, Kỹ năng",
+  "inputs": [],
+  "checks": [
+   {
+    "type": "file_created",
+    "kind": "docx"
+   },
+   {
+    "type": "docx_heading_count",
+    "min": 4
+   }
+  ]
+ },
+ {
+  "id": "docx-13-thong-bao",
+  "group": "Word",
+  "request": "Soạn thông báo nghỉ lễ Quốc khánh 2/9 cho toàn công ty",
+  "inputs": [],
+  "checks": [
+   {
+    "type": "file_created",
+    "kind": "docx"
+   },
+   {
+    "type": "docx_contains",
+    "text": "2/9"
+   }
+  ]
+ },
+ {
+  "id": "docx-14-bang-gia",
+  "group": "Word",
+  "request": "Tạo bảng báo giá 3 sản phẩm với cột Tên, Đơn giá, Số lượng, Thành tiền",
+  "inputs": [],
+  "checks": [
+   {
+    "type": "file_created",
+    "kind": "docx"
+   },
+   {
+    "type": "docx_table_count",
+    "min": 1
+   }
+  ]
+ },
+ {
+  "id": "docx-15-dinh-dang-khoa",
+  "group": "Định dạng từ khoá",
+  "request": "Tô đỏ và in đậm mọi chữ 'khách hàng' trong hợp đồng",
+  "inputs": [
+   "docx_hop_dong"
+  ],
+  "checks": [
+   {
+    "type": "file_changed",
+    "file": "hop-dong.docx"
+   },
+   {
+    "type": "docx_contains",
+    "file": "hop-dong.docx",
+    "text": "khách hàng"
+   }
+  ]
+ },
+ {
+  "id": "docx-16-mau",
+  "group": "Mẫu thiết kế",
+  "request": "Định dạng báo cáo giống tài liệu mẫu của công ty",
+  "inputs": [
+   "docx_bao_cao",
+   "docx_mau"
+  ],
+  "checks": [
+   {
+    "type": "docx_style_size",
+    "file": "bao-cao.docx",
+    "style": "Heading 1",
+    "pt": 20
+   }
+  ]
+ },
+ {
+  "id": "docx-17-mau-giu-noi-dung",
+  "group": "Mẫu thiết kế",
+  "request": "Áp dụng phong cách của mau-cong-ty.docx cho hợp đồng, bỏ định dạng gõ tay",
+  "inputs": [
+   "docx_hop_dong",
+   "docx_mau"
+  ],
+  "checks": [
+   {
+    "type": "docx_style_size",
+    "file": "hop-dong.docx",
+    "style": "Normal",
+    "pt": 13
+   },
+   {
+    "type": "docx_contains",
+    "file": "hop-dong.docx",
+    "text": "120.000.000"
+   }
+  ]
+ },
+ {
+  "id": "review-01-bao-cao",
+  "group": "Rà soát",
+  "request": "Góp ý báo cáo bằng nhận xét bên lề, không sửa nội dung",
+  "inputs": [
+   "docx_bao_cao"
+  ],
+  "checks": [
+   {
+    "type": "docx_has_revisions_or_comments",
+    "file": "bao-cao.docx"
+   },
+   {
+    "type": "docx_contains",
+    "file": "bao-cao.docx",
+    "text": "Tập trung ngân sách"
+   }
+  ]
+ },
+ {
+  "id": "review-02-chinh-ta",
+  "group": "Rà soát",
+  "request": "Đề xuất sửa lỗi diễn đạt trong hợp đồng dưới dạng Track Changes",
+  "inputs": [
+   "docx_hop_dong"
+  ],
+  "checks": [
+   {
+    "type": "docx_has_revisions_or_comments",
+    "file": "hop-dong.docx"
+   }
+  ]
+ },
+ {
+  "id": "review-03-rui-ro",
+  "group": "Rà soát",
+  "request": "Đánh dấu điều khoản rủi ro về thời hạn thanh toán bằng nhận xét",
+  "inputs": [
+   "docx_hop_dong"
+  ],
+  "checks": [
+   {
+    "type": "docx_has_revisions_or_comments",
+    "file": "hop-dong.docx"
+   }
+  ]
+ },
+ {
+  "id": "review-04-de-toan",
+  "group": "Rà soát",
+  "request": "Nhận xét về độ khó từng câu trong đề, không sửa đề",
+  "inputs": [
+   "docx_de_toan"
+  ],
+  "checks": [
+   {
+    "type": "docx_has_revisions_or_comments",
+    "file": "de-toan.docx"
+   },
+   {
+    "type": "docx_equation_count",
+    "file": "de-toan.docx",
+    "min": 2
+   }
+  ]
+ },
+ {
+  "id": "tran-01-bao-cao-en",
+  "group": "Dịch",
+  "request": "Dịch báo cáo sang tiếng Anh, giữ nguyên số liệu",
+  "inputs": [
+   "docx_bao_cao"
+  ],
+  "checks": [
+   {
+    "type": "docx_contains",
+    "file": "bao-cao.docx",
+    "text": "1.250"
+   },
+   {
+    "type": "docx_not_contains",
+    "file": "bao-cao.docx",
+    "text": "Tổng quan"
+   }
+  ]
+ },
+ {
+  "id": "tran-02-slide-en",
+  "group": "Dịch",
+  "request": "Dịch toàn bộ slide sang tiếng Anh",
+  "inputs": [
+   "pptx_gioi_thieu"
+  ],
+  "checks": [
+   {
+    "type": "file_changed",
+    "file": "gioi-thieu.pptx"
+   },
+   {
+    "type": "pptx_contains",
+    "file": "gioi-thieu.pptx",
+    "text": "X"
+   }
+  ]
+ },
+ {
+  "id": "tran-03-de-toan-en",
+  "group": "Dịch",
+  "request": "Dịch đề kiểm tra sang tiếng Anh, giữ nguyên công thức",
+  "inputs": [
+   "docx_de_toan"
+  ],
+  "checks": [
+   {
+    "type": "docx_equation_count",
+    "file": "de-toan.docx",
+    "min": 2
+   },
+   {
+    "type": "docx_not_contains",
+    "file": "de-toan.docx",
+    "text": "Giải phương trình"
+   }
+  ]
+ },
+ {
+  "id": "tran-04-hop-dong-ja",
+  "group": "Dịch",
+  "request": "Dịch hợp đồng sang tiếng Nhật, giữ số tiền và ngày",
+  "inputs": [
+   "docx_hop_dong"
+  ],
+  "checks": [
+   {
+    "type": "docx_contains",
+    "file": "hop-dong.docx",
+    "text": "15/01/2026"
+   },
+   {
+    "type": "docx_contains",
+    "file": "hop-dong.docx",
+    "text": "120.000.000"
+   }
+  ]
+ },
+ {
+  "id": "tran-05-excel-tieu-de",
+  "group": "Dịch",
+  "request": "Dịch dòng tiêu đề bảng nhân sự sang tiếng Anh",
+  "inputs": [
+   "xlsx_nhan_su"
+  ],
+  "checks": [
+   {
+    "type": "xlsx_contains_text",
+    "file": "nhan-su.xlsx",
+    "text": "Salary"
+   }
+  ]
+ },
+ {
+  "id": "tran-06-giu-ten",
+  "group": "Dịch",
+  "request": "Dịch báo cáo sang tiếng Anh nhưng giữ tên riêng và phần trăm",
+  "inputs": [
+   "docx_bao_cao"
+  ],
+  "checks": [
+   {
+    "type": "docx_contains",
+    "file": "bao-cao.docx",
+    "text": "78%"
+   }
+  ]
+ },
+ {
+  "id": "math-01-word-bac-hai",
+  "group": "Công thức toán",
+  "request": "Soạn tài liệu Word trình bày công thức nghiệm phương trình bậc hai",
+  "inputs": [],
+  "checks": [
+   {
+    "type": "file_created",
+    "kind": "docx"
+   },
+   {
+    "type": "docx_equation_count",
+    "min": 1
+   },
+   {
+    "type": "docx_contains",
+    "text": "\\frac"
+   }
+  ]
+ },
+ {
+  "id": "math-02-word-tich-phan",
+  "group": "Công thức toán",
+  "request": "Soạn đề 3 câu tích phân xác định kèm đáp án",
+  "inputs": [],
+  "checks": [
+   {
+    "type": "file_created",
+    "kind": "docx"
+   },
+   {
+    "type": "docx_equation_count",
+    "min": 3
+   },
+   {
+    "type": "docx_contains",
+    "text": "\\int"
+   }
+  ]
+ },
+ {
+  "id": "math-03-them-dap-an",
+  "group": "Công thức toán",
+  "request": "Thêm lời giải chi tiết có công thức cho từng câu của đề",
+  "inputs": [
+   "docx_de_toan"
+  ],
+  "checks": [
+   {
+    "type": "docx_equation_count",
+    "file": "de-toan.docx",
+    "min": 5
+   }
+  ]
+ },
+ {
+  "id": "math-04-ma-tran",
+  "group": "Công thức toán",
+  "request": "Tạo tài liệu giải thích cách tính định thức ma trận 2x2 và 3x3",
+  "inputs": [],
+  "checks": [
+   {
+    "type": "file_created",
+    "kind": "docx"
+   },
+   {
+    "type": "docx_contains",
+    "text": "matrix"
+   }
+  ]
+ },
+ {
+  "id": "math-05-he-pt",
+  "group": "Công thức toán",
+  "request": "Viết hệ phương trình 2 ẩn và cách giải bằng phương pháp thế",
+  "inputs": [],
+  "checks": [
+   {
+    "type": "file_created",
+    "kind": "docx"
+   },
+   {
+    "type": "docx_equation_count",
+    "min": 2
+   }
+  ]
+ },
+ {
+  "id": "math-06-chuyen-cong-thuc",
+  "group": "Công thức toán",
+  "request": "Câu 3 đang viết công thức bằng chữ, hãy chuyển thành công thức toán thật",
+  "inputs": [
+   "docx_de_toan"
+  ],
+  "checks": [
+   {
+    "type": "docx_equation_count",
+    "file": "de-toan.docx",
+    "min": 3
+   }
+  ]
+ },
+ {
+  "id": "math-07-doc-de",
+  "group": "Công thức toán",
+  "request": "Đề có mấy công thức? Liệt kê chúng",
+  "inputs": [
+   "docx_de_toan"
+  ],
+  "checks": [
+   {
+    "type": "reply_contains",
+    "any": [
+     "x^2",
+     "x²",
+     "\\int",
+     "∫"
+    ]
+   },
+   {
+    "type": "no_file_changed"
+   }
+  ]
+ },
+ {
+  "id": "math-08-slide-pytago",
+  "group": "Công thức toán",
+  "request": "Làm 3 slide về định lý Pytago có công thức và ví dụ",
+  "inputs": [],
+  "checks": [
+   {
+    "type": "file_created",
+    "kind": "pptx"
+   },
+   {
+    "type": "pptx_equation_count",
+    "min": 2
+   }
+  ]
+ },
+ {
+  "id": "math-09-slide-dao-ham",
+  "group": "Công thức toán",
+  "request": "Làm slide bảng đạo hàm các hàm cơ bản",
+  "inputs": [],
+  "checks": [
+   {
+    "type": "file_created",
+    "kind": "pptx"
+   },
+   {
+    "type": "pptx_equation_count",
+    "min": 3
+   }
+  ]
+ },
+ {
+  "id": "math-10-slide-them",
+  "group": "Công thức toán",
+  "request": "Thêm một slide công thức diện tích hình tròn",
+  "inputs": [
+   "pptx_gioi_thieu"
+  ],
+  "checks": [
+   {
+    "type": "pptx_equation_count",
+    "file": "gioi-thieu.pptx",
+    "min": 1
+   }
+  ]
+ },
+ {
+  "id": "math-11-thong-ke",
+  "group": "Công thức toán",
+  "request": "Soạn tài liệu công thức trung bình, phương sai, độ lệch chuẩn",
+  "inputs": [],
+  "checks": [
+   {
+    "type": "file_created",
+    "kind": "docx"
+   },
+   {
+    "type": "docx_contains",
+    "text": "\\sum"
+   }
+  ]
+ },
+ {
+  "id": "math-12-vat-ly",
+  "group": "Công thức toán",
+  "request": "Làm 2 slide công thức chuyển động thẳng biến đổi đều",
+  "inputs": [],
+  "checks": [
+   {
+    "type": "file_created",
+    "kind": "pptx"
+   },
+   {
+    "type": "pptx_equation_count",
+    "min": 2
+   }
+  ]
+ },
+ {
+  "id": "pptx-03-quy-trinh",
+  "group": "PowerPoint",
+  "request": "Làm slide sơ đồ quy trình tuyển dụng 4 bước",
+  "inputs": [],
+  "checks": [
+   {
+    "type": "file_created",
+    "kind": "pptx"
+   },
+   {
+    "type": "pptx_shape_count",
+    "min": 4
+   }
+  ]
+ },
+ {
+  "id": "pptx-04-bieu-do",
+  "group": "PowerPoint",
+  "request": "Làm slide biểu đồ doanh thu 4 quý: 120, 150, 170, 210 triệu",
+  "inputs": [],
+  "checks": [
+   {
+    "type": "file_created",
+    "kind": "pptx"
+   },
+   {
+    "type": "pptx_chart_count",
+    "min": 1
+   }
+  ]
+ },
+ {
+  "id": "pptx-05-bang",
+  "group": "PowerPoint",
+  "request": "Thêm slide bảng so sánh 3 gói dịch vụ",
+  "inputs": [
+   "pptx_gioi_thieu"
+  ],
+  "checks": [
+   {
+    "type": "pptx_table_count",
+    "file": "gioi-thieu.pptx",
+    "min": 1
+   }
+  ]
+ },
+ {
+  "id": "pptx-06-sua-tran",
+  "group": "PowerPoint",
+  "request": "Slide đang bị tràn chữ, sửa lại cho gọn",
+  "inputs": [
+   "pptx_tran_chu"
+  ],
+  "checks": [
+   {
+    "type": "pptx_layout_ok",
+    "file": "ke-hoach.pptx"
+   }
+  ]
+ },
+ {
+  "id": "pptx-07-ghi-chu",
+  "group": "PowerPoint",
+  "request": "Viết ghi chú thuyết trình cho tất cả slide",
+  "inputs": [
+   "pptx_gioi_thieu"
+  ],
+  "checks": [
+   {
+    "type": "pptx_notes_count",
+    "file": "gioi-thieu.pptx",
+    "min": 2
+   }
+  ]
+ },
+ {
+  "id": "pptx-08-them-slide",
+  "group": "PowerPoint",
+  "request": "Thêm slide Giá bán và slide Liên hệ vào cuối",
+  "inputs": [
+   "pptx_gioi_thieu"
+  ],
+  "checks": [
+   {
+    "type": "pptx_slide_count",
+    "file": "gioi-thieu.pptx",
+    "min": 4
+   }
+  ]
+ },
+ {
+  "id": "pptx-09-sap-xep",
+  "group": "PowerPoint",
+  "request": "Đưa slide Lợi ích lên đầu",
+  "inputs": [
+   "pptx_gioi_thieu"
+  ],
+  "checks": [
+   {
+    "type": "file_changed",
+    "file": "gioi-thieu.pptx"
+   }
+  ]
+ },
+ {
+  "id": "pptx-10-bo-cuc",
+  "group": "PowerPoint",
+  "request": "Làm bài 6 slide giới thiệu công ty, bố cục gọn gàng không tràn chữ",
+  "inputs": [],
+  "checks": [
+   {
+    "type": "file_created",
+    "kind": "pptx"
+   },
+   {
+    "type": "pptx_slide_count",
+    "min": 6
+   },
+   {
+    "type": "pptx_layout_ok"
+   }
+  ]
+ },
+ {
+  "id": "pptx-11-so-sanh",
+  "group": "PowerPoint",
+  "request": "Làm slide so sánh hai phương án A và B bằng hai khối cạnh nhau",
+  "inputs": [],
+  "checks": [
+   {
+    "type": "file_created",
+    "kind": "pptx"
+   },
+   {
+    "type": "pptx_shape_count",
+    "min": 2
+   }
+  ]
+ },
+ {
+  "id": "pptx-12-thoi-gian",
+  "group": "PowerPoint",
+  "request": "Làm slide dòng thời gian 5 mốc phát triển của dự án",
+  "inputs": [],
+  "checks": [
+   {
+    "type": "file_created",
+    "kind": "pptx"
+   },
+   {
+    "type": "pptx_shape_count",
+    "min": 5
+   }
+  ]
+ },
+ {
+  "id": "pptx-13-tieu-de",
+  "group": "PowerPoint",
+  "request": "Đổi tiêu đề slide đầu thành 'Máy lọc nước X - Thế hệ mới'",
+  "inputs": [
+   "pptx_gioi_thieu"
+  ],
+  "checks": [
+   {
+    "type": "pptx_contains",
+    "file": "gioi-thieu.pptx",
+    "text": "Thế hệ mới"
+   }
+  ]
+ },
+ {
+  "id": "pptx-14-tu-bao-cao",
+  "group": "PowerPoint",
+  "request": "Tạo bài trình chiếu tóm tắt báo cáo này (4-5 slide)",
+  "inputs": [
+   "docx_bao_cao"
+  ],
+  "checks": [
+   {
+    "type": "file_created",
+    "kind": "pptx"
+   },
+   {
+    "type": "pptx_slide_count",
+    "min": 4
+   }
+  ]
+ },
+ {
+  "id": "design-01-toi",
+  "group": "Mẫu thiết kế",
+  "request": "Làm 3 slide giới thiệu sự kiện với nền tối",
+  "inputs": [],
+  "checks": [
+   {
+    "type": "file_created",
+    "kind": "pptx"
+   },
+   {
+    "type": "pptx_theme_bg",
+    "value": "0F1923"
+   }
+  ]
+ },
+ {
+  "id": "design-02-doi-mau",
+  "group": "Mẫu thiết kế",
+  "request": "Đổi cả bài sang tông màu ấm",
+  "inputs": [
+   "pptx_gioi_thieu"
+  ],
+  "checks": [
+   {
+    "type": "pptx_theme_bg",
+    "file": "gioi-thieu.pptx",
+    "value": "FBF6EE"
+   }
+  ]
+ },
+ {
+  "id": "design-03-tron",
+  "group": "Mẫu thiết kế",
+  "request": "Làm 3 slide với mẫu trơn, không có dải màu",
+  "inputs": [],
+  "checks": [
+   {
+    "type": "file_created",
+    "kind": "pptx"
+   }
+  ]
+ },
+ {
+  "id": "kw-01-excel",
+  "group": "Định dạng từ khoá",
+  "request": "Tô đỏ chữ 'Kỹ thuật' trong bảng",
+  "inputs": [
+   "xlsx_nhan_su"
+  ],
+  "checks": [
+   {
+    "type": "file_changed",
+    "file": "nhan-su.xlsx"
+   }
+  ]
+ },
+ {
+  "id": "kw-02-gach-chan",
+  "group": "Định dạng từ khoá",
+  "request": "Gạch chân cụm 'tỉ lệ chuyển đổi' trong báo cáo",
+  "inputs": [
+   "docx_bao_cao"
+  ],
+  "checks": [
+   {
+    "type": "file_changed",
+    "file": "bao-cao.docx"
+   }
+  ]
+ },
+ {
+  "id": "undo-02-word",
+  "group": "Hoàn tác",
+  "request": "Hoàn tác lần sửa vừa rồi",
+  "inputs": [
+   "docx_hop_dong"
+  ],
+  "checks": [
+   {
+    "type": "docx_contains",
+    "file": "hop-dong.docx",
+    "text": "khách hàng"
+   },
+   {
+    "type": "has_redo",
+    "file": "hop-dong.docx"
+   }
+  ],
+  "setup_request": "Thay chữ 'khách hàng' thành 'bên mua'"
+ },
+ {
+  "id": "undo-03-slide",
+  "group": "Hoàn tác",
+  "request": "Quay lại như cũ",
+  "inputs": [
+   "pptx_gioi_thieu"
+  ],
+  "checks": [
+   {
+    "type": "pptx_slide_count",
+    "file": "gioi-thieu.pptx",
+    "min": 2
+   },
+   {
+    "type": "has_redo",
+    "file": "gioi-thieu.pptx"
+   }
+  ],
+  "setup_request": "Xoá slide thứ hai"
+ },
+ {
+  "id": "undo-04-dinh-dang",
+  "group": "Hoàn tác",
+  "request": "Hoàn tác yêu cầu trước",
+  "inputs": [
+   "xlsx_nhan_su"
+  ],
+  "checks": [
+   {
+    "type": "has_redo",
+    "file": "nhan-su.xlsx"
+   }
+  ],
+  "setup_request": "Tô nền vàng cả bảng"
+ },
+ {
+  "id": "vague-02",
+  "group": "Yêu cầu không rõ",
+  "request": "Làm cho đẹp hơn",
+  "inputs": [
+   "xlsx_nhan_su",
+   "docx_hop_dong"
+  ],
+  "checks": [
+   {
+    "type": "no_file_changed"
+   },
+   {
+    "type": "reply_asks_question"
+   }
+  ]
+ },
+ {
+  "id": "vague-03",
+  "group": "Yêu cầu không rõ",
+  "request": "Xoá hết đi",
+  "inputs": [
+   "xlsx_loi_nhuan",
+   "docx_bao_cao"
+  ],
+  "checks": [
+   {
+    "type": "no_file_changed"
+   },
+   {
+    "type": "reply_asks_question"
+   }
+  ]
+ },
+ {
+  "id": "vague-04",
+  "group": "Yêu cầu không rõ",
+  "request": "Sửa số liệu cho đúng",
+  "inputs": [
+   "xlsx_loi_nhuan"
+  ],
+  "checks": [
+   {
+    "type": "no_file_changed"
+   },
+   {
+    "type": "reply_asks_question"
+   }
+  ]
+ },
+ {
+  "id": "vague-05",
+  "group": "Yêu cầu không rõ",
+  "request": "Thêm cái biểu đồ",
+  "inputs": [
+   "xlsx_nhan_su",
+   "xlsx_ban_hang"
+  ],
+  "checks": [
+   {
+    "type": "no_file_changed"
+   },
+   {
+    "type": "reply_asks_question"
+   }
+  ]
+ },
+ {
+  "id": "cmp-01-phien-ban",
+  "group": "So sánh",
+  "request": "So sánh phiên bản hiện tại với bản gốc và tóm tắt khác biệt",
+  "inputs": [
+   "docx_hop_dong"
+  ],
+  "checks": [
+   {
+    "type": "reply_contains",
+    "any": [
+     "đối tác",
+     "khác",
+     "thay"
+    ]
+   }
+  ],
+  "setup_request": "Thay chữ 'khách hàng' thành 'đối tác'"
+ },
+ {
+  "id": "cmp-02-hai-tep",
+  "group": "So sánh",
+  "request": "So sánh hai tài liệu hop-dong.docx và bao-cao.docx, nêu điểm khác",
+  "inputs": [
+   "docx_hop_dong",
+   "docx_bao_cao"
+  ],
+  "checks": [
+   {
+    "type": "reply_contains",
+    "any": [
+     "hợp đồng",
+     "báo cáo"
+    ]
+   },
+   {
+    "type": "no_file_changed"
+   }
+  ]
+ }
 ]
