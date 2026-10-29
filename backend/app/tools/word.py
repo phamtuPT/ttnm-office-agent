@@ -1,5 +1,6 @@
 """Tool Word (python-docx). TV2 mở rộng: bảng, định dạng từ khoá, tìm-thay thế, Track Changes/Comment, ..."""
 import copy
+import re
 from datetime import datetime, timezone
 
 from docx import Document
@@ -280,14 +281,41 @@ class RewriteItem(BaseModel):
 class RewriteArgs(BaseModel):
     file: str = FILE
     items: list[RewriteItem] = Field(description="Các đoạn cần viết lại (dịch, rút gọn, sửa lỗi...)")
+    allow_number_changes: bool = Field(
+        False, description="Chỉ đặt true khi NGƯỜI DÙNG yêu cầu đổi số liệu. Mặc định mọi số, ngày, tiền phải giữ "
+                           "nguyên đúng từng ký tự (kể cả dấu chấm/phẩy phân cách), kể cả khi dịch.")
+
+
+# Số, ngày, tiền: "120.000.000", "15/01/2026", "3,5", "08:30"
+_NUMBER = re.compile(r"\d+(?:[.,/:\-]\d+)*")
+
+
+def _changed_numbers(old: str, new: str) -> list[str]:
+    """Các số/ngày có trong đoạn cũ nhưng không còn nguyên dạng trong đoạn mới (bất kể thứ tự)."""
+    remaining = _NUMBER.findall(new)
+    missing = []
+    for n in _NUMBER.findall(old):
+        if n in remaining:
+            remaining.remove(n)
+        else:
+            missing.append(n)
+    return missing
 
 
 @tool("word_rewrite_paragraphs", "Viết lại nhiều đoạn một lần (dịch tài liệu, sửa chính tả, đổi giọng văn), "
-      "giữ style và định dạng run đầu của từng đoạn.", RewriteArgs, kind="docx", writes=True)
+      "giữ style và định dạng run đầu của từng đoạn. Tự kiểm tra số/ngày/tiền không bị đổi.", RewriteArgs,
+      kind="docx", writes=True)
 def word_rewrite_paragraphs(args: RewriteArgs, ctx: ToolCtx) -> dict:
     for it in args.items:
         _check_selection(ctx, it.index)
     doc = Document(ctx.path)
+    if not args.allow_number_changes:
+        problems = {it.index: miss for it in args.items
+                    if (miss := _changed_numbers(para_text(_paragraph(doc, it.index)), it.text))}
+        if problems:
+            # Không ghi gì: số liệu sai trong hợp đồng/báo cáo là lỗi nghiêm trọng
+            raise ToolError("Số/ngày/tiền bị thay đổi, chưa ghi đoạn nào. Hãy giữ nguyên ĐÚNG từng ký tự (kể cả dấu "
+                            f"phân cách hàng nghìn) rồi gọi lại: {problems}")
     for it in args.items:
         p = _paragraph(doc, it.index)
         if p.runs:

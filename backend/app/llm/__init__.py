@@ -21,7 +21,7 @@ def _build(cfg: RuntimeConfig) -> LLMProvider:
         from .gemini import GeminiProvider
         return GeminiProvider(api_key=cfg.api_keys.get("gemini", ""), model=m.agent, lite_model=m.lite or m.agent,
                               fallback_model=m.fallback or m.agent, stt_model=m.stt or m.lite or m.agent,
-                              idle_timeout=idle)
+                              idle_timeout=idle, thinking_level=get_settings().agent_thinking_level)
     if cfg.provider in ("openai", "ollama"):
         from .openai_compat import OpenAICompatProvider
         return OpenAICompatProvider(

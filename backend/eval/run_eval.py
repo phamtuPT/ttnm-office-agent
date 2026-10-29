@@ -241,7 +241,8 @@ async def run_case(case: dict, provider, inputs_builders: dict) -> dict:
            "latest": {f.name: max(v.number for v in f.versions) for f in fs},
            "input_names": input_names, "originals": originals, "reply": reply}
     results = [(c, *check(c, ctx)) for c in case["checks"]]
-    logs = db.query(ToolCallLog).filter(ToolCallLog.turn_id == f"{case['id']}-{len(requests) - 1}").all()
+    logs = db.query(ToolCallLog).filter(ToolCallLog.session_id == chat.id,  # mỗi lần chạy là một phiên riêng
+                                        ToolCallLog.turn_id == f"{case['id']}-{len(requests) - 1}").all()
     db.close()
     return {
         "id": case["id"], "group": case["group"], "passed": all(ok for _, ok, _ in results) and not err,

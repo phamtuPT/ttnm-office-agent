@@ -14,7 +14,7 @@ Nhà cung cấp và model đổi được ngay trên giao diện (nút ⚙) mà 
 
 | Việc | Model (Gemini, biến `.env`) |
 |---|---|
-| Vòng lặp agent: hiểu yêu cầu, lập kế hoạch, gọi tool, sinh nội dung, trả lời | `AGENT_MODEL=gemini-3.8-flash` |
+| Vòng lặp agent: hiểu yêu cầu, lập kế hoạch, gọi tool, sinh nội dung, trả lời | `AGENT_MODEL=gemini-3.8-flash`, `AGENT_THINKING_LEVEL=low` (phản hồi đầu ~2,5 s thay vì ~5,5 s, xem docs/EVAL.md) |
 | Đọc ảnh (hoá đơn, bảng giá, công văn) và tự xem ảnh slide vừa render | dùng chung `AGENT_MODEL` |
 | Đặt tên phiên | `LITE_MODEL=gemini-3.5-flash-lite` |
 | Giọng nói → văn bản (chỉ khi trình duyệt không có Web Speech API) | `STT_MODEL=gemini-3.5-flash-lite` |

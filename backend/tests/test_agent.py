@@ -93,3 +93,11 @@ def test_history_from_other_provider_is_rebuilt_from_text():
     hist = MockProvider().adopt_history(rows)
     assert hist == [{"role": "user", "text": "Xin chào", "images": 0},
                     {"role": "model", "text": "Chào bạn", "tool_calls": []}]
+
+
+def test_first_token_counts_tool_only_turn(db, chat):
+    store.create_file(db, chat.id, "c.xlsx", xlsx_bytes())
+    provider = MockProvider([{"tool_calls": [{"name": "excel_inspect", "args": {"file": "c.xlsx"}}]}, {"text": "Xong"}])
+    _, _, stats = _run(provider, ToolExecutor(db, chat.id, _always))
+    # Mốc tính ngay khi model trả lời gọi tool (trước khi tool chạy), không đợi tới chữ ở lượt sau
+    assert stats.first_token_ms is not None and stats.first_token_ms < 1000

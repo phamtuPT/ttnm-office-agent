@@ -254,3 +254,23 @@ def test_pptx_set_text_many_items_one_call(db, chat):
     prs = Presentation(store.working_path(f))
     assert prs.slides[0].shapes.title.text == "Mở đầu"
     assert prs.slides[1].placeholders[1].text_frame.text == "Ý 1\nÝ 2"
+
+
+def test_rewrite_refuses_changed_numbers_when_translating(db, chat):
+    """Hồi quy từ đánh giá Gemini (mức suy nghĩ thấp): khi dịch, model đổi 120.000.000 thành 120,000,000."""
+    from io import BytesIO
+    doc = Document()
+    doc.add_paragraph("Giá trị hợp đồng: 120.000.000 đồng, ký ngày 15/01/2026.")
+    buf = BytesIO()
+    doc.save(buf)
+    f = store.create_file(db, chat.id, "hd.docx", buf.getvalue())
+    ex = ex_for(db, chat)
+    bad = run(ex, "word_rewrite_paragraphs", {"file": f.name, "items": [
+        {"index": 0, "text": "Contract value: 120,000,000 VND, signed on 15/01/2026."}]})
+    assert not bad.ok and "120.000.000" in bad.data["error"] and f.current_version == 1
+    ok = run(ex, "word_rewrite_paragraphs", {"file": f.name, "items": [
+        {"index": 0, "text": "Contract value: VND 120.000.000, signed on 15/01/2026."}]})
+    assert ok.ok
+    changed = run(ex, "word_rewrite_paragraphs", {"file": f.name, "allow_number_changes": True, "items": [
+        {"index": 0, "text": "Contract value: VND 150.000.000, signed on 15/01/2026."}]})
+    assert changed.ok

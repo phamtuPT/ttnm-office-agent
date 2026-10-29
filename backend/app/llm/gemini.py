@@ -24,11 +24,12 @@ class GeminiProvider(LLMProvider):
     name = "gemini"
 
     def __init__(self, *, api_key: str, model: str, lite_model: str, fallback_model: str, stt_model: str,
-                 idle_timeout: float = 60):
+                 idle_timeout: float = 60, thinking_level: str = ""):
         if not api_key:
             raise LLMError("Chưa có khoá API Gemini — nhập trong Cài đặt hoặc GEMINI_API_KEY trong .env")
         self.model, self.lite_model, self.fallback_model, self.stt_model = model, lite_model, fallback_model, stt_model
         self.idle_timeout = idle_timeout
+        self.thinking_level = thinking_level.upper()
         self.client = genai.Client(api_key=api_key)
 
     async def _call(self, fn, *, streaming_started=lambda: False):
@@ -62,8 +63,11 @@ class GeminiProvider(LLMProvider):
             nonlocal emitted
             parts: list[types.Part] = []
             finish, usage = None, {}
+            # Mức suy nghĩ chỉ áp cho model agent chính: model dự phòng có thể không hỗ trợ tham số này
+            cfg = config.model_copy(update={"thinking_config": types.ThinkingConfig(
+                thinking_level=self.thinking_level)}) if self.thinking_level and model == self.model else config
             stream = await self.client.aio.models.generate_content_stream(
-                model=model, contents=contents, config=config)
+                model=model, contents=contents, config=cfg)
             async for chunk in with_idle_timeout(stream, self.idle_timeout):
                 if chunk.usage_metadata:
                     u = chunk.usage_metadata

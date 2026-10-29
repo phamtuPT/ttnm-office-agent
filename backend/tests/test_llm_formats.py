@@ -96,3 +96,33 @@ def test_openai_tool_results_flatten_with_images():
     flat = p._flatten([msg])
     assert flat[0] == {"role": "tool", "tool_call_id": "a", "content": '{"ok": true}'}
     assert flat[1]["role"] == "user" and flat[1]["content"][1]["image_url"]["url"].startswith("data:image/png;base64,")
+
+
+def test_gemini_thinking_level_only_on_agent_model():
+    from google.genai import errors
+    p = GeminiProvider(api_key="k", model="main", lite_model="lite", fallback_model="backup", stt_model="lite",
+                       thinking_level="low")
+    seen = []
+
+    async def fake_stream(model, contents, config):
+        seen.append((model, config.thinking_config.thinking_level if config.thinking_config else None))
+        if model == "main":
+            raise errors.APIError(503, {"error": {"message": "quá tải", "status": "UNAVAILABLE"}})
+
+        async def gen():
+            yield types.GenerateContentResponse(candidates=[types.Candidate(
+                content=types.Content(role="model", parts=[types.Part(text="ok")]))])
+        return gen()
+
+    p.client = NS(aio=NS(models=NS(generate_content_stream=fake_stream)))
+    import app.llm.gemini as gm
+    real_sleep = gm.asyncio.sleep
+    gm.asyncio.sleep = lambda s: real_sleep(0)
+    try:
+        async def noop(_t):
+            pass
+        r = asyncio.run(p.stream_turn([p.user_message("hi", [])], "sys", [], noop))
+    finally:
+        gm.asyncio.sleep = real_sleep
+    assert r.text == "ok"
+    assert seen[0] == ("main", types.ThinkingLevel.LOW) and seen[-1] == ("backup", None)

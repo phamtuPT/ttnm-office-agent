@@ -21,6 +21,9 @@ class Settings(BaseSettings):
     lite_model: str = "gemini-3.5-flash-lite"
     fallback_model: str = "gemini-3.5-flash-lite"
     stt_model: str = "gemini-3.5-flash-lite"
+    # Mức suy nghĩ của model agent Gemini: low | medium | high; trống = mặc định của model.
+    # "low" giảm thời gian tới phản hồi đầu từ ~5,5 s xuống ~2,5 s (đo 29/10/2026) — xem docs/EVAL.md
+    agent_thinking_level: str = "low"
     openai_model: str = ""
     ollama_model: str = ""
 

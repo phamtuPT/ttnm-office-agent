@@ -22,7 +22,7 @@ class StepLimitError(Exception):
 @dataclass
 class TurnStats:
     started: float = field(default_factory=time.monotonic)
-    first_token_ms: int | None = None
+    first_token_ms: int | None = None  # phản hồi đầu tiên của model: chữ hoặc lời gọi tool (cả hai hiện ngay)
     steps: int = 0
     tool_calls: int = 0
     tool_errors: int = 0
@@ -44,14 +44,19 @@ async def run_turn(*, provider: LLMProvider, executor: ToolExecutor, history: li
     tools = declarations()
     show = pii.unmask_text if pii else (lambda s: s)
 
-    async def on_text(t: str) -> None:
+    def mark_first() -> None:
         if stats.first_token_ms is None:
             stats.first_token_ms = int((time.monotonic() - stats.started) * 1000)
+
+    async def on_text(t: str) -> None:
+        mark_first()
         await emit({"type": "message.delta", "text": show(t)})
 
     for _ in range(max_steps):
         stats.steps += 1
         turn = await provider.stream_turn(hist, system, tools, on_text)
+        if turn.tool_calls:
+            mark_first()  # lượt chỉ có lời gọi tool, không có chữ
         stats.input_tokens += turn.usage.get("input_tokens", 0)
         stats.output_tokens += turn.usage.get("output_tokens", 0)
 
