@@ -908,7 +908,7 @@
  {
   "id": "docx-14-bang-gia",
   "group": "Word",
-  "request": "Tạo bảng báo giá 3 sản phẩm với cột Tên, Đơn giá, Số lượng, Thành tiền",
+  "request": "Soạn văn bản Word báo giá 3 sản phẩm, có bảng gồm các cột Tên, Đơn giá, Số lượng, Thành tiền",
   "inputs": [],
   "checks": [
    {
@@ -1228,7 +1228,7 @@
  {
   "id": "math-05-he-pt",
   "group": "Công thức toán",
-  "request": "Viết hệ phương trình 2 ẩn và cách giải bằng phương pháp thế",
+  "request": "Soạn tài liệu Word trình bày một hệ phương trình 2 ẩn và cách giải bằng phương pháp thế",
   "inputs": [],
   "checks": [
    {

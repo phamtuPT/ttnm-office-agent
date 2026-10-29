@@ -72,15 +72,19 @@ class Tool:
     creates: bool = False
     destructive: bool = False
     inline: bool = False
+    # Điều kiện để model thấy tool (ví dụ máy có LibreOffice / sandbox). Không đạt → không khai báo cho model, tiết
+    # kiệm bước và tránh model gọi rồi nhận lỗi "chưa cài".
+    available: Callable[[], bool] | None = None
 
 
 REGISTRY: dict[str, Tool] = {}
 
 
 def tool(name: str, description: str, args_model: type[BaseModel], *, kind: str | None = None,
-         writes: bool = False, creates: bool = False, destructive: bool = False, inline: bool = False):
+         writes: bool = False, creates: bool = False, destructive: bool = False, inline: bool = False,
+         available: Callable[[], bool] | None = None):
     def deco(fn):
-        REGISTRY[name] = Tool(name, description, args_model, fn, kind, writes, creates, destructive, inline)
+        REGISTRY[name] = Tool(name, description, args_model, fn, kind, writes, creates, destructive, inline, available)
         return fn
     return deco
 
@@ -89,7 +93,7 @@ def declarations() -> list[dict]:
     """Khai báo trung lập với provider: {name, description, parameters (JSON Schema)}."""
     return [{"name": t.name, "description": t.description,
              "parameters": _clean_schema(t.args_model.model_json_schema())}
-            for t in REGISTRY.values()]
+            for t in REGISTRY.values() if t.available is None or t.available()]
 
 
 def _clean_schema(schema: dict) -> dict:

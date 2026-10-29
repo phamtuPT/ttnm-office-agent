@@ -33,7 +33,8 @@ class RenderArgs(BaseModel):
 
 
 @tool("render_pages", "Chụp ảnh trang Word / slide PowerPoint vừa làm để TỰ KIỂM TRA bằng mắt: chữ tràn khung, "
-      "hình chồng lấn, bố cục lệch. Gọi sau khi tạo/sửa slide; thấy lỗi thì sửa rồi kiểm tra lại.", RenderArgs)
+      "hình chồng lấn, bố cục lệch. Gọi sau khi tạo/sửa slide; thấy lỗi thì sửa rồi kiểm tra lại.", RenderArgs,
+      available=lambda: render_svc.available())
 def render_pages(args: RenderArgs, ctx: ToolCtx) -> dict:
     if ctx.path is None or ctx.path.suffix.lower() not in (".docx", ".pptx"):
         raise ToolError("Chỉ render được tệp .docx và .pptx")
@@ -148,7 +149,7 @@ class OcrArgs(BaseModel):
 
 
 @tool("ocr_image", "Nhận dạng chữ trong ảnh bằng OCR cục bộ (Tesseract) — dùng để đối chiếu khi ảnh mờ hoặc "
-      "người dùng không muốn gửi ảnh lên đám mây.", OcrArgs)
+      "người dùng không muốn gửi ảnh lên đám mây.", OcrArgs, available=ocr.available)
 def ocr_image(args: OcrArgs, ctx: ToolCtx) -> dict:
     src = asset_path(ctx, args.image)
     if not ocr.available():
@@ -175,7 +176,7 @@ class RunPythonArgs(BaseModel):
 @tool("run_python", "Chạy mã Python phân tích dữ liệu (thống kê, hồi quy, ANOVA, ARIMA, vẽ hình) trong sandbox "
       "cách ly không có mạng. Người dùng xem mã và xác nhận trước khi chạy. Hình .png trả về thành ảnh để chèn "
       "vào Word/PowerPoint; tệp .xlsx/.docx/.pptx trả về thành tệp mới trong phiên.", RunPythonArgs,
-      destructive=True, inline=True)
+      destructive=True, inline=True, available=lambda: bool(get_settings().sandbox_url))
 async def run_python(args: RunPythonArgs, ctx: ToolCtx) -> dict:
     s = get_settings()
     if not s.sandbox_url:

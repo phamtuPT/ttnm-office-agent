@@ -52,11 +52,42 @@ def table_cell_accuracy(reference: list[list[str]], predicted: list[list[str]]) 
     return ok / max(total, 1)
 
 
+_DIGITS = {"không": 0, "một": 1, "mốt": 1, "hai": 2, "ba": 3, "bốn": 4, "tư": 4, "năm": 5, "lăm": 5, "sáu": 6,
+           "bảy": 7, "tám": 8, "chín": 9}
+
+
+def _number_words(words: list[str]) -> list[str]:
+    """"mười hai" → "12", "hai mươi lăm" → "25", "bốn" → "4": nhận dạng giọng nói viết số bằng chữ hay chữ số đều được."""
+    out, i = [], 0
+    while i < len(words):
+        w = words[i]
+        nxt = words[i + 1] if i + 1 < len(words) else ""
+        if w == "mười":
+            unit = _DIGITS.get(nxt)
+            out.append(str(10 + unit) if unit is not None and unit else "10")
+            i += 2 if unit else 1
+        elif w in _DIGITS and nxt in ("mươi", "chục"):
+            third = words[i + 2] if i + 2 < len(words) else ""
+            unit = _DIGITS.get(third)
+            out.append(str(_DIGITS[w] * 10 + (unit or 0)))
+            i += 3 if unit else 2
+        elif w in _DIGITS and w != "năm":  # "năm" còn nghĩa là "năm (2026)": để như chữ
+            out.append(str(_DIGITS[w]))
+            i += 1
+        else:
+            out.append(w)
+            i += 1
+    return out
+
+
 def _words(text: str) -> list[str]:
     import re
     import unicodedata
     text = unicodedata.normalize("NFC", text.lower())
-    return re.findall(r"[\w./:%-]+", text)
+    # "15 tháng 01 năm 2026" ≡ "15/01/2026"
+    text = re.sub(r"(\d{1,2}) tháng (\d{1,2}) năm (\d{4})", r"\1/\2/\3", text)
+    words = [w.strip(".,:;!?-") for w in re.findall(r"[\w./:%-]+", text)]  # dấu câu cuối từ không tính là lỗi
+    return _number_words([w for w in words if w])
 
 
 def wer(reference: str, hypothesis: str) -> float:

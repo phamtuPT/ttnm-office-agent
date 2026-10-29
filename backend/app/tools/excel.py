@@ -140,6 +140,42 @@ def excel_create_workbook(args: CreateArgs, ctx: ToolCtx) -> dict:
     return {"created": args.file, "sheets": [s.name for s in args.sheets]}
 
 
+class AddSheetArgs(BaseModel):
+    file: str = FILE
+    sheets: list[SheetSpec] = Field(description="Các sheet mới (tên chưa có trong tệp) kèm dữ liệu từ ô A1; công thức "
+                                                "được tham chiếu sang sheet khác, ví dụ =COUNTIF('Nhân sự'!C:C,A2)")
+
+
+@tool("excel_add_sheet", "Thêm sheet mới vào tệp Excel có sẵn (bảng thống kê, tổng hợp, dự báo...) kèm dữ liệu và "
+      "công thức.", AddSheetArgs, kind="xlsx", writes=True)
+def excel_add_sheet(args: AddSheetArgs, ctx: ToolCtx) -> dict:
+    if not args.sheets:
+        raise ToolError("Cần ít nhất một sheet")
+    wb = openpyxl.load_workbook(ctx.path)
+    taken = [n.lower() for n in wb.sheetnames]
+    clash = [s.name for s in args.sheets if s.name[:31].lower() in taken]
+    if clash:
+        raise ToolError(f"Đã có sheet {clash}; dùng excel_write_cells để ghi vào sheet đó hoặc chọn tên khác")
+    names = wb.sheetnames + [s.name[:31] for s in args.sheets]
+    issues = []
+    for spec in args.sheets:
+        ws = wb.create_sheet(spec.name[:31])
+        for r, row in enumerate(spec.rows, start=1):
+            for c, value in enumerate(row, start=1):
+                if isinstance(value, str) and value.startswith("="):
+                    value, problems = check_formula(value, names)
+                    if problems:
+                        issues.append({"sheet": spec.name, "cell": ws.cell(r, c).coordinate, "problems": problems})
+                ws.cell(r, c, value)
+        if spec.bold_header and spec.rows:
+            for c in ws[1]:
+                c.font = Font(bold=True)
+    if issues:
+        raise ToolError(f"Công thức có lỗi, chưa thêm sheet nào: {issues[:10]}")
+    wb.save(ctx.path)
+    return {"added": [s.name for s in args.sheets]}
+
+
 # ---------- Ghi ----------
 
 class CellWrite(BaseModel):

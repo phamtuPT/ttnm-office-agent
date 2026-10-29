@@ -125,6 +125,7 @@ export const TOOL_LABELS: Record<string, string> = {
   pptx_move_slide: "Đổi thứ tự slide",
   pptx_add_table: "Chèn bảng vào slide",
   pptx_add_chart: "Chèn biểu đồ vào slide",
+  excel_add_sheet: "Thêm sheet",
   pptx_add_shape: "Vẽ hình khối",
   pptx_set_theme: "Đổi bảng màu bài trình chiếu",
   pptx_check_layout: "Tự kiểm tra bố cục slide",

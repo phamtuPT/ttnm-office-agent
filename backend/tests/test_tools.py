@@ -258,3 +258,28 @@ def test_single_cell_selection_is_anchor_not_limit(db, chat):
     ex2 = ToolExecutor(db, chat.id, _always, Selection(file=f.name, sheet="Doanh thu", range="A1:B2"))
     assert not run(ex2, "excel_write_cells", {"file": f.name, "sheet": "Doanh thu",
                                              "cells": [{"ref": "E12", "value": 2}]}).ok
+
+
+def test_add_sheet_with_cross_sheet_formulas(db, chat):
+    store.create_file(db, chat.id, "s.xlsx", xlsx_bytes())
+    ex = ToolExecutor(db, chat.id, _always, turn_id="as1")
+    r = run(ex, "excel_add_sheet", {"file": "s.xlsx", "sheets": [{"name": "Thống kê", "rows": [
+        ["Chỉ số", "Giá trị"], ["Tổng", "=SUM('Doanh thu'!B2:B4)"]]}]})
+    assert r.ok, r.data
+    f = next(x for x in chat.files if x.name == "s.xlsx")
+    wb = openpyxl.load_workbook(store.working_path(f))
+    assert wb["Thống kê"]["B2"].value == "=SUM('Doanh thu'!B2:B4)" and wb["Thống kê"]["A1"].font.bold
+    assert "Đã có sheet" in run(ToolExecutor(db, chat.id, _always, turn_id="as2"), "excel_add_sheet", {
+        "file": "s.xlsx", "sheets": [{"name": "doanh thu", "rows": []}]}).data["error"]
+    bad = run(ToolExecutor(db, chat.id, _always, turn_id="as3"), "excel_add_sheet", {
+        "file": "s.xlsx", "sheets": [{"name": "Lỗi", "rows": [["=SUMM(A1)"]]}]})
+    assert not bad.ok and "Lỗi" not in openpyxl.load_workbook(store.working_path(f)).sheetnames
+
+
+def test_tools_needing_missing_services_are_hidden(monkeypatch):
+    from app.config import get_settings
+    from app.tools.registry import declarations
+    monkeypatch.setattr(get_settings(), "sandbox_url", "")
+    assert "run_python" not in {d["name"] for d in declarations()}
+    monkeypatch.setattr(get_settings(), "sandbox_url", "http://sandbox:9000")
+    assert "run_python" in {d["name"] for d in declarations()}

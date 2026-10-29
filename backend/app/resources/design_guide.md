@@ -13,5 +13,6 @@ Hướng dẫn thiết kế slide (chỉ chèn vào prompt khi yêu cầu liên 
 - Công thức toán: viết LaTeX $...$; công thức quan trọng đặt riêng một dòng $$...$$ (căn giữa); ≤ 3 công thức lớn trên
   một slide, kèm một dòng giải thích ý nghĩa.
 - Ảnh không đè lên chữ; chừa lề ≥ 1 cm.
-- Sau khi tạo/sửa: gọi pptx_check_layout để tìm chữ tràn khung, hình chồng lấn, hình ra ngoài slide; có lỗi thì sửa
-  (rút gọn chữ, tách slide, dời/thu nhỏ hình) rồi kiểm tra lại. Có render_pages thì xem thêm ảnh slide.
+- Sau khi tạo/sửa: gọi pptx_check_layout MỘT lần cho các slide vừa làm; có lỗi thì sửa TẤT CẢ trong một lần gọi
+  (rút gọn chữ, giảm cỡ chữ, tách slide, dời/thu nhỏ hình) rồi kiểm tra lại. issue_count = 0 → dừng và trả lời ngay,
+  không kiểm tra thêm. Ngay từ đầu chừa đủ chỗ: hộp chữ ≤ 5 dòng, mỗi dòng ≤ 12 từ.
