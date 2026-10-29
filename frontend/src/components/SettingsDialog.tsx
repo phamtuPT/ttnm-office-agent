@@ -91,7 +91,7 @@ export function SettingsDialog(p: { onClose: () => void; onSaved: (s: AppSetting
         )}
         <div className="modal-actions">
           <button className="btn" onClick={p.onClose}>Huỷ</button>
-          <button className="btn primary" onClick={save} disabled={saving}>{saving ? "Đang lưu…" : "Lưu"}</button>
+          <button className="btn solid" onClick={save} disabled={saving}>{saving ? "Đang lưu…" : "Lưu"}</button>
         </div>
       </div>
     </div>

@@ -98,7 +98,7 @@ export function ChatPanel(p: Props) {
       <div className="chat-log" aria-live="polite">
         {p.items.length === 0 && (
           <div className="chat-empty">
-            <p className="eyebrow">// hội thoại</p>
+            <p className="eyebrow"><span className="slashes">//</span> hội thoại</p>
             <h2>Giao việc bằng lời</h2>
             <p>Gõ, nói hoặc dán ảnh. Trợ lý nêu kế hoạch, làm trực tiếp trên tệp và báo lại chỗ đã sửa — mọi thay đổi đều hoàn tác được.</p>
           </div>
@@ -164,7 +164,7 @@ export function ChatPanel(p: Props) {
           {p.busy ? (
             <button className="btn danger" onClick={p.onCancel}>Dừng</button>
           ) : (
-            <button className="btn primary" onClick={submit} disabled={!canSend}>Gửi ↵</button>
+            <button className="btn solid" onClick={submit} disabled={!canSend}>Gửi ↵</button>
           )}
         </div>
       </div>

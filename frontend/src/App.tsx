@@ -119,7 +119,10 @@ export default function App() {
   return (
     <div className="app">
       <header className="topbar">
-        <div className="brand" aria-label="Office Agent">office<span className="tld">.agent</span><span className="ver">v0.3</span></div>
+        <div className="brand" aria-label="Office Agent">
+          <span className="brand-mark" aria-hidden>OA</span>
+          <span><span className="brand-name">office<span className="dotc">.</span>agent</span><span className="brand-sub">multimodal office ai · v0.4</span></span>
+        </div>
         <select className="session-select" value={sessionId ?? ""} onChange={(e) => setSessionId(e.target.value)} aria-label="Phiên làm việc">
           {sessions.map((s) => <option key={s.id} value={s.id}>{s.title}</option>)}
         </select>
@@ -138,6 +141,11 @@ export default function App() {
       </header>
 
       <div className="main">
+        {!sessionId && (
+          <section className="chat" aria-busy="true">
+            <div className="chat-log"><p className="notice">Đang kết nối tới máy chủ…</p></div>
+          </section>
+        )}
         {sessionId && (
           <ChatPanel
             sessionId={sessionId}
