@@ -84,17 +84,21 @@ export function HomePage({ bar, onError }: { bar: BarProps; onError: (m: string)
 
   return (
     <div className="app home">
-      <TopBar bar={bar} right={
+      <TopBar bar={bar} activeId={null} right={
         <label className="search">
           <Search size={16} aria-hidden />
           <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Tìm phiên hoặc tệp…" aria-label="Tìm phiên hoặc tệp" />
         </label>
       } />
 
+      <div className="surface">
       <main className="home-main">
         <section className="start" aria-labelledby="start-title">
           <div className="home-inner">
-            <h1 id="start-title" className="section-heading">Bắt đầu làm việc mới</h1>
+            <header className="phead">
+              <p className="eyebrow">Trợ lý AI cho Word, Excel, PowerPoint</p>
+              <h1 id="start-title" className="title">Bắt đầu làm việc mới</h1>
+            </header>
             <div className="start-grid">
               {START.map((t) => (
                 <button key={t.kind} className={`start-tile ${t.kind}`} onClick={() => start(t.kind)} disabled={busy}>
@@ -168,6 +172,7 @@ export function HomePage({ bar, onError }: { bar: BarProps; onError: (m: string)
           </div>
         </section>
       </main>
+      </div>
 
       {toDelete && (
         <div className="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="del-title">

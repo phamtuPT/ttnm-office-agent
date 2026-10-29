@@ -1,4 +1,4 @@
-import { ArrowLeft, Check, Pencil, Undo2, Upload } from "lucide-react";
+import { Check, Pencil, Undo2, Upload } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { api } from "../api";
 import { ChatPanel } from "../components/ChatPanel";
@@ -8,6 +8,7 @@ import { HistoryDialog } from "../components/HistoryDialog";
 import { Thumb } from "../components/icons";
 import { PreviewPane } from "../components/PreviewPane";
 import { type BarProps, TopBar } from "../components/TopBar";
+import { openTab } from "../openTabs";
 import { navigate } from "../router";
 import type { ChatSession, FileDiff, OfficeFile, Selection } from "../types";
 import { useChatSocket } from "../useChatSocket";
@@ -100,6 +101,11 @@ export function WorkspacePage({ sessionId, bar, onError }: { sessionId: string; 
     }
   };
 
+  // Phiên đang xem luôn có tab trên thanh cửa sổ; tên/loại tab cập nhật theo phiên
+  useEffect(() => {
+    if (session) openTab({ id: session.id, title: session.title, kind: session.kind });
+  }, [session?.id, session?.title, session?.kind]);
+
   const file = files.find((f) => f.id === fileId);
   const hasDraggedFiles = (e: React.DragEvent) => Array.from(e.dataTransfer.types).includes("Files");
 
@@ -107,12 +113,8 @@ export function WorkspacePage({ sessionId, bar, onError }: { sessionId: string; 
     <div className="app">
       <TopBar
         bar={bar}
+        activeId={sessionId}
         connected={chat.connected}
-        left={
-          <button className="btn icon" onClick={() => navigate({ page: "home" })} aria-label="Về trang chủ" title="Về trang chủ">
-            <ArrowLeft size={17} aria-hidden />
-          </button>
-        }
         right={
           <>
             <div className="session-title">
@@ -136,6 +138,7 @@ export function WorkspacePage({ sessionId, bar, onError }: { sessionId: string; 
         }
       />
 
+      <div className="surface">
       <div className="main">
         <ChatPanel
           sessionId={sessionId}
@@ -182,6 +185,8 @@ export function WorkspacePage({ sessionId, bar, onError }: { sessionId: string; 
             </div>
           )}
         </main>
+      </div>
+
       </div>
 
       {chat.confirm && <ConfirmDialog req={chat.confirm} onAnswer={chat.answerConfirm} />}
