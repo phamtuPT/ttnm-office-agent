@@ -141,3 +141,39 @@ def test_pages_endpoint_without_libreoffice(monkeypatch):
         sid = _session(c)
         f = c.post(f"/api/sessions/{sid}/files", files={"file": ("s.pptx", pptx_bytes(), "application/octet-stream")}).json()
         assert c.get(f"/api/files/{f['id']}/pages").json() == {"available": False, "pages": 0}
+
+
+def test_home_flow_create_by_kind_list_rename_delete():
+    with _client() as c:
+        s = c.post("/api/sessions", json={"kind": "xlsx"}).json()
+        assert s["title"] == "Bảng tính mới" and s["kind"] == "xlsx" and s["files"][0]["name"] == "Bảng tính mới.xlsx"
+        assert c.get(f"/api/files/{s['files'][0]['id']}/outline").json()["sheets"][0]["name"] == "Trang tính 1"
+        for kind in ("docx", "pptx"):
+            assert c.post("/api/sessions", json={"kind": kind}).json()["kind"] == kind
+        empty = c.post("/api/sessions").json()
+        assert empty["kind"] is None and empty["files"] == []
+
+        listed = c.get("/api/sessions").json()
+        assert {"id", "title", "updated_at", "kind", "files", "message_count"} <= set(listed[0])
+        assert s["id"] in [x["id"] for x in listed]
+
+        assert c.patch(f"/api/sessions/{s['id']}", json={"title": "Doanh thu Q3"}).json()["title"] == "Doanh thu Q3"
+        assert c.delete(f"/api/sessions/{s['id']}").status_code == 204
+        assert c.get(f"/api/sessions/{s['id']}").status_code == 404
+        assert s["id"] not in [x["id"] for x in c.get("/api/sessions").json()]
+
+
+def test_session_thumbnails_for_each_kind(monkeypatch):
+    from app.preview import render
+    from .conftest import docx_bytes, pptx_bytes
+    monkeypatch.setattr(render, "available", lambda: False)
+    with _client() as c:
+        sid = _session(c)
+        for name, data in [("t.xlsx", xlsx_bytes()), ("t.docx", docx_bytes()), ("t.pptx", pptx_bytes())]:
+            f = c.post(f"/api/sessions/{sid}/files", files={"file": (name, data, "application/octet-stream")}).json()
+            r = c.get(f"/api/files/{f['id']}/thumbnail.png")
+            assert r.status_code == 200 and r.content[:4] == b"\x89PNG", name
+            assert c.get(f"/api/files/{f['id']}/thumbnail.png").content == r.content  # lấy từ cache
+        s = c.get(f"/api/sessions/{sid}").json()
+        assert s["preview"]["kind"] == "pptx"  # tệp mới nhất làm ảnh xem trước
+        assert c.post("/api/sessions").json()["preview"] is None

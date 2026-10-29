@@ -1,3 +1,4 @@
+import { LoaderCircle, Mic, Square } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { api } from "../api";
 
@@ -99,18 +100,18 @@ export function VoiceButton(p: Props) {
     else startRecorder();
   };
 
-  const label = { idle: "🎤", listening: "⏹", transcribing: "…" }[state];
+  const icon = { idle: <Mic size={18} aria-hidden />, listening: <Square size={16} aria-hidden />, transcribing: <LoaderCircle size={18} className="spin" aria-hidden /> }[state];
   const title = { idle: "Nói yêu cầu (bấm lần nữa để dừng)", listening: "Đang nghe — bấm để dừng", transcribing: "Đang nhận dạng…" }[state];
   return (
     <button
-      className={`btn ${state === "listening" ? "danger pulse" : ""}`}
+      className={`btn icon ${state === "listening" ? "danger pulse" : "ghost"}`}
       title={title}
       aria-label={title}
       aria-pressed={state === "listening"}
       disabled={state === "transcribing"}
       onClick={toggle}
     >
-      {label}
+      {icon}
     </button>
   );
 }

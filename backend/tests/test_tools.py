@@ -229,3 +229,14 @@ def test_pdf_to_png(tmp_path):
         doc.save(pdf)
     pages = pdf_to_pngs(pdf, tmp_path, dpi=20)
     assert [p.name for p in pages] == ["page-0.png", "page-1.png"] and pages[0].read_bytes()[:4] == b"\x89PNG"
+
+
+def test_write_succeeds_while_preview_is_reading_the_file(db, chat):
+    """Windows: giao diện đang tải bản xem trước (giữ handle đọc) không được làm hỏng lần ghi của agent."""
+    f = store.create_file(db, chat.id, "busy.xlsx", xlsx_bytes())
+    with open(store.working_path(f), "rb"):
+        r = run(ToolExecutor(db, chat.id, _always, turn_id="t1"), "excel_write_cells",
+                {"file": f.name, "sheet": "Doanh thu", "cells": [{"ref": "B2", "value": 7}]})
+    assert r.ok and r.changes[0].version == 2
+    assert ws_of(f)["B2"].value == 7
+    assert not list(store.working_path(f).parent.glob(".tmp-*"))

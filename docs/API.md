@@ -10,8 +10,11 @@ Lỗi trả về dạng `{"detail": "thông báo tiếng Việt"}`.
 | Method | Đường dẫn | Mô tả |
 |---|---|---|
 | GET | `/api/health` | `{ok: true}` |
-| POST | `/api/sessions` | Tạo phiên → `{id, title, created_at}` |
-| GET | `/api/sessions` | Danh sách phiên (mới nhất trước) |
+| POST | `/api/sessions` | Tạo phiên. Body tuỳ chọn `{"kind": "xlsx" \| "docx" \| "pptx"}` → kèm sẵn một tệp trống loại đó |
+| GET | `/api/sessions` | Phiên gần đây (sửa gần nhất trước): `{id, title, updated_at, kind, files, message_count, preview}` |
+| GET | `/api/sessions/{sid}` | Một phiên |
+| PATCH | `/api/sessions/{sid}` | Đổi tên `{"title": "..."}` |
+| DELETE | `/api/sessions/{sid}` | Xoá phiên cùng mọi tệp, phiên bản, ảnh, lịch sử (không hoàn tác được) |
 | GET | `/api/sessions/{sid}/messages` | Lịch sử hiển thị `[{id, role: user\|model, text, turn_id}]` |
 | POST | `/api/sessions/{sid}/undo-last` | Hoàn tác mọi thay đổi tệp của yêu cầu gần nhất (409 nếu không có) |
 | GET | `/api/sessions/{sid}/turns` | Chỉ số từng yêu cầu: `status, steps, tool_calls, tool_errors, first_token_ms, duration_ms, input_tokens, output_tokens, provider, model` |
@@ -29,6 +32,7 @@ Lỗi trả về dạng `{"detail": "thông báo tiếng Việt"}`.
 | GET | `/api/files/{fid}/outline` | Dàn ý: sheet + 6 dòng đầu / các đoạn / các slide + ghi chú |
 | GET | `/api/files/{fid}/pages` | Render trang/slide: `{available, pages, version}` (`available=false` nếu chưa có LibreOffice) |
 | GET | `/api/files/{fid}/pages/{i}.png` | Ảnh trang/slide thứ i (gọi `/pages` trước) |
+| GET | `/api/files/{fid}/thumbnail.png?v=<phiên bản>` | Ảnh thu nhỏ trang/slide/bảng đầu (LibreOffice nếu có, không thì vẽ từ nội dung), cache theo phiên bản |
 | GET | `/api/files/{fid}/versions` | Lịch sử (mới nhất trước): `[{number, request, summary, source, diff, current}]` |
 | POST | `/api/files/{fid}/undo` | Lùi về phiên bản trước (= hoàn tác yêu cầu gần nhất trên tệp) |
 | POST | `/api/files/{fid}/redo` | Tiến tới phiên bản sau |

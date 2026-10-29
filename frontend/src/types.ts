@@ -4,6 +4,11 @@ export interface ChatSession {
   id: string;
   title: string;
   created_at: string;
+  updated_at: string;
+  kind: FileKind | null; // loại của tệp đầu tiên trong phiên
+  files: { id: string; name: string; kind: FileKind }[];
+  message_count: number;
+  preview: { file_id: string; version: number; kind: FileKind } | null; // tệp dùng làm ảnh xem trước
 }
 
 export interface OfficeFile {

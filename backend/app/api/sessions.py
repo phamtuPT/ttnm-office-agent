@@ -1,13 +1,18 @@
+import shutil
+from typing import Literal
+
 from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from fastapi.responses import FileResponse
+from pydantic import BaseModel, Field
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from .. import runtime_settings
-from ..db import ChatSession, Turn
+from ..db import ChatSession, File, FileVersion, Message, ToolCallLog, Turn
 from ..llm import get_provider
 from ..llm.base import LLMError
 from ..tools.assets import list_assets
-from ..versioning import store
+from ..versioning import blank, store
 from .deps import get_db, get_session_or_404, iso
 from .files import file_out
 
@@ -16,21 +21,77 @@ router = APIRouter(prefix="/api/sessions", tags=["sessions"])
 MAX_AUDIO_MB = 10
 
 
-def _session_out(s: ChatSession) -> dict:
-    return {"id": s.id, "title": s.title, "created_at": iso(s.created_at)}
+def _session_out(s: ChatSession, updated_at=None, message_count: int = 0) -> dict:
+    files = [{"id": f.id, "name": f.name, "kind": f.kind} for f in s.files]
+    # Tệp làm ảnh xem trước: tệp có phiên bản hiện tại mới nhất (tệp vừa được sửa/tạo)
+    primary = max(s.files, key=lambda f: max((v.created_at for v in f.versions if v.number == f.current_version),
+                                             default=f.created_at), default=None)
+    preview = {"file_id": primary.id, "version": primary.current_version, "kind": primary.kind} if primary else None
+    return {"id": s.id, "title": s.title, "created_at": iso(s.created_at),
+            "updated_at": iso(updated_at or s.created_at), "kind": primary.kind if primary else None,
+            "files": files, "message_count": message_count, "preview": preview}
+
+
+class CreateSession(BaseModel):
+    kind: Literal["xlsx", "docx", "pptx"] | None = Field(
+        None, description="Bắt đầu với một tệp trống loại này; bỏ trống = phiên không có tệp (để tải tệp lên)")
 
 
 @router.post("")
-def create_session(db: Session = Depends(get_db)):
-    s = ChatSession()
+def create_session(body: CreateSession | None = None, db: Session = Depends(get_db)):
+    kind = body.kind if body else None
+    s = ChatSession(title=blank.DEFAULTS[kind][1] if kind else "Phiên mới")
     db.add(s)
     db.commit()
+    if kind:
+        store.create_file(db, s.id, blank.DEFAULTS[kind][0], blank.blank_bytes(kind), source="blank")
+        db.refresh(s)
     return _session_out(s)
 
 
 @router.get("")
 def list_sessions(db: Session = Depends(get_db)):
-    return [_session_out(s) for s in db.query(ChatSession).order_by(ChatSession.created_at.desc())]
+    """Phiên gần đây (mở/sửa gần nhất trước) cho trang chủ."""
+    last_msg = dict(db.query(Message.session_id, func.max(Message.created_at)).group_by(Message.session_id).all())
+    counts = dict(db.query(Message.session_id, func.count(Message.id))
+                  .filter(Message.role == "user").group_by(Message.session_id).all())
+    last_ver = dict(db.query(File.session_id, func.max(FileVersion.created_at))
+                    .join(FileVersion, FileVersion.file_id == File.id).group_by(File.session_id).all())
+    out = []
+    for s in db.query(ChatSession).all():
+        updated = max([t for t in (s.created_at, last_msg.get(s.id), last_ver.get(s.id)) if t is not None])
+        out.append(_session_out(s, updated, counts.get(s.id, 0)))
+    return sorted(out, key=lambda x: x["updated_at"], reverse=True)
+
+
+@router.get("/{session_id}")
+def get_session(session_id: str, db: Session = Depends(get_db)):
+    return _session_out(get_session_or_404(db, session_id))
+
+
+class RenameSession(BaseModel):
+    title: str = Field(min_length=1, max_length=200)
+
+
+@router.patch("/{session_id}")
+def rename_session(session_id: str, body: RenameSession, db: Session = Depends(get_db)):
+    s = get_session_or_404(db, session_id)
+    s.title = body.title.strip() or s.title
+    db.commit()
+    return _session_out(s)
+
+
+@router.delete("/{session_id}", status_code=204)
+def delete_session(session_id: str, db: Session = Depends(get_db)):
+    """Xoá phiên cùng toàn bộ tệp, phiên bản, ảnh và lịch sử hội thoại. Không hoàn tác được."""
+    s = get_session_or_404(db, session_id)
+    for model in (Message, Turn, ToolCallLog):
+        db.query(model).filter_by(session_id=session_id).delete()
+    for f in list(s.files):
+        db.delete(f)  # kéo theo file_versions (cascade)
+    db.delete(s)
+    db.commit()
+    shutil.rmtree(store.session_dir(session_id), ignore_errors=True)
 
 
 @router.get("/{session_id}/messages")

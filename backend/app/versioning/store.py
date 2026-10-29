@@ -12,6 +12,7 @@ storage/<session_id>/assets/                       ảnh người dùng gửi k�
 import os
 import re
 import shutil
+import time
 import uuid
 from pathlib import Path
 
@@ -22,7 +23,34 @@ from ..db import File, FileVersion
 from . import diff as difflib_
 
 ALLOWED_KINDS = {"xlsx", "docx", "pptx"}
+REPLACE_RETRIES = 8
 _SAFE_NAME = re.compile(r"[^\w.\- ()]", re.UNICODE)
+
+
+def replace_file(src: Path, dst: Path) -> None:
+    """Đưa tệp tạm vào chỗ tệp đích một cách nguyên tử.
+
+    Trên Windows, os.replace bị từ chối khi tệp đích đang được mở để đọc (ví dụ giao diện đang tải bản xem trước).
+    Thử lại vài lần; nếu vẫn bị khoá thì ghi đè nội dung (handle đọc của Python vẫn cho phép ghi) rồi bỏ tệp tạm.
+    """
+    for attempt in range(REPLACE_RETRIES):
+        try:
+            os.replace(src, dst)
+            return
+        except PermissionError:
+            time.sleep(0.03 * (attempt + 1))
+    shutil.copyfile(src, dst)
+    try:
+        src.unlink()
+    except OSError:
+        pass
+
+
+def _unlink(p: Path) -> None:
+    try:
+        p.unlink(missing_ok=True)
+    except PermissionError:  # Windows: đang có người đọc — để lại, tệp phiên bản thừa vô hại
+        pass
 
 
 def safe_filename(name: str) -> str:
@@ -115,7 +143,7 @@ def apply_change(db: Session, f: File, new_content: Path, source: str, turn_id: 
 
     Cùng turn với phiên bản hiện tại (và đó là bản mới nhất) → ghi đè phiên bản đó, diff tính từ bản trước turn.
     """
-    os.replace(new_content, working_path(f))  # nguyên tử trên cùng ổ đĩa
+    replace_file(new_content, working_path(f))
     cur = _current(f)
     latest = max(v.number for v in f.versions)
     same_turn = turn_id is not None and cur.turn_id == turn_id and cur.number == latest and cur.source != "upload"
@@ -132,7 +160,7 @@ def apply_change(db: Session, f: File, new_content: Path, source: str, turn_id: 
         return cur.number, d, cur.summary
 
     for v in [v for v in f.versions if v.number > f.current_version]:
-        version_path(f, v.number).unlink(missing_ok=True)
+        _unlink(version_path(f, v.number))
         f.versions.remove(v)
     number = f.current_version + 1  # bản hiện tại giờ là bản mới nhất
     _snapshot(f, number)
@@ -159,7 +187,7 @@ def _prune(f: File) -> None:
     keep = get_settings().max_generations
     extra = [v for v in f.versions if v.number != f.current_version][: max(0, len(f.versions) - keep)]
     for v in extra:
-        version_path(f, v.number).unlink(missing_ok=True)
+        _unlink(version_path(f, v.number))
         f.versions.remove(v)
 
 

@@ -11,7 +11,6 @@ const base = {
   connected: true,
   activeFile: "dt.xlsx",
   selection: null,
-  prefill: null,
   onClearSelection: () => {},
   onCancel: () => {},
   onOpenFile: () => {},
@@ -73,9 +72,4 @@ describe("ChatPanel", () => {
     expect(screen.getByText(/Ô nằm ngoài vùng/)).toBeTruthy();
   });
 
-  it("điền sẵn yêu cầu khi bấm thẻ việc mẫu", () => {
-    const { rerender } = render(<ChatPanel {...base} items={[]} onSend={() => {}} />);
-    rerender(<ChatPanel {...base} items={[]} onSend={() => {}} prefill={{ text: "Làm 5 slide", nonce: 1 }} />);
-    expect((screen.getByLabelText("Yêu cầu") as HTMLTextAreaElement).value).toBe("Làm 5 slide");
-  });
 });

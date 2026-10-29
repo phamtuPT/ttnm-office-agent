@@ -5,6 +5,9 @@ Bản đề xuất gốc: [đề-xuất-btl.docx](đề-xuất-btl.docx). Bảng
 
 ## Sơ đồ
 
+Frontend có hai màn hình: **trang chủ** (chọn loại tệp để bắt đầu, danh sách phiên gần đây có ảnh xem trước) và
+**không gian làm việc** của một phiên (sơ đồ dưới đây).
+
 ```
 ┌──────────────────────────── Frontend (React 18 + TypeScript + Vite) ─────────────────────────────┐
 │ TRÁI: hội thoại                              │ PHẢI: tệp và xem trước                             │

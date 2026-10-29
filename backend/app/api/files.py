@@ -2,12 +2,12 @@ import io
 import zipfile
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from sqlalchemy.orm import Session
 
 from ..config import get_settings
 from ..db import File, Turn
-from ..preview import render
+from ..preview import render, thumbnail
 from ..tools.registry import REGISTRY, ToolCtx
 from ..versioning import store
 from .deps import get_db, get_file_or_404, get_session_or_404, iso
@@ -78,6 +78,18 @@ def file_outline(file_id: str, db: Session = Depends(get_db)):
     tool = REGISTRY[OUTLINE_TOOL[f.kind]]
     args = tool.args_model(file=f.name, **({"limit": 10_000} if f.kind == "docx" else {}))
     return tool.handler(args, ToolCtx(path=store.working_path(f), selection=None))
+
+
+@router.get("/files/{file_id}/thumbnail.png")
+def file_thumbnail(file_id: str, db: Session = Depends(get_db)):
+    """Ảnh thu nhỏ trang/slide/bảng đầu tiên của phiên bản hiện tại (URL kèm ?v=<phiên bản> để trình duyệt cache)."""
+    f = get_file_or_404(db, file_id)
+    cache = store.session_dir(f.session_id) / "thumbs" / f"{f.id}-v{f.current_version}.png"
+    try:
+        png = thumbnail.build(store.current_snapshot(f), f.kind, cache)
+    except Exception as e:  # tệp hỏng/lạ: giao diện tự dùng ảnh minh hoạ thay thế
+        raise HTTPException(422, f"Không tạo được ảnh xem trước: {type(e).__name__}")
+    return Response(png, media_type="image/png", headers={"Cache-Control": "private, max-age=86400"})
 
 
 def _render_dir(f: File):

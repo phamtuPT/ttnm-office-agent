@@ -22,6 +22,7 @@ from ..tools.assets import list_assets, normalize_image, save_asset
 from ..tools.executor import ToolExecutor
 from ..tools.registry import Selection
 from ..versioning import store
+from ..versioning.blank import DEFAULT_TITLES
 
 log = logging.getLogger(__name__)
 router = APIRouter()
@@ -194,7 +195,7 @@ class Connection:
         self.db.commit()
         await self.send({"type": "turn.end", "turn_id": turn.id})
 
-        if session.title == "Phiên mới" and text:
+        if session.title in DEFAULT_TITLES and text:
             await self._name_session(provider, session, text, pii)
 
     async def _name_session(self, provider, session: ChatSession, text: str, pii: Anonymizer | None) -> None:

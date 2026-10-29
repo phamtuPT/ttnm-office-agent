@@ -1,3 +1,4 @@
+import { Check, ChevronRight, FilePen, ImagePlus, LoaderCircle, Mic, SendHorizontal, Square, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { ChatItem, Selection } from "../types";
 import { TOOL_LABELS } from "../types";
@@ -11,7 +12,6 @@ interface Props {
   connected: boolean;
   activeFile: string | null;
   selection: Selection | null;
-  prefill: { text: string; nonce: number } | null;
   onClearSelection: () => void;
   onSend: (text: string, images: OutgoingImage[]) => void;
   onCancel: () => void;
@@ -64,11 +64,6 @@ export function ChatPanel(p: Props) {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [p.items]);
 
-  useEffect(() => {
-    if (!p.prefill) return;
-    setText(p.prefill.text);
-    inputRef.current?.focus();
-  }, [p.prefill?.nonce]);
 
   const addImages = async (files: FileList | null) => {
     for (const f of Array.from(files ?? [])) {
@@ -98,9 +93,8 @@ export function ChatPanel(p: Props) {
       <div className="chat-log" aria-live="polite">
         {p.items.length === 0 && (
           <div className="chat-empty">
-            <p className="eyebrow"><span className="slashes">//</span> hội thoại</p>
-            <h2>Giao việc bằng lời</h2>
-            <p>Gõ, nói hoặc dán ảnh. Trợ lý nêu kế hoạch, làm trực tiếp trên tệp và báo lại chỗ đã sửa — mọi thay đổi đều hoàn tác được.</p>
+            <h2>Bạn cần làm gì với tệp?</h2>
+            <p>Gõ, nói hoặc dán ảnh. Trợ lý nêu kế hoạch, làm trực tiếp trên tệp đang mở và báo lại chỗ đã sửa. Muốn sửa đúng một vùng thì chọn vùng đó trên khung xem trước trước khi gửi.</p>
           </div>
         )}
         {toBlocks(p.items).map((b, i) =>
@@ -117,14 +111,14 @@ export function ChatPanel(p: Props) {
         {p.selection && (
           <span className="chip">
             Chỉ sửa trong: <b>{describeSelection(p.selection)}</b>
-            <button onClick={p.onClearSelection} aria-label="Bỏ vùng chọn">✕</button>
+            <button onClick={p.onClearSelection} aria-label="Bỏ vùng chọn"><X size={14} aria-hidden /></button>
           </span>
         )}
         {images.map((x, i) => (
           <span className="chip img" key={i}>
             <img src={x.url} alt="" />
             {x.name}
-            <button onClick={() => setImages((xs) => xs.filter((_, j) => j !== i))} aria-label={`Bỏ ảnh ${x.name}`}>✕</button>
+            <button onClick={() => setImages((xs) => xs.filter((_, j) => j !== i))} aria-label={`Bỏ ảnh ${x.name}`}><X size={14} aria-hidden /></button>
           </span>
         ))}
       </div>
@@ -145,10 +139,10 @@ export function ChatPanel(p: Props) {
           rows={2}
           aria-label="Yêu cầu"
         />
-        {interim && <div className="interim" aria-live="polite">🎤 {interim}</div>}
+        {interim && <div className="interim" aria-live="polite"><Mic size={14} aria-hidden /> {interim}</div>}
         <div className="composer-actions">
           <label className="btn icon ghost" title="Đính kèm ảnh (hoặc dán ảnh vào ô soạn)">
-            <span aria-hidden>🖼</span>
+            <ImagePlus size={18} aria-hidden />
             <span className="sr-only">Đính kèm ảnh</span>
             <input type="file" accept={IMAGE_TYPES.join(",")} multiple hidden
               onChange={(e) => { addImages(e.target.files); e.target.value = ""; }} />
@@ -162,9 +156,9 @@ export function ChatPanel(p: Props) {
           <span className="hint">Enter gửi · Shift+Enter xuống dòng</span>
           <span className="spacer" />
           {p.busy ? (
-            <button className="btn danger" onClick={p.onCancel}>Dừng</button>
+            <button className="btn danger" onClick={p.onCancel}><Square size={14} aria-hidden /> Dừng</button>
           ) : (
-            <button className="btn solid" onClick={submit} disabled={!canSend}>Gửi ↵</button>
+            <button className="btn solid" onClick={submit} disabled={!canSend}><SendHorizontal size={16} aria-hidden /> Gửi</button>
           )}
         </div>
       </div>
@@ -178,11 +172,15 @@ function ToolLog({ items }: { items: ToolItem[] }) {
     <div className="term" role="log" aria-label="Các bước trợ lý đã làm">
       <div className="term-head"><i /><i /><i /> <span>công cụ · {items.length} bước</span></div>
       {items.map((t, i) => {
-        const mark = { running: <span className="run">⋯</span>, ok: <span className="ok">✓</span>, error: <span className="err">✗</span> }[t.status];
+        const mark = {
+          running: <LoaderCircle size={14} className="run spin" aria-label="đang chạy" />,
+          ok: <Check size={14} className="ok" aria-label="xong" />,
+          error: <X size={14} className="err" aria-label="lỗi" />,
+        }[t.status];
         return (
           <div key={i}>
             <button className="term-line" onClick={() => setOpen(open === i ? null : i)} aria-expanded={open === i}>
-              <span className="prompt">$</span> {t.name} {mark}{" "}
+              <ChevronRight size={14} className="prompt" aria-hidden /> {t.name} {mark}{" "}
               <span className="lbl">{TOOL_LABELS[t.name] ?? ""}</span>
               {t.status === "error" && t.result?.error ? <span className="err"> — {String(t.result.error)}</span> : null}
             </button>
@@ -210,7 +208,7 @@ function ChatRow({ item, onOpenFile }: { item: ChatItem; onOpenFile: (id: string
     case "change":
       return (
         <button className="change" onClick={() => onOpenFile(item.fileId)} title="Mở tệp để xem thay đổi">
-          <span aria-hidden>✎</span><span><b>{item.fileName}</b> · v{item.version} — {item.summary}</span>
+          <FilePen size={16} aria-hidden /><span><b>{item.fileName}</b> · v{item.version} — {item.summary}</span>
         </button>
       );
     case "notice":

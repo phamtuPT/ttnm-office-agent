@@ -1,9 +1,11 @@
+import { Download, History, ListTree, Printer, Redo2, Undo2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import * as XLSX from "xlsx";
 import { renderAsync } from "docx-preview";
 import { api } from "../api";
 import type { FileDiff, OfficeFile, Selection } from "../types";
 import { type ChartInfo, ChartView } from "./ChartView";
+import { FileKindIcon } from "./icons";
 
 interface Props {
   file: OfficeFile;
@@ -24,17 +26,17 @@ export function PreviewPane(p: Props) {
   return (
     <section className="preview">
       <header className="preview-head">
-        <span className={`kind ${file.kind}`}>{file.kind}</span>
+        <FileKindIcon kind={file.kind} size={24} />
         <b className="name">{file.name}</b>
         <span className="pill mono">v{file.current_version}</span>
         <span className="spacer" />
-        <button className="btn" onClick={p.onUndo} disabled={file.current_version <= file.oldest_version} title="Hoàn tác yêu cầu gần nhất trên tệp này">↶ Hoàn tác</button>
-        <button className="btn" onClick={p.onRedo} disabled={file.current_version >= file.latest_version} title="Làm lại">↷ Làm lại</button>
-        <button className="btn" onClick={p.onHistory} title="Xem thay đổi theo từng yêu cầu, khôi phục phiên bản cũ">Lịch sử</button>
+        <button className="btn" onClick={p.onUndo} disabled={file.current_version <= file.oldest_version} title="Hoàn tác yêu cầu gần nhất trên tệp này"><Undo2 size={16} aria-hidden /> Hoàn tác</button>
+        <button className="btn" onClick={p.onRedo} disabled={file.current_version >= file.latest_version} title="Làm lại"><Redo2 size={16} aria-hidden /> Làm lại</button>
+        <button className="btn" onClick={p.onHistory} title="Xem thay đổi theo từng yêu cầu, khôi phục phiên bản cũ"><History size={16} aria-hidden /> Lịch sử</button>
         {file.kind === "docx" && (
-          <button className="btn" onClick={() => setPrintView((v) => !v)} aria-pressed={printView}>{printView ? "Dàn ý" : "Bản in"}</button>
+          <button className="btn" onClick={() => setPrintView((v) => !v)} aria-pressed={printView}>{printView ? <><ListTree size={16} aria-hidden /> Dàn ý</> : <><Printer size={16} aria-hidden /> Bản in</>}</button>
         )}
-        <a className="btn primary" href={api.fileContentUrl(file.id)} download={file.name}>Tải về</a>
+        <a className="btn primary" href={api.fileContentUrl(file.id)} download={file.name}><Download size={16} aria-hidden /> Tải về</a>
       </header>
       <p className="hint">
         {file.kind === "xlsx" && "Kéo chuột để chọn vùng ô cho trợ lý sửa."}
@@ -77,8 +79,9 @@ function XlsxView({ file, reloadKey, diff, selection, onSelect }: Props) {
   if (!wb) return <p className="hint">Đang tải…</p>;
   const ws = wb.Sheets[sheet];
   const range = XLSX.utils.decode_range(ws?.["!ref"] ?? "A1");
-  const rows = Math.min(range.e.r, MAX_ROWS - 1);
-  const cols = Math.min(Math.max(range.e.c, 5), MAX_COLS - 1);
+  // Luôn hiện tối thiểu một lưới 30×8 để bảng tính trống vẫn trông như bảng tính
+  const rows = Math.min(Math.max(range.e.r, 29), MAX_ROWS - 1);
+  const cols = Math.min(Math.max(range.e.c, 7), MAX_COLS - 1);
   const changed = new Set((diff?.cells ?? []).filter((c) => c.sheet === sheet).map((c) => c.ref));
 
   const selRange = drag

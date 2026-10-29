@@ -1,14 +1,16 @@
 # Hệ thống thiết kế giao diện
 
-Phong cách "tạp chí vuông" lấy cảm hứng từ trang cộng đồng vibe coding mà nhóm tham khảo: **không bo góc**, viền 1px,
-nền xanh đêm, nhấn san hô/hổ phách/xanh trời, tiêu đề lớn đậm hơi nghiêng, nhãn mục dạng `// tiêu đề`, thẻ đánh số mờ ở
-góc. Thêm vài chi tiết kiểu bảng điều khiển cho lập trình viên (khối terminal cho các bước tool, nền lưới chấm, chuyển
-sáng/tối). Đây là thiết kế riêng của dự án: không dùng logo, tên hay nội dung của các trang tham khảo.
+Phong cách vuông vức, lấy cảm hứng từ trang cộng đồng vibe coding mà nhóm tham khảo: **không bo góc**, viền 1px,
+nền xanh đêm, nhấn san hô/hổ phách/xanh trời, font Anybody cho tiêu đề. Bố cục trang chủ theo kiểu Google Sheets/Docs
+(chọn loại tệp → danh sách phiên gần đây có ảnh xem trước). Thêm vài chi tiết kiểu bảng điều khiển cho lập trình viên
+(khối terminal cho các bước tool, nền lưới chấm, chuyển sáng/tối). Đây là thiết kế riêng của dự án: không dùng logo,
+tên hay nội dung của các trang tham khảo.
 Mã nguồn: `frontend/src/styles.css`.
 
 ## Nguyên tắc
 
 - **Vuông:** mọi khung, nút, nhãn, hộp thoại đều không bo góc (chỉ chấm trạng thái là tròn).
+- **Không dùng ký tự làm icon:** mọi icon là SVG từ bộ `lucide-react` (logo cũng là SVG); icon loại tệp tô màu theo loại.
 - **Viền thay bóng:** phân lớp bằng viền 1px và nền `surface`/`elevated`; bóng chỉ dùng khi di chuột vào thẻ.
 - **Vạch nhấn 4px bên trái** cho thứ cần chú ý: đoạn giới thiệu, trả lời của trợ lý, thẻ đang di chuột, thay đổi tệp,
   lựa chọn đang bật, phiên bản hiện tại.
@@ -36,26 +38,32 @@ với người mù màu), giống nhau ở biểu đồ Excel/PowerPoint do tr�
 
 | Vai trò | Font | Ở đâu |
 |---|---|---|
-| Tiêu đề, nút, nhãn, số | Anybody (variable) | logo, tiêu đề màn hình chào, nút, tab, nhãn `//`, số liệu, số thứ tự thẻ |
+| Tiêu đề, nút, nhãn | Anybody (variable) | logo, tiêu đề mục, nút, tab, tên phiên, tên tệp |
 | Nội dung | Be Vietnam Pro | đoạn văn, tin nhắn, mô tả |
 | Kỹ thuật | monospace hệ thống | nhật ký tool, địa chỉ ô, công thức, mã `run_python` |
 
 Font được **tự host** qua `@fontsource` (không gọi Google Fonts): chạy được khi offline và không lộ địa chỉ IP người
 dùng — đúng tinh thần "chạy cục bộ" của đề xuất.
 
-## Thành phần
+## Màn hình
 
-- **Thanh trên cùng:** ô logo vuông "OA" + `office.agent` (dấu chấm san hô), chọn phiên, Hoàn tác yêu cầu, mô hình AI đang
-  dùng (chấm xanh = đã kết nối), nhãn PII khi đang ẩn danh, nút sáng/tối. Nền mờ.
+Hai màn hình, định tuyến bằng hash (`#/` và `#/s/<id>`):
+
+**Trang chủ** (giống trang chủ Google Sheets/Docs):
+- Dải **Bắt đầu làm việc mới**: bốn ô chọn — Bảng tính (Excel), Tài liệu (Word), Bản trình chiếu (PowerPoint), Mở tệp có
+  sẵn. Chọn loại nào thì tạo phiên mới kèm tệp trống loại đó rồi mở không gian làm việc.
+- **Phiên làm việc gần đây**: lưới thẻ có **ảnh xem trước nội dung thật** của tệp vừa sửa gần nhất trong phiên (bảng ô
+  kèm giá trị, trang chữ, slide đầu), tên phiên, loại tệp, thời điểm sửa, số tệp và số yêu cầu. Lọc theo loại, tìm theo
+  tên phiên/tệp, sắp xếp theo thời gian hoặc tên; xoá phiên phải xác nhận.
+
+**Không gian làm việc** (chỉ mở khi đã chọn loại hoặc phiên):
+- **Thanh trên cùng:** nút về trang chủ, logo, tên phiên (bấm để đổi tên), Hoàn tác yêu cầu, mô hình AI đang dùng (chấm
+  xanh = đã kết nối), nhãn PII khi đang ẩn danh, nút sáng/tối.
 - **Hội thoại (trái):** tin người dùng là khung viền san hô; trả lời của trợ lý có vạch hổ phách; dòng kế hoạch ①→②→③ in
-  đậm màu hổ phách; các bước tool gom thành **khối terminal** (bấm một dòng để xem tham số/kết quả); thay đổi tệp là
-  thẻ vạch hổ phách, bấm để mở tệp.
-- **Không gian làm việc (phải, nền lưới chấm):** tab tệp vuông (tệp đang mở tô đặc san hô), tên tệp cỡ lớn, lưới Excel
-  (công thức màu xanh trời, ô vừa đổi nền hổ phách, kéo chọn vùng), biểu đồ SVG, dàn ý Word/bản in, ảnh slide.
-  Kéo thả tệp vào vùng này để tải lên.
-- **Màn hình chào:** tem "BTL / 2026" nghiêng, tiêu đề `office.agent.` cỡ rất lớn nghiêng −1°, đoạn giới thiệu có vạch san
-  hô, dải số liệu chia ô, mục `// Việc mẫu` với **thẻ đánh số 01–06** (kịch bản mục 3.3 của đề xuất): di chuột thì thẻ nổi
-  lên, hiện vạch san hô bên trái và tiêu đề đổi màu; bấm để điền sẵn yêu cầu.
+  đậm màu hổ phách; các bước tool gom thành **khối terminal** (bấm một dòng để xem tham số/kết quả); thay đổi tệp là thẻ
+  vạch hổ phách, bấm để mở tệp.
+- **Tệp và xem trước (phải, nền lưới chấm):** tab tệp (tệp đang mở tô đặc san hô), lưới Excel tối thiểu 30×8 (công thức
+  màu xanh trời, ô vừa đổi nền hổ phách, kéo chọn vùng), biểu đồ SVG, dàn ý Word/bản in, ảnh slide. Kéo thả tệp để tải lên.
 - **Hộp thoại:** vạch san hô phía trên; lựa chọn nhà cung cấp đang bật có vạch trái.
 
 ## Khả năng tiếp cận
