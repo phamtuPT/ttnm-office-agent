@@ -1,12 +1,69 @@
 # Kết quả đánh giá tự động
 
-Bộ đánh giá: `backend/eval/` (12 yêu cầu mẫu trong `cases.json`, chấm tự động bằng kiểm tra trên tệp kết quả).
-Chạy lại: `cd backend && python -m eval.run_eval --provider gemini --repeat 3`. CSV chi tiết lưu ở `backend/eval/results/`.
+Bộ đánh giá: `backend/eval/` — **101 yêu cầu mẫu** trong `cases.json` (13 nhóm), chấm tự động bằng kiểm tra trên tệp
+kết quả; **50 ảnh có nhãn** đo đọc ảnh; **15 câu lệnh giọng nói** đo nhận dạng; bộ slide cài lỗi đo tự kiểm tra bố cục.
+Chạy lại: xem mục "Đánh giá" trong README. CSV chi tiết lưu ở `backend/eval/results/`.
 
 **Token đầu** = thời gian từ lúc gửi yêu cầu tới phản hồi đầu tiên của model hiện lên giao diện: chữ (thường là dòng
 kế hoạch ①→②→③) hoặc bước tool đầu tiên. Cả hai đều hiện ngay cho người dùng.
 
-## Kết quả hiện tại — 29/10/2026, Gemini `gemini-3.8-flash`, mức suy nghĩ `low`, 2 lượt × 12 yêu cầu
+## Tổng hợp theo chỉ số mục 8.3 của đề xuất — 29/10/2026, Gemini `gemini-3.8-flash`, suy nghĩ `low`
+
+| Chỉ số | Kết quả | Mục tiêu | |
+|---|---|---|---|
+| Tỉ lệ hoàn thành tác vụ | **92,8%** (90/97) lượt đầu; 97/97 sau khi sửa các lỗi lượt đầu phát hiện | ≥ 85% | ✅ |
+| Độ chính xác gọi công cụ | **97,2%** | ≥ 90% | ✅ |
+| Tính toàn vẹn tệp | **100%** | 100% | ✅ |
+| Thời gian tới token đầu | trung bình 3,4 s · trung vị 2,5 s · p90 6,8 s | < 5 s | ✅ (trung bình) |
+| Thời gian hoàn thành | trung bình 17,4 s | tác vụ đơn < 60 s | ✅ |
+| Số bước trung bình | 3,5 | ≤ 10 | ✅ |
+| Độ chính xác nhận dạng chữ từ ảnh (CER) | **0%** trên 50 ảnh (cả ảnh tối, nghiêng, mờ, nhiễu) | ≤ 5% với ảnh rõ | ✅ |
+| Độ chính xác trích xuất bảng | **100%** ô đúng giá trị và vị trí (40 ảnh có bảng) | ≥ 90% | ✅ |
+| Tỉ lệ phát hiện lỗi bố cục | **100%** (66 slide cài lỗi), báo nhầm 0% (36 slide sạch) | ≥ 80% | ✅ |
+| Nhận dạng giọng nói (đường dự phòng máy chủ) | WER **3,7%**, 77% câu đúng hoàn toàn (30 bản ghi tổng hợp) | — | |
+| Độ phủ kiểm thử backend | 86% (`pytest --cov`) | ≥ 70% | ✅ |
+| Mức độ dễ dùng (SUS) | chưa có — phiếu `#/sus` sẵn sàng cho buổi thử nghiệm | ≥ 70 | ⏳ |
+
+Lưu ý khi đọc số: ảnh OCR là **ảnh tổng hợp** (chữ in sạch, làm khó bằng tối/nghiêng/mờ/nhiễu), bản ghi giọng nói là
+**giọng đọc tổng hợp** (Gemini TTS) → số liệu là mốc ban đầu, cao hơn thực tế. Báo cáo cuối cần thêm ảnh chụp thật
+(`backend/eval/ocr_dataset/`, định dạng nhãn trong `labels.json`) và giọng thật của người dùng
+(`backend/eval/voice_dataset/recordings/`). 4 yêu cầu phân tích cần sandbox `run_python` bị bỏ qua khi chạy trên máy
+không có Docker (97/101 yêu cầu được chạy).
+
+### Theo nhóm (lượt đầu, 97 yêu cầu)
+
+| Nhóm | Số yêu cầu | Đạt | Thời gian TB (s) | Bước TB |
+|---|---|---|---|---|
+| Excel | 18 | 17 | 20,2 | 3,9 |
+| PowerPoint | 13 | 11 | 27,2 | 5,6 |
+| Word | 12 | 11 | 13,7 | 2,5 |
+| Công thức toán (Word + PowerPoint) | 12 | 11 | 20,8 | 3,4 |
+| Sửa một phần (vùng chọn) | 8 | 8 | 8,9 | 2,8 |
+| Dịch | 7 | 7 | 15,7 | 4,0 |
+| Rà soát | 5 | 5 | 17,6 | 3,0 |
+| Yêu cầu không rõ | 5 | 3 | 16,9 | 3,2 |
+| Mẫu thiết kế | 5 | 5 | 15,3 | 3,2 |
+| Định dạng từ khoá | 4 | 4 | 6,8 | 2,2 |
+| Hoàn tác | 4 | 4 | 13,9 | 2,0 |
+| Phân tích (không cần sandbox) | 2 | 2 | 8,2 | 2,5 |
+| So sánh | 2 | 2 | 11,6 | 2,0 |
+
+### 7 yêu cầu trượt ở lượt đầu và cách xử lý
+
+| Yêu cầu | Nguyên nhân | Xử lý | Chạy lại |
+|---|---|---|---|
+| xlsx-09 tạo sheet Thống kê | Chưa có tool thêm sheet vào tệp có sẵn; model thử `run_python` (máy không có sandbox) rồi hết 10 bước | Thêm `excel_add_sheet`; tool thiếu dịch vụ (`run_python`, `render_pages`, `ocr_image`) không khai báo cho model | ✅ 6 bước |
+| pptx-03, pptx-12 sơ đồ / dòng thời gian | Lặp "sửa → kiểm tra bố cục" nhiều vòng, gọi `render_pages` khi không có LibreOffice → hết 10 bước | Hướng dẫn: kiểm tra một lần, sửa hết trong một lần gọi, hết lỗi thì dừng; ẩn `render_pages` khi không dùng được | ✅ 5 và 8 bước |
+| docx-14, math-05 | Đề không nói "Word": model làm bảng Excel / trả lời ngay trong chat (cách hiểu hợp lý) | Sửa đề cho rõ | ✅ |
+| vague-02, vague-05 | Có tệp đang mở nên model làm trên tệp đó — đúng quy tắc "không nêu tệp → dùng tệp đang mở" | Đổi thành yêu cầu mơ hồ thật sự ("sửa như tôi dặn hôm qua") | ✅ hỏi lại |
+
+### Nhận dạng giọng nói — lỗi còn lại
+
+Lỗi tập trung ở từ đầu câu và từ tiếng Anh xen lẫn: "Sắp xếp" → "Xếp xếp", "Soạn" → "Xoang", "kiến nghị" → "ký
+nghị", "ô B2" → "OB2", "chart" → "chạc", "Hoàn tác" → "Hoàn tất". Giao diện luôn cho xem và sửa bản chép lời trước khi
+gửi (không tự gửi). WER đã chuẩn hoá: bỏ dấu câu, "mười hai" ≡ "12", "15 tháng 01 năm 2026" ≡ "15/01/2026".
+
+## Lượt đánh giá trước (12 yêu cầu, tối ưu độ trễ) — 29/10/2026, Gemini `gemini-3.8-flash`, mức suy nghĩ `low`, 2 lượt × 12 yêu cầu
 
 | Chỉ số (đề xuất mục 8.3) | Kết quả | Mục tiêu |
 |---|---|---|

@@ -1675,7 +1675,7 @@
  {
   "id": "vague-02",
   "group": "Yêu cầu không rõ",
-  "request": "Làm cho đẹp hơn",
+  "request": "Sửa lại như tôi dặn hôm qua",
   "inputs": [
    "xlsx_nhan_su",
    "docx_hop_dong"
@@ -1725,7 +1725,7 @@
  {
   "id": "vague-05",
   "group": "Yêu cầu không rõ",
-  "request": "Thêm cái biểu đồ",
+  "request": "Thêm cái biểu đồ giống bên kia vào",
   "inputs": [
    "xlsx_nhan_su",
    "xlsx_ban_hang"
