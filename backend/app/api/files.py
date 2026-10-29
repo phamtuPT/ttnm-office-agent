@@ -1,13 +1,16 @@
 import io
+import re
 import zipfile
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from fastapi.responses import FileResponse, Response
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from ..config import get_settings
 from ..db import File, Turn
 from ..preview import render, thumbnail
+from ..tools.executor import ToolExecutor
 from ..tools.registry import REGISTRY, ToolCtx
 from ..tools.word import document_equations
 from ..versioning import store
@@ -166,3 +169,52 @@ def restore(file_id: str, number: int, db: Session = Depends(get_db)):
     except ValueError as e:
         raise HTTPException(404, str(e))
     return file_out(f)
+
+
+class CellEdit(BaseModel):
+    ref: str = Field(max_length=12)
+    value: str | float | bool | None = None
+
+
+class EditCells(BaseModel):
+    sheet: str
+    cells: list[CellEdit] = Field(min_length=1, max_length=500)
+
+
+_NUMBER = re.compile(r"-?\d+(?:\.\d+)?")
+_DECIMAL_COMMA = re.compile(r"-?\d+,\d+")
+
+
+def _typed(value):
+    """Ô người dùng gõ tay: chuỗi rỗng = xoá ô; số (3,5 hoặc 3.5) thành số; '=...' giữ là công thức."""
+    if not isinstance(value, str):
+        return value
+    v = value.strip()
+    if not v:
+        return None
+    if _NUMBER.fullmatch(v):
+        return float(v) if "." in v else int(v)
+    if _DECIMAL_COMMA.fullmatch(v):
+        return float(v.replace(",", "."))
+    return value
+
+
+@router.put("/files/{file_id}/cells")
+async def edit_cells(file_id: str, body: EditCells, db: Session = Depends(get_db)):
+    """Người dùng sửa ô trực tiếp trên lưới: ghi qua cùng tool với trợ lý (ghi nguyên tử, kiểm tra công thức,
+    sao lưu) — mỗi lần sửa là một phiên bản riêng, hoàn tác được."""
+    f = get_file_or_404(db, file_id)
+    if f.kind != "xlsx":
+        raise HTTPException(400, "Chỉ sửa ô được với tệp Excel")
+
+    async def no_confirm(_name, _args):
+        return False
+
+    result = await ToolExecutor(db, f.session_id, no_confirm).run(
+        "excel_write_cells", {"file": f.name, "sheet": body.sheet,
+                              "cells": [{"ref": c.ref.upper(), "value": _typed(c.value)} for c in body.cells]})
+    if not result.ok:
+        raise HTTPException(422, result.data.get("error", "Không ghi được"))
+    db.refresh(f)
+    change = result.changes[0] if result.changes else None
+    return {"file": file_out(f), "diff": change.diff if change else {}, "summary": change.summary if change else ""}

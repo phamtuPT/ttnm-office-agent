@@ -1,4 +1,4 @@
-import type { AppSettings, ChatSession, FileKind, FileVersion, OfficeFile } from "./types";
+import type { AppSettings, ChatSession, FileDiff, FileKind, FileVersion, OfficeFile } from "./types";
 
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, init);
@@ -37,6 +37,8 @@ export const api = {
   },
   fileContentUrl: (fid: string) => `/api/files/${fid}/content`,
   outline: (fid: string) => request<any>(`/api/files/${fid}/outline`),
+  editCells: (fid: string, sheet: string, cells: { ref: string; value: string | null }[]) =>
+    request<{ file: OfficeFile; diff: FileDiff; summary: string }>(`/api/files/${fid}/cells`, json("PUT", { sheet, cells })),
   equations: (fid: string) => request<{ latex: string; display: boolean }[]>(`/api/files/${fid}/equations`),
   pages: (fid: string) => request<{ available: boolean; pages: number; version?: number }>(`/api/files/${fid}/pages`),
   pageUrl: (fid: string, i: number, version: number) => `/api/files/${fid}/pages/${i}.png?v=${version}`,

@@ -101,7 +101,8 @@ export function HomePage({ bar, onError }: { bar: BarProps; onError: (m: string)
             </header>
             <div className="start-grid">
               {START.map((t) => (
-                <button key={t.kind} className={`start-tile ${t.kind}`} onClick={() => start(t.kind)} disabled={busy}>
+                <button key={t.kind} className={`start-tile ${t.kind}`} onClick={() => start(t.kind)} disabled={busy}
+                  aria-label={`${t.title} — tạo mới (${t.desc})`}>
                   <span className="tile-thumb"><Thumb kind={t.kind} /></span>
                   <span className="tile-body">
                     <FileKindIcon kind={t.kind} size={20} />
@@ -109,7 +110,8 @@ export function HomePage({ bar, onError }: { bar: BarProps; onError: (m: string)
                   </span>
                 </button>
               ))}
-              <button className="start-tile open" onClick={() => uploadRef.current?.click()} disabled={busy}>
+              <button className="start-tile open" onClick={() => uploadRef.current?.click()} disabled={busy}
+                aria-label="Mở tệp có sẵn — tải lên .xlsx, .docx, .pptx">
                 <span className="tile-thumb"><Thumb kind={null} /></span>
                 <span className="tile-body">
                   <FolderOpen size={20} className="kind-icon none" aria-hidden />

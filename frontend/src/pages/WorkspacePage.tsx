@@ -171,6 +171,11 @@ export function WorkspacePage({ sessionId, bar, onError }: { sessionId: string; 
               onUndo={() => versionAction(api.undo)}
               onRedo={() => versionAction(api.redo)}
               onHistory={() => setShowHistory(true)}
+              onEdited={(d) => {
+                setDiffs((x) => ({ ...x, [file.id]: d }));
+                setReloadKey((k) => k + 1);
+                refreshFiles();
+              }}
             />
           ) : (
             <div className="no-file">

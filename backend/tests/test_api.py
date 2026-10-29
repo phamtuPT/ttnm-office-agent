@@ -177,3 +177,23 @@ def test_session_thumbnails_for_each_kind(monkeypatch):
         s = c.get(f"/api/sessions/{sid}").json()
         assert s["preview"]["kind"] == "pptx"  # tệp mới nhất làm ảnh xem trước
         assert c.post("/api/sessions").json()["preview"] is None
+
+
+def test_edit_cells_directly():
+    import openpyxl
+
+    from .conftest import xlsx_bytes
+    with _client() as c:
+        sid = _session(c)
+        f = c.post(f"/api/sessions/{sid}/files", files={"file": ("so.xlsx", xlsx_bytes(), "application/octet-stream")}).json()
+        r = c.put(f"/api/files/{f['id']}/cells", json={"sheet": "Doanh thu", "cells": [
+            {"ref": "c1", "value": "Ghi chú"}, {"ref": "B2", "value": "3,5"}, {"ref": "B5", "value": "=SUM(B2:B4)"},
+            {"ref": "A4", "value": ""}]})
+        assert r.status_code == 200, r.text
+        body = r.json()
+        assert body["file"]["current_version"] == 2 and body["diff"]["cells"]
+        ws = openpyxl.load_workbook(io.BytesIO(c.get(f"/api/files/{f['id']}/content").content))["Doanh thu"]
+        assert (ws["C1"].value, ws["B2"].value, ws["B5"].value, ws["A4"].value) == ("Ghi chú", 3.5, "=SUM(B2:B4)", None)
+        bad = c.put(f"/api/files/{f['id']}/cells", json={"sheet": "Doanh thu", "cells": [{"ref": "B6", "value": "=SUMM(B2)"}]})
+        assert bad.status_code == 422 and "Công thức" in bad.json()["detail"]
+        assert c.post(f"/api/files/{f['id']}/undo").json()["current_version"] == 1  # sửa tay cũng hoàn tác được
