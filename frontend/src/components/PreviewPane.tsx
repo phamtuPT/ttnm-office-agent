@@ -181,7 +181,8 @@ function XlsxView({ file, reloadKey, diff, selection, onSelect, onEdited }: Prop
       for (let c = rng.s.c; c <= rng.e.c; c++) {
         const ref = XLSX.utils.encode_cell({ r, c });
         const cell = ws?.[ref] as XLSX.CellObject | undefined;
-        if (cell && cell.t !== "z") cells.push({ ref, value: null });
+        // Ô công thức openpyxl ghi chưa có giá trị đệm → SheetJS đọc là kiểu "z" nhưng vẫn có f
+        if (cell && (cell.t !== "z" || cell.f)) cells.push({ ref, value: null });
       }
     }
     if (cells.length) save(cells.slice(0, 500));

@@ -94,6 +94,17 @@
 :root[data-theme="dark"] { --hatch: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='7' height='7'%3E%3Cpath d='M0 7L7 0M-1 1L1 -1M6 8L8 6' stroke='%233a3d44' stroke-width='1.1'/%3E%3C/svg%3E"); }
 
 * { box-sizing: border-box; }
+
+/* Thanh cuộn mảnh 6px, không mũi tên, thanh trượt bo tròn. Chrome/Edge dùng ::-webkit-scrollbar (đặt scrollbar-width
+   sẽ làm chúng bỏ qua phần này) — scrollbar-width chỉ cho Firefox. */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track, ::-webkit-scrollbar-corner { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--muted-2); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+@supports (-moz-appearance: none) {
+  * { scrollbar-width: thin; scrollbar-color: var(--muted-2) transparent; }
+}
 html, body { margin: 0; }
 body { background: var(--canvas); padding: 12px; }
 button, select, textarea, input { font: inherit; color: inherit; }

@@ -22,3 +22,7 @@ storage/
 ~$*
 .coverage
 backend/eval/results/
+
+# Playwright
+frontend/test-results/
+frontend/playwright-report/
