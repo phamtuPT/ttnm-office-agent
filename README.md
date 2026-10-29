@@ -8,13 +8,14 @@ Ollama (cục bộ — dữ liệu không rời máy).
 - Đề xuất: [docs/đề-xuất-btl.docx](docs/đề-xuất-btl.docx) · Phân công: [docs/PHAN_CONG.md](docs/PHAN_CONG.md)
 - Kiến trúc và đối chiếu với đề xuất: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 - API REST + WebSocket: [docs/API.md](docs/API.md) · Cơ sở dữ liệu: [docs/DATABASE.md](docs/DATABASE.md)
-- Mô hình AI, chi phí, lưu ý: [docs/LLM.md](docs/LLM.md)
+- Mô hình AI, chi phí, lưu ý: [docs/LLM.md](docs/LLM.md) · Hệ thống thiết kế giao diện: [docs/DESIGN.md](docs/DESIGN.md)
 
 ## Cấu trúc
 
 ```
-backend/    FastAPI + agent + công cụ Office (Python 3.12)
+backend/    FastAPI + agent + công cụ Office (Python 3.12), eval/ bộ đánh giá
 frontend/   React 18 + TypeScript + Vite
+sandbox/    Dịch vụ chạy mã phân tích dữ liệu (run_python), cách ly, không có mạng
 docs/       Đề xuất, phân công, tài liệu thiết kế
 ```
 
@@ -60,7 +61,13 @@ Backend chạy cổng khác: `BACKEND_URL=http://localhost:8010 npm run dev`.
 
 ```bash
 cd backend && python -m pytest --cov=app
-cd frontend && npm run build
+cd frontend && npm test && npm run build
+```
+
+**Đánh giá theo mục 8 của đề xuất** (chạy bộ yêu cầu mẫu, xuất CSV + tóm tắt chỉ số vào `backend/eval/results/`)
+
+```bash
+cd backend && python -m eval.run_eval --provider gemini --repeat 3
 ```
 
 ## Quy ước

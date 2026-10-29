@@ -3,6 +3,7 @@ import difflib
 from pathlib import Path
 
 import openpyxl
+from openpyxl.cell.rich_text import CellRichText
 from docx import Document
 from pptx import Presentation
 
@@ -14,7 +15,7 @@ def compute(kind: str, before: Path, after: Path) -> dict:
 
 
 def is_empty(diff: dict) -> bool:
-    keys = ("cells", "paragraphs", "slides", "sheets_added", "sheets_removed", "charts", "conditional", "tables",
+    keys = ("cells", "paragraphs", "slides", "sheets_added", "sheets_removed", "charts", "conditional", "filters", "tables",
             "created")
     return not any(diff.get(k) for k in keys)
 
@@ -38,10 +39,13 @@ def summarize(diff: dict) -> str:
         parts.append(f"biểu đồ sheet {c['sheet']}: {c['before']} → {c['after']}")
     for c in diff.get("conditional") or []:
         parts.append(f"định dạng có điều kiện sheet {c['sheet']}: {c['before']} → {c['after']} quy tắc")
+    for c in diff.get("filters") or []:
+        parts.append(f"bộ lọc sheet {c['sheet']}: {c['after'] or 'đã bỏ'}")
     if diff.get("paragraphs"):
         parts.append(f"{sum(max(len(p['before']), len(p['after'])) for p in diff['paragraphs'])} đoạn văn thay đổi")
     if diff.get("tables"):
-        parts.append(f"số bảng {diff['tables']['before']} → {diff['tables']['after']}")
+        t = diff["tables"]
+        parts.append(f"số bảng {t['before']} → {t['after']}" if t["before"] != t["after"] else "nội dung bảng thay đổi")
     if diff.get("slides"):
         parts.append(f"{len(diff['slides'])} slide thay đổi")
     return "; ".join(parts) or "Không có thay đổi"
@@ -61,26 +65,28 @@ def _cf_rules(ws) -> list[str]:
 
 
 def _xlsx(before: Path, after: Path) -> dict:
-    wb_a, wb_b = openpyxl.load_workbook(before), openpyxl.load_workbook(after)
+    wb_a, wb_b = openpyxl.load_workbook(before, rich_text=True), openpyxl.load_workbook(after, rich_text=True)
     names_a, names_b = set(wb_a.sheetnames), set(wb_b.sheetnames)
-    cells, n_val, n_fmt, charts, conditional = [], 0, 0, [], []
+    cells, n_val, n_fmt, charts, conditional, filters = [], 0, 0, [], [], []
     for name in wb_b.sheetnames:
         if name not in names_a:
             continue
         ws_a, ws_b = wb_a[name], wb_b[name]
         if len(ws_a._charts) != len(ws_b._charts):
             charts.append({"sheet": name, "before": len(ws_a._charts), "after": len(ws_b._charts)})
+        if ws_a.auto_filter.ref != ws_b.auto_filter.ref:
+            filters.append({"sheet": name, "before": ws_a.auto_filter.ref, "after": ws_b.auto_filter.ref})
         cf_a, cf_b = _cf_rules(ws_a), _cf_rules(ws_b)
         if cf_a != cf_b:
             conditional.append({"sheet": name, "before": len(cf_a), "after": len(cf_b)})
         for r in range(1, max(ws_a.max_row, ws_b.max_row) + 1):
             for c in range(1, max(ws_a.max_column, ws_b.max_column) + 1):
                 ca, cb = ws_a.cell(r, c), ws_b.cell(r, c)
-                if ca.value != cb.value:
+                if _plain(ca.value) != _plain(cb.value):
                     n_val += 1
                     item = {"sheet": name, "ref": cb.coordinate, "kind": "value",
                             "before": _jsonable(ca.value), "after": _jsonable(cb.value)}
-                elif _style(ca) != _style(cb):
+                elif _style(ca) != _style(cb) or repr(ca.value) != repr(cb.value):  # gồm rich text
                     n_fmt += 1
                     item = {"sheet": name, "ref": cb.coordinate, "kind": "format",
                             "before": _jsonable(ca.value), "after": _jsonable(cb.value)}
@@ -88,17 +94,15 @@ def _xlsx(before: Path, after: Path) -> dict:
                     continue
                 if len(cells) < MAX_ITEMS:
                     cells.append(item)
-    return {"cells": cells, "values_total": n_val, "formats_total": n_fmt, "charts": charts, "conditional": conditional,
+    return {"cells": cells, "values_total": n_val, "formats_total": n_fmt, "charts": charts, "conditional": conditional, "filters": filters,
             "sheets_added": sorted(names_b - names_a), "sheets_removed": sorted(names_a - names_b)}
 
 
 # ---------- Word ----------
 
 def _para_key(p) -> str:
-    # Gồm style + định dạng run để phát hiện cả thay đổi định dạng (in đậm, tô màu từ khoá...)
-    runs = "|".join(f"{int(bool(r.bold))}{int(bool(r.italic))}{int(bool(r.underline))}"
-                    f"{r.font.color.rgb if r.font.color and r.font.color.type else ''}{r.text}" for r in p.runs)
-    return f"{p.style.name}\x00{runs}"
+    # Cả XML của đoạn: phát hiện đổi định dạng, comment, Track Changes, ảnh — không chỉ chữ
+    return f"{p.style.name}\x00{p._p.xml}"
 
 
 def _docx(before: Path, after: Path) -> dict:
@@ -111,7 +115,7 @@ def _docx(before: Path, after: Path) -> dict:
             ops.append({"op": tag, "before_index": i1, "after_index": j1,
                         "before": [p.text for p in pa[i1:i2]], "after": [p.text for p in pb[j1:j2]]})
     out = {"paragraphs": ops[:MAX_ITEMS]}
-    if len(da.tables) != len(db.tables):
+    if [t._tbl.xml for t in da.tables] != [t._tbl.xml for t in db.tables]:
         out["tables"] = {"before": len(da.tables), "after": len(db.tables)}
     return out
 
@@ -119,10 +123,10 @@ def _docx(before: Path, after: Path) -> dict:
 # ---------- PowerPoint ----------
 
 def _slide_sig(s) -> str:
-    texts = [sh.text_frame.text for sh in s.shapes if sh.has_text_frame]
+    # XML các shape: chữ, định dạng run, vị trí, bảng, biểu đồ; cộng nền và ghi chú
+    shapes = [sh._element.xml for sh in s.shapes]
     notes = s.notes_slide.notes_text_frame.text if s.has_notes_slide else ""
-    geo = [(sh.shape_type, sh.left, sh.top, sh.width, sh.height) for sh in s.shapes]
-    return repr((texts, notes, geo))
+    return repr((shapes, s.background._cSld.xml if hasattr(s.background, "_cSld") else "", notes))
 
 
 def _slide_text(s) -> str:
@@ -139,6 +143,10 @@ def _pptx(before: Path, after: Path) -> dict:
             slides.append({"index": i, "before": _slide_text(a) if a is not None else None,
                            "after": _slide_text(b) if b is not None else None})
     return {"slides": slides[:MAX_ITEMS]}
+
+
+def _plain(v):
+    return str(v) if isinstance(v, CellRichText) else v
 
 
 def _jsonable(v):

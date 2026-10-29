@@ -5,6 +5,7 @@ Thứ tự: tìm tool → kiểm tra tham số → tìm tệp, kiểm tra loại
 lỗi/timeout/huỷ: bỏ tệp tạm, bản làm việc không bị đụng tới.
 """
 import asyncio
+import inspect
 import shutil
 import time
 from dataclasses import dataclass, field
@@ -150,6 +151,8 @@ class ToolExecutor:
         return ToolResult(True, data, changes=changes, images=images)
 
     async def _call(self, tool: Tool, args, ctx: ToolCtx) -> dict:
+        if inspect.iscoroutinefunction(tool.handler):  # tool gọi dịch vụ ngoài (sandbox) — không chặn event loop
+            return await asyncio.wait_for(tool.handler(args, ctx), timeout=get_settings().tool_timeout_s + 30)
         if tool.inline:
             return tool.handler(args, ctx)
         # Thread không huỷ được khi timeout, nhưng nó chỉ ghi vào tệp tạm → bản làm việc an toàn

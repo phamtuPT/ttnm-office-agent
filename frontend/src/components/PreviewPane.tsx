@@ -3,6 +3,7 @@ import * as XLSX from "xlsx";
 import { renderAsync } from "docx-preview";
 import { api } from "../api";
 import type { FileDiff, OfficeFile, Selection } from "../types";
+import { type ChartInfo, ChartView } from "./ChartView";
 
 interface Props {
   file: OfficeFile;
@@ -23,15 +24,17 @@ export function PreviewPane(p: Props) {
   return (
     <section className="preview">
       <header className="preview-head">
+        <span className={`kind ${file.kind}`}>{file.kind}</span>
         <b className="name">{file.name}</b>
-        <span className="ver">Phiên bản {file.current_version}</span>
+        <span className="pill mono">v{file.current_version}</span>
+        <span className="spacer" />
         <button className="btn" onClick={p.onUndo} disabled={file.current_version <= file.oldest_version} title="Hoàn tác yêu cầu gần nhất trên tệp này">↶ Hoàn tác</button>
         <button className="btn" onClick={p.onRedo} disabled={file.current_version >= file.latest_version} title="Làm lại">↷ Làm lại</button>
-        <button className="btn" onClick={p.onHistory} title="Xem thay đổi theo từng yêu cầu, khôi phục phiên bản cũ">🕘 Lịch sử</button>
+        <button className="btn" onClick={p.onHistory} title="Xem thay đổi theo từng yêu cầu, khôi phục phiên bản cũ">Lịch sử</button>
         {file.kind === "docx" && (
-          <button className="btn" onClick={() => setPrintView((v) => !v)}>{printView ? "Dàn ý" : "Bản in"}</button>
+          <button className="btn" onClick={() => setPrintView((v) => !v)} aria-pressed={printView}>{printView ? "Dàn ý" : "Bản in"}</button>
         )}
-        <a className="btn" href={api.fileContentUrl(file.id)} download={file.name}>Tải về</a>
+        <a className="btn primary" href={api.fileContentUrl(file.id)} download={file.name}>Tải về</a>
       </header>
       <p className="hint">
         {file.kind === "xlsx" && "Kéo chuột để chọn vùng ô cho trợ lý sửa."}
@@ -56,8 +59,12 @@ function XlsxView({ file, reloadKey, diff, selection, onSelect }: Props) {
   const [wb, setWb] = useState<XLSX.WorkBook | null>(null);
   const [sheet, setSheet] = useState<string>("");
   const [drag, setDrag] = useState<{ a: XLSX.CellAddress; b: XLSX.CellAddress } | null>(null);
+  const [charts, setCharts] = useState<Record<string, ChartInfo[]>>({});
 
   useEffect(() => {
+    api.outline(file.id)
+      .then((o) => setCharts(Object.fromEntries(o.sheets.map((s: any) => [s.name, s.charts ?? []]))))
+      .catch(() => setCharts({}));
     fetch(api.fileContentUrl(file.id))
       .then((r) => r.arrayBuffer())
       .then((buf) => {
@@ -85,7 +92,7 @@ function XlsxView({ file, reloadKey, diff, selection, onSelect }: Props) {
     setDrag(null);
   };
 
-  const show = (addr: string) => {
+  const show = (addr: string): string => {
     const c = ws?.[addr] as XLSX.CellObject | undefined;
     if (!c) return "";
     // openpyxl không lưu giá trị đã tính của công thức → hiển thị công thức
@@ -114,14 +121,15 @@ function XlsxView({ file, reloadKey, diff, selection, onSelect }: Props) {
                 <th>{r + 1}</th>
                 {Array.from({ length: cols + 1 }, (_, c) => {
                   const addr = XLSX.utils.encode_cell({ r, c });
+                  const text = show(addr);
                   return (
                     <td
                       key={c}
-                      className={`${inSel(r, c) ? "sel" : ""} ${changed.has(addr) ? "changed" : ""}`}
+                      className={`${inSel(r, c) ? "sel" : ""} ${changed.has(addr) ? "changed" : ""} ${text.startsWith("=") ? "formula" : ""}`}
                       onMouseDown={(e) => { e.preventDefault(); setDrag({ a: { r, c }, b: { r, c } }); }}
                       onMouseEnter={() => drag && setDrag({ ...drag, b: { r, c } })}
                     >
-                      {show(addr)}
+                      {text}
                     </td>
                   );
                 })}
@@ -131,6 +139,11 @@ function XlsxView({ file, reloadKey, diff, selection, onSelect }: Props) {
         </table>
       </div>
       {range.e.r >= MAX_ROWS && <p className="hint">Chỉ hiển thị {MAX_ROWS} dòng đầu.</p>}
+      {(charts[sheet]?.length ?? 0) > 0 && (
+        <div className="charts" aria-label="Biểu đồ trong sheet">
+          {charts[sheet].map((ch, i) => <ChartView key={i} chart={ch} wb={wb} sheet={sheet} />)}
+        </div>
+      )}
     </div>
   );
 }

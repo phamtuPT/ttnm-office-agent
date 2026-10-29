@@ -4,8 +4,11 @@ services:
   backend:
     build: ./backend
     env_file: .env
+    environment:
+      SANDBOX_URL: http://sandbox:9000
     volumes:
       - storage:/data
+    networks: [default, sandboxnet]
     restart: unless-stopped
 
   frontend:
@@ -16,12 +19,31 @@ services:
       - backend
     restart: unless-stopped
 
+  # Chạy mã phân tích dữ liệu do AI sinh ra (tool run_python). Không có đường ra Internet:
+  # chỉ nối vào mạng nội bộ sandboxnet với backend. Hệ thống tệp chỉ đọc, giới hạn tài nguyên.
+  sandbox:
+    build: ./sandbox
+    networks: [sandboxnet]
+    read_only: true
+    tmpfs:
+      - /tmp:size=256m
+    mem_limit: 1536m
+    cpus: 1.0
+    pids_limit: 128
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    restart: unless-stopped
+
   ollama:
     image: ollama/ollama:0.12.6
     profiles: ["ollama"]
     volumes:
       - ollama:/root/.ollama
     restart: unless-stopped
+
+networks:
+  sandboxnet:
+    internal: true # không có gateway ra ngoài
 
 volumes:
   storage:

@@ -30,10 +30,10 @@ export function HistoryDialog(p: { file: OfficeFile; onClose: () => void; onRest
           {versions?.map((v) => (
             <li key={v.number} className={v.current ? "current" : ""}>
               <div className="row">
-                <b>v{v.number}</b>
+                <span className="vnum">v{v.number}</span>
                 <span className="when">{new Date(v.created_at).toLocaleString("vi-VN")}</span>
                 <span className="what">{v.request ? `“${v.request}”` : v.summary}</span>
-                {v.current ? <span className="tag">Đang dùng</span> : (
+                {v.current ? <span className="pill ok">Đang dùng</span> : (
                   <button className="btn small" onClick={() => restore(v.number)}>Khôi phục</button>
                 )}
               </div>

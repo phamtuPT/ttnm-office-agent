@@ -48,7 +48,11 @@ def working_path(f: File) -> Path:
 
 
 def version_path(f: File, number: int) -> Path:
-    return session_dir(f.session_id) / "versions" / f.id / f"v{number}.{f.kind}"
+    return version_path_for(f.session_id, f.id, f.kind, number)
+
+
+def version_path_for(session_id: str, file_id: str, kind: str, number: int) -> Path:
+    return session_dir(session_id) / "versions" / file_id / f"v{number}.{kind}"
 
 
 def scratch_path(session_id: str, kind: str) -> Path:

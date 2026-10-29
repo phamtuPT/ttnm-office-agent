@@ -1,6 +1,10 @@
 """Tool Word (python-docx). TV2 mở rộng: bảng, định dạng từ khoá, tìm-thay thế, Track Changes/Comment, ..."""
+import copy
+from datetime import datetime, timezone
+
 from docx import Document
 from docx.oxml import OxmlElement
+from docx.oxml.ns import qn
 from docx.shared import Cm
 from docx.text.paragraph import Paragraph
 from pydantic import BaseModel, Field
@@ -138,3 +142,205 @@ def word_insert_image(args: InsertImageArgs, ctx: ToolCtx) -> dict:
         _paragraph(doc, args.after_index)._p.addnext(para._p)
     doc.save(ctx.path)
     return {"inserted": args.image}
+
+
+AUTHOR = "Trợ lý AI"
+
+
+def _move_after(doc, element, after_index: int) -> None:
+    """Phần tử vừa thêm ở cuối tài liệu → dời tới sau đoạn after_index (-1 = đầu tài liệu)."""
+    if after_index == -1:
+        doc.paragraphs[0]._p.addprevious(element)
+    else:
+        _paragraph(doc, after_index)._p.addnext(element)
+
+
+class TableArgs(BaseModel):
+    file: str = FILE
+    after_index: int = Field(description="Chèn sau đoạn này; -1 để chèn lên đầu")
+    rows: list[list[str]] = Field(description="Dữ liệu bảng, dòng đầu là tiêu đề")
+    style: str = Field("Table Grid", description="Style bảng, ví dụ 'Table Grid', 'Light Grid Accent 1'")
+
+
+@tool("word_insert_table", "Chèn bảng vào tài liệu Word (dòng đầu in đậm làm tiêu đề).", TableArgs,
+      kind="docx", writes=True)
+def word_insert_table(args: TableArgs, ctx: ToolCtx) -> dict:
+    if not args.rows or not args.rows[0]:
+        raise ToolError("Bảng cần ít nhất một dòng và một cột")
+    _check_selection(ctx, args.after_index)
+    doc = Document(ctx.path)
+    ncols = max(len(r) for r in args.rows)
+    table = doc.add_table(rows=len(args.rows), cols=ncols)
+    try:
+        table.style = args.style
+    except KeyError:
+        table.style = "Table Grid"
+    for i, row in enumerate(args.rows):
+        for j in range(ncols):
+            cell = table.cell(i, j)
+            cell.text = str(row[j]) if j < len(row) else ""
+            if i == 0:
+                for r in cell.paragraphs[0].runs:
+                    r.bold = True
+    if doc.paragraphs:
+        _move_after(doc, table._tbl, args.after_index)
+    doc.save(ctx.path)
+    return {"table": f"{len(args.rows)}x{ncols}"}
+
+
+def _replace_in_paragraph(p, find: str, repl: str, match_case: bool) -> int:
+    """Thay trong từng run để giữ định dạng; chuỗi nằm vắt qua nhiều run thì gộp vào run đầu."""
+    def norm(s):
+        return s if match_case else s.lower()
+    count = 0
+    for r in p.runs:
+        if norm(find) in norm(r.text):
+            n = norm(r.text).count(norm(find))
+            if match_case:
+                r.text = r.text.replace(find, repl)
+            else:
+                out, src, i = [], r.text, 0
+                while (j := src.lower().find(find.lower(), i)) != -1:
+                    out += [src[i:j], repl]
+                    i = j + len(find)
+                r.text = "".join(out) + src[i:]
+            count += n
+    if count == 0 and norm(find) in norm(p.text) and p.runs:  # vắt qua nhiều run
+        text = p.text
+        n = norm(text).count(norm(find))
+        if match_case:
+            text = text.replace(find, repl)
+        else:
+            out, i = [], 0
+            while (j := text.lower().find(find.lower(), i)) != -1:
+                out += [text[i:j], repl]
+                i = j + len(find)
+            text = "".join(out) + text[i:]
+        p.runs[0].text = text
+        for r in p.runs[1:]:
+            r._r.getparent().remove(r._r)
+        count += n
+    return count
+
+
+def _all_paragraphs(doc):
+    yield from doc.paragraphs
+    for t in doc.tables:
+        for row in t.rows:
+            for cell in row.cells:
+                yield from cell.paragraphs
+
+
+class ReplaceItem(BaseModel):
+    find: str
+    replace: str
+
+
+class FindReplaceArgs(BaseModel):
+    file: str = FILE
+    items: list[ReplaceItem] = Field(description="Các cặp tìm → thay, áp dụng theo thứ tự")
+    match_case: bool = False
+
+
+@tool("word_find_replace", "Tìm và thay hàng loạt trong toàn tài liệu (cả trong bảng), giữ định dạng chữ.",
+      FindReplaceArgs, kind="docx", writes=True)
+def word_find_replace(args: FindReplaceArgs, ctx: ToolCtx) -> dict:
+    doc = Document(ctx.path)
+    paras = list(_all_paragraphs(doc))
+    if ctx.selection and ctx.selection.paragraphs is not None:
+        paras = [p for i, p in enumerate(doc.paragraphs) if i in ctx.selection.paragraphs]
+    counts = {it.find: sum(_replace_in_paragraph(p, it.find, it.replace, args.match_case) for p in paras)
+              for it in args.items if it.find}
+    doc.save(ctx.path)
+    return {"replaced": counts}
+
+
+class RewriteItem(BaseModel):
+    index: int
+    text: str
+
+
+class RewriteArgs(BaseModel):
+    file: str = FILE
+    items: list[RewriteItem] = Field(description="Các đoạn cần viết lại (dịch, rút gọn, sửa lỗi...)")
+
+
+@tool("word_rewrite_paragraphs", "Viết lại nhiều đoạn một lần (dịch tài liệu, sửa chính tả, đổi giọng văn), "
+      "giữ style và định dạng run đầu của từng đoạn.", RewriteArgs, kind="docx", writes=True)
+def word_rewrite_paragraphs(args: RewriteArgs, ctx: ToolCtx) -> dict:
+    for it in args.items:
+        _check_selection(ctx, it.index)
+    doc = Document(ctx.path)
+    for it in args.items:
+        p = _paragraph(doc, it.index)
+        if p.runs:
+            p.runs[0].text = it.text
+            for r in p.runs[1:]:
+                r._r.getparent().remove(r._r)
+        else:
+            p.add_run(it.text)
+    doc.save(ctx.path)
+    return {"rewritten": len(args.items)}
+
+
+class CommentArgs(BaseModel):
+    file: str = FILE
+    index: int = Field(description="Chỉ số đoạn được nhận xét")
+    comment: str = Field(description="Nội dung nhận xét")
+
+
+@tool("word_add_comment", "Thêm Comment (nhận xét bên lề) vào một đoạn — dùng khi rà soát tài liệu.", CommentArgs,
+      kind="docx", writes=True)
+def word_add_comment(args: CommentArgs, ctx: ToolCtx) -> dict:
+    doc = Document(ctx.path)
+    p = _paragraph(doc, args.index)
+    if not p.runs:
+        raise ToolError("Đoạn trống, không gắn nhận xét được")
+    doc.add_comment(p.runs, text=args.comment, author=AUTHOR, initials="AI")
+    doc.save(ctx.path)
+    return {"commented": args.index}
+
+
+def _tracked(tag: str, rid: int):
+    el = OxmlElement(tag)
+    el.set(qn("w:id"), str(rid))
+    el.set(qn("w:author"), AUTHOR)
+    el.set(qn("w:date"), datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"))
+    return el
+
+
+class SuggestArgs(BaseModel):
+    file: str = FILE
+    index: int = Field(description="Chỉ số đoạn cần đề xuất sửa")
+    text: str = Field(description="Nội dung đề xuất thay cho cả đoạn")
+
+
+@tool("word_suggest_edit", "Đề xuất sửa một đoạn dưới dạng Track Changes (chữ cũ gạch đi, chữ mới chèn vào) để "
+      "người dùng Chấp nhận/Từ chối trong Word.", SuggestArgs, kind="docx", writes=True)
+def word_suggest_edit(args: SuggestArgs, ctx: ToolCtx) -> dict:
+    _check_selection(ctx, args.index)
+    doc = Document(ctx.path)
+    p = _paragraph(doc, args.index)
+    runs = list(p.runs)
+    if not runs:
+        raise ToolError("Đoạn trống — dùng word_replace_paragraph thay vì đề xuất sửa")
+    base = 9000 + args.index * 10
+    deleted = _tracked("w:del", base)
+    runs[0]._r.addprevious(deleted)
+    for r in runs:
+        deleted.append(r._r)  # chuyển run cũ vào <w:del>, đổi w:t → w:delText
+        for t in r._r.findall(qn("w:t")):
+            t.tag = qn("w:delText")
+    inserted = _tracked("w:ins", base + 1)
+    new_r = copy.deepcopy(runs[0]._r)
+    for child in list(new_r):
+        if child.tag != qn("w:rPr"):
+            new_r.remove(child)
+    t = OxmlElement("w:t")
+    t.set(qn("xml:space"), "preserve")
+    t.text = args.text
+    new_r.append(t)
+    inserted.append(new_r)
+    deleted.addnext(inserted)
+    doc.save(ctx.path)
+    return {"suggested": args.index}

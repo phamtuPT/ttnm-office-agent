@@ -14,8 +14,9 @@ Theo mục 10 của [đề-xuất-btl.docx](đề-xuất-btl.docx) và lịch th
 | Đa nhà cung cấp (Gemini/OpenAI/Ollama), đổi lúc chạy | ✅ | `backend/app/llm/`, `backend/app/runtime_settings.py` |
 | Retry, timeout, stream treo, xử lý lỗi model | ✅ | `backend/app/llm/gemini.py`, `llm/base.py` |
 | Yêu cầu không rõ → hỏi lại; kế hoạch ①→②→③ | ✅ prompt, cần đánh giá | `backend/app/agent/prompts.py` |
-| `run_python` trong sandbox | ⬜ | thiết kế ở cuối `docs/ARCHITECTURE.md` |
-| Tính lại công thức Excel bằng LibreOffice, báo `#REF!` cho agent | ⬜ | `backend/app/preview/render.py` |
+| `run_python` trong sandbox cách ly | ✅ | `sandbox/`, `backend/app/tools/system.py` |
+| Kiểm tra công thức trước khi ghi (#NAME?, #REF!) | ✅ | `backend/app/tools/xlsx_util.py` |
+| Bộ đánh giá tự động mục 8.3 | ✅ khung, 12 yêu cầu | `backend/eval/` |
 | Test điều phối, lỗi mô hình/timeout | ✅ một phần | `backend/tests/test_agent.py`, `test_llm_formats.py` |
 
 ## Lê Trọng Thức — HTA, GOMS/KLM, công cụ Office
@@ -25,12 +26,14 @@ Theo mục 10 của [đề-xuất-btl.docx](đề-xuất-btl.docx) và lịch th
 | Việc | Trạng thái | Mã nguồn |
 |---|---|---|
 | Excel: tạo, đọc, ghi, định dạng, tô màu có điều kiện, biểu đồ gốc, xoá sheet | ✅ | `backend/app/tools/excel.py` |
-| Excel: thanh sai số, sắp xếp, lọc, định dạng từ khoá | ⬜ | |
+| Excel: thanh sai số, sắp xếp, lọc, định dạng từ khoá | ✅ | `excel.py`, `keywords.py` |
 | Word: tạo, dàn ý, sửa/chèn đoạn, chèn ảnh | ✅ | `backend/app/tools/word.py` |
-| Word: bảng, sửa hàng loạt, sao chép phong cách, Track Changes/Comment, định dạng từ khoá | ⬜ | |
+| Word: bảng, sửa hàng loạt, Track Changes/Comment, định dạng từ khoá | ✅ | `word.py`, `keywords.py` |
+| Word: sao chép phong cách từ tài liệu khác | ⬜ | |
 | PowerPoint: tạo 16:9, sửa chữ, ghi chú, chèn ảnh | ✅ | `backend/app/tools/pptx.py` |
-| PowerPoint: mẫu thiết kế `default_theme.pptx`, bảng, biểu đồ, xoá/sắp xếp slide | ⬜ | |
-| Bộ tệp mẫu + kết quả kỳ vọng (≈100 yêu cầu đánh giá) | ⬜ | đề nghị `eval/` |
+| PowerPoint: chủ đề màu, bảng, biểu đồ gốc, thêm/xoá/sắp xếp slide | ✅ | `pptx.py` |
+| PowerPoint: mẫu thiết kế từ tệp `default_theme.pptx` | ⬜ | |
+| Bộ tệp mẫu + kết quả kỳ vọng (≈100 yêu cầu đánh giá) | 🟡 12 mẫu | `backend/eval/cases.json` |
 | Test công thức, vùng sửa, định dạng, toàn vẹn tệp | ✅ một phần | `backend/tests/test_tools.py` |
 
 Cách thêm tool: xem docstring `backend/app/tools/registry.py`. Tool ghi đặt `writes=True` (ghi vào `ctx.path`
@@ -49,8 +52,9 @@ Bảng `tool_calls` cho thời gian thật để đối chiếu GOMS/KLM.
 | Diff giá trị/định dạng/biểu đồ/đoạn/slide | ✅ | `backend/app/versioning/diff.py` |
 | Ảnh: chuẩn hoá (EXIF, thu nhỏ, nén), lưu, chèn vào tài liệu | ✅ | `backend/app/tools/assets.py` |
 | Ảnh → bảng Excel / văn bản Word | ✅ qua vision LLM | luồng chat + tool tạo/ghi |
-| Ảnh: cắt, xoay theo yêu cầu | ⬜ | `backend/app/tools/assets.py` |
-| OCR cục bộ để so sánh, đo CER và độ chính xác trích bảng | ⬜ | đề nghị `backend/app/media/ocr.py`, `eval/` |
+| Ảnh: cắt, xoay, thu nhỏ, trắng đen theo yêu cầu | ✅ | tool `image_edit` |
+| OCR cục bộ (Tesseract), hàm CER và độ chính xác trích bảng | ✅ | `backend/app/media/ocr.py`, tool `ocr_image` |
+| Bộ ~50 ảnh có nhãn + chạy đo CER | ⬜ | `backend/eval/` |
 | Giọng nói: Web Speech API (vi-VN) + dự phòng máy chủ, không tự gửi | ✅ | `frontend/src/components/VoiceButton.tsx`, `/transcribe` |
 | Bộ 10–15 câu lệnh giọng nói + bản chép chuẩn; đo lỗi nhận dạng | ⬜ | |
 | Test tệp sai/hỏng, đường dẫn, ghi đè, khôi phục | ✅ | `backend/tests/test_api.py`, `test_tools.py` |
@@ -64,13 +68,15 @@ cognitive walkthrough, thử nghiệm người dùng, SUS (Chương 6).
 |---|---|---|
 | Bố cục chat trái / xem trước phải, tab tệp | ✅ | `frontend/src/App.tsx`, `components/FileList.tsx` |
 | Xem trước Excel (kéo chọn vùng), Word (dàn ý/bản in), PowerPoint (ảnh slide/dàn ý) | ✅ | `components/PreviewPane.tsx` |
-| Vẽ biểu đồ Excel bằng SVG trong khung xem trước | ⬜ | `components/PreviewPane.tsx` |
+| Vẽ biểu đồ Excel bằng SVG trong khung xem trước | ✅ | `components/ChartView.tsx` |
+| Màn hình chào, giao diện sáng/tối, kéo thả tệp, nhật ký tool dạng terminal | ✅ | `components/Hero.tsx`, `styles.css` |
 | Trạng thái xử lý, bước tool, lỗi, Dừng, xác nhận | ✅ | `components/ChatPanel.tsx`, `ConfirmDialog.tsx` |
 | Hoàn tác / Làm lại / Lịch sử có diff / Hoàn tác yêu cầu | ✅ | `components/HistoryDialog.tsx` |
 | Nút mic, trạng thái đang nghe/đang nhận dạng, lỗi quyền mic, trình duyệt không hỗ trợ | ✅ | `components/VoiceButton.tsx` |
 | Cài đặt mô hình AI | ✅ | `components/SettingsDialog.tsx` |
-| Test thành phần và end-to-end frontend | ⬜ | đề nghị Vitest + Playwright |
-| Áp thiết kế Figma, khả năng tiếp cận (bàn phím, tương phản) | ⬜ | `frontend/src/styles.css` |
+| Test thành phần frontend | ✅ 11 test | `frontend/src/__tests__` (Vitest) |
+| Test end-to-end trình duyệt | ⬜ | đề nghị Playwright |
+| Đối chiếu với Figma, kiểm tra khả năng tiếp cận (bàn phím, trình đọc màn hình) | ⬜ | `frontend/src/styles.css` |
 
 Chạy giao diện không cần API key: để nhà cung cấp là **Thử nghiệm**, gõ “tạo bảng” hoặc “hoàn tác” để thử luồng.
 

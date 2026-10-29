@@ -11,6 +11,7 @@ interface Props {
   connected: boolean;
   activeFile: string | null;
   selection: Selection | null;
+  prefill: { text: string; nonce: number } | null;
   onClearSelection: () => void;
   onSend: (text: string, images: OutgoingImage[]) => void;
   onCancel: () => void;
@@ -21,7 +22,7 @@ interface Props {
 const MAX_IMAGE_MB = 10;
 const IMAGE_TYPES = ["image/png", "image/jpeg", "image/webp", "image/heic", "image/gif"];
 
-function describeSelection(s: Selection) {
+export function describeSelection(s: Selection) {
   if (s.range) return `${s.file} › ${s.sheet}!${s.range}`;
   if (s.paragraphs) return `${s.file} › đoạn ${s.paragraphs.map((i) => i + 1).join(", ")}`;
   if (s.slides) return `${s.file} › slide ${s.slides.map((i) => i + 1).join(", ")}`;
@@ -37,6 +38,21 @@ function readAsBase64(file: File): Promise<OutgoingImage> {
   });
 }
 
+type ToolItem = Extract<ChatItem, { kind: "tool" }>;
+type Block = { kind: "tools"; items: ToolItem[] } | ChatItem;
+
+/** Gom các bước tool liên tiếp thành một khối terminal. */
+export function toBlocks(items: ChatItem[]): Block[] {
+  const out: Block[] = [];
+  for (const it of items) {
+    const last = out[out.length - 1];
+    if (it.kind === "tool" && last?.kind === "tools") last.items.push(it);
+    else if (it.kind === "tool") out.push({ kind: "tools", items: [it] });
+    else out.push(it);
+  }
+  return out;
+}
+
 export function ChatPanel(p: Props) {
   const [text, setText] = useState("");
   const [interim, setInterim] = useState("");
@@ -47,6 +63,12 @@ export function ChatPanel(p: Props) {
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [p.items]);
+
+  useEffect(() => {
+    if (!p.prefill) return;
+    setText(p.prefill.text);
+    inputRef.current?.focus();
+  }, [p.prefill?.nonce]);
 
   const addImages = async (files: FileList | null) => {
     for (const f of Array.from(files ?? [])) {
@@ -63,8 +85,9 @@ export function ChatPanel(p: Props) {
     }
   };
 
+  const canSend = p.connected && !p.busy && (text.trim().length > 0 || images.length > 0);
   const submit = () => {
-    if (p.busy || (!text.trim() && !images.length)) return;
+    if (!canSend) return;
     p.onSend(text.trim(), images.map((x) => x.img));
     setText("");
     setImages([]);
@@ -74,19 +97,16 @@ export function ChatPanel(p: Props) {
     <section className="chat" aria-label="Hội thoại">
       <div className="chat-log" aria-live="polite">
         {p.items.length === 0 && (
-          <div className="hint">
-            <p>Giao việc bằng lời, ví dụ:</p>
-            <ul>
-              <li>“Tạo bảng doanh thu 12 tháng, có dòng tổng và biểu đồ cột”</li>
-              <li>Kéo chọn B2:D10 rồi gõ “tô đỏ các giá trị âm”</li>
-              <li>Gửi ảnh hoá đơn kèm “chuyển thành bảng Excel và tính tổng”</li>
-            </ul>
+          <div className="chat-empty">
+            <p className="eyebrow">// hội thoại</p>
+            <h2>Giao việc bằng lời</h2>
+            <p>Gõ, nói hoặc dán ảnh. Trợ lý nêu kế hoạch, làm trực tiếp trên tệp và báo lại chỗ đã sửa — mọi thay đổi đều hoàn tác được.</p>
           </div>
         )}
-        {p.items.map((it, i) => (
-          <ChatRow key={i} item={it} onOpenFile={p.onOpenFile} />
-        ))}
-        {p.busy && <div className="typing">Đang xử lý…</div>}
+        {toBlocks(p.items).map((b, i) =>
+          b.kind === "tools" ? <ToolLog key={i} items={b.items} /> : <ChatRow key={i} item={b} onOpenFile={p.onOpenFile} />,
+        )}
+        {p.busy && !p.items.some((x) => x.kind === "text" && x.streaming) && <div className="notice">Đang xử lý…</div>}
         <div ref={endRef} />
       </div>
 
@@ -113,7 +133,7 @@ export function ChatPanel(p: Props) {
         <textarea
           ref={inputRef}
           value={text}
-          placeholder={p.connected ? "Nhập hoặc nói yêu cầu… (Enter để gửi, Shift+Enter xuống dòng)" : "Đang kết nối…"}
+          placeholder={p.connected ? "Nhập hoặc nói yêu cầu…" : "Đang kết nối tới máy chủ…"}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
@@ -122,13 +142,14 @@ export function ChatPanel(p: Props) {
             }
           }}
           onPaste={(e) => addImages(e.clipboardData.files)}
-          rows={3}
+          rows={2}
           aria-label="Yêu cầu"
         />
         {interim && <div className="interim" aria-live="polite">🎤 {interim}</div>}
         <div className="composer-actions">
-          <label className="btn" title="Đính kèm ảnh (hoặc dán ảnh vào ô soạn)">
-            🖼
+          <label className="btn icon ghost" title="Đính kèm ảnh (hoặc dán ảnh vào ô soạn)">
+            <span aria-hidden>🖼</span>
+            <span className="sr-only">Đính kèm ảnh</span>
             <input type="file" accept={IMAGE_TYPES.join(",")} multiple hidden
               onChange={(e) => { addImages(e.target.files); e.target.value = ""; }} />
           </label>
@@ -138,11 +159,12 @@ export function ChatPanel(p: Props) {
             onInterim={setInterim}
             onError={p.onError}
           />
+          <span className="hint">Enter gửi · Shift+Enter xuống dòng</span>
           <span className="spacer" />
           {p.busy ? (
             <button className="btn danger" onClick={p.onCancel}>Dừng</button>
           ) : (
-            <button className="btn primary" onClick={submit} disabled={!p.connected || (!text.trim() && !images.length)}>Gửi</button>
+            <button className="btn primary" onClick={submit} disabled={!canSend}>Gửi ↵</button>
           )}
         </div>
       </div>
@@ -150,29 +172,50 @@ export function ChatPanel(p: Props) {
   );
 }
 
+function ToolLog({ items }: { items: ToolItem[] }) {
+  const [open, setOpen] = useState<number | null>(null);
+  return (
+    <div className="term" role="log" aria-label="Các bước trợ lý đã làm">
+      <div className="term-head"><i /><i /><i /> <span>công cụ · {items.length} bước</span></div>
+      {items.map((t, i) => {
+        const mark = { running: <span className="run">⋯</span>, ok: <span className="ok">✓</span>, error: <span className="err">✗</span> }[t.status];
+        return (
+          <div key={i}>
+            <button className="term-line" onClick={() => setOpen(open === i ? null : i)} aria-expanded={open === i}>
+              <span className="prompt">$</span> {t.name} {mark}{" "}
+              <span className="lbl">{TOOL_LABELS[t.name] ?? ""}</span>
+              {t.status === "error" && t.result?.error ? <span className="err"> — {String(t.result.error)}</span> : null}
+            </button>
+            {open === i && <pre>{JSON.stringify({ args: t.args, result: t.result }, null, 2)}</pre>}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function ChatRow({ item, onOpenFile }: { item: ChatItem; onOpenFile: (id: string) => void }) {
   switch (item.kind) {
-    case "text":
-      return <div className={`msg ${item.role}`}>{item.text}</div>;
-    case "tool": {
-      const icon = { running: "⏳", ok: "✓", error: "⚠" }[item.status];
+    case "text": {
+      if (item.role === "user") return <div className="msg user">{item.text}</div>;
+      // Dòng kế hoạch ① … → ② … hiển thị tách riêng
+      const [first, ...rest] = item.text.split("\n");
+      const isPlan = /^\s*①/.test(first);
       return (
-        <details className={`tool ${item.status}`}>
-          <summary>
-            {icon} {TOOL_LABELS[item.name] ?? item.name}
-            {item.status === "error" && item.result?.error ? `: ${String(item.result.error)}` : ""}
-          </summary>
-          <pre>{JSON.stringify({ args: item.args, result: item.result }, null, 2)}</pre>
-        </details>
+        <div className={`msg model ${item.streaming ? "cursor" : ""}`}>
+          {isPlan ? <><span className="plan">{first}</span>{rest.join("\n")}</> : item.text}
+        </div>
       );
     }
     case "change":
       return (
         <button className="change" onClick={() => onOpenFile(item.fileId)} title="Mở tệp để xem thay đổi">
-          ✎ <b>{item.fileName}</b> → phiên bản {item.version}: {item.summary}
+          <span aria-hidden>✎</span><span><b>{item.fileName}</b> · v{item.version} — {item.summary}</span>
         </button>
       );
     case "notice":
       return <div className="notice">{item.text}</div>;
+    default:
+      return null;
   }
 }

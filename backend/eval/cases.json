@@ -1,0 +1,237 @@
+[
+  {
+    "id": "xlsx-01-tao-bang-bieu-do",
+    "group": "Excel",
+    "request": "Tạo bảng doanh thu 12 tháng (số liệu ví dụ), có dòng tổng và biểu đồ cột",
+    "inputs": [],
+    "checks": [
+      {
+        "type": "file_created",
+        "kind": "xlsx"
+      },
+      {
+        "type": "xlsx_any_formula",
+        "contains": "SUM"
+      },
+      {
+        "type": "xlsx_chart_count",
+        "min": 1
+      }
+    ]
+  },
+  {
+    "id": "xlsx-02-to-do-am",
+    "group": "Sửa một phần",
+    "request": "Tô đỏ các giá trị âm",
+    "inputs": [
+      "xlsx_loi_nhuan"
+    ],
+    "selection": {
+      "file": "loi-nhuan.xlsx",
+      "sheet": "Lợi nhuận",
+      "range": "B2:D6"
+    },
+    "checks": [
+      {
+        "type": "xlsx_conditional_or_red",
+        "file": "loi-nhuan.xlsx",
+        "sheet": "Lợi nhuận",
+        "range": "B2:D6"
+      },
+      {
+        "type": "xlsx_unchanged_outside",
+        "file": "loi-nhuan.xlsx",
+        "sheet": "Lợi nhuận",
+        "range": "B2:D6"
+      }
+    ]
+  },
+  {
+    "id": "xlsx-03-dong-tong",
+    "group": "Excel",
+    "request": "Thêm dòng Tổng cuối bảng cho các cột Q1 đến Q3",
+    "inputs": [
+      "xlsx_loi_nhuan"
+    ],
+    "checks": [
+      {
+        "type": "xlsx_any_formula",
+        "file": "loi-nhuan.xlsx",
+        "contains": "SUM"
+      },
+      {
+        "type": "xlsx_contains_text",
+        "file": "loi-nhuan.xlsx",
+        "text": "Tổng"
+      }
+    ]
+  },
+  {
+    "id": "xlsx-04-sap-xep",
+    "group": "Excel",
+    "request": "Sắp xếp bảng theo cột Q1 giảm dần",
+    "inputs": [
+      "xlsx_loi_nhuan"
+    ],
+    "checks": [
+      {
+        "type": "xlsx_sorted_desc",
+        "file": "loi-nhuan.xlsx",
+        "sheet": "Lợi nhuận",
+        "col": "B",
+        "rows": [
+          2,
+          6
+        ]
+      }
+    ]
+  },
+  {
+    "id": "docx-01-bao-cao",
+    "group": "Word",
+    "request": "Soạn báo cáo ngắn về kết quả kinh doanh quý 3 gồm các đề mục: Tổng quan, Kết quả, Kiến nghị",
+    "inputs": [],
+    "checks": [
+      {
+        "type": "file_created",
+        "kind": "docx"
+      },
+      {
+        "type": "docx_heading_count",
+        "min": 3
+      }
+    ]
+  },
+  {
+    "id": "docx-02-tim-thay",
+    "group": "Word",
+    "request": "Thay tất cả chữ 'khách hàng' thành 'đối tác'",
+    "inputs": [
+      "docx_hop_dong"
+    ],
+    "checks": [
+      {
+        "type": "docx_not_contains",
+        "file": "hop-dong.docx",
+        "text": "khách hàng"
+      },
+      {
+        "type": "docx_contains",
+        "file": "hop-dong.docx",
+        "text": "đối tác"
+      }
+    ]
+  },
+  {
+    "id": "docx-03-ra-soat",
+    "group": "Rà soát",
+    "request": "Rà soát hợp đồng, đề xuất sửa câu chưa rõ dưới dạng Track Changes và ghi nhận xét",
+    "inputs": [
+      "docx_hop_dong"
+    ],
+    "checks": [
+      {
+        "type": "docx_has_revisions_or_comments",
+        "file": "hop-dong.docx"
+      }
+    ]
+  },
+  {
+    "id": "docx-04-dich",
+    "group": "Dịch",
+    "request": "Dịch tài liệu sang tiếng Anh, giữ nguyên số và ngày tháng",
+    "inputs": [
+      "docx_hop_dong"
+    ],
+    "checks": [
+      {
+        "type": "docx_contains",
+        "file": "hop-dong.docx",
+        "text": "15/01/2026"
+      },
+      {
+        "type": "docx_contains",
+        "file": "hop-dong.docx",
+        "text": "120.000.000"
+      },
+      {
+        "type": "docx_not_contains",
+        "file": "hop-dong.docx",
+        "text": "Hợp đồng ký ngày"
+      }
+    ]
+  },
+  {
+    "id": "pptx-01-gioi-thieu",
+    "group": "PowerPoint",
+    "request": "Làm 5 slide giới thiệu sản phẩm máy lọc nước, có ghi chú thuyết trình",
+    "inputs": [],
+    "checks": [
+      {
+        "type": "file_created",
+        "kind": "pptx"
+      },
+      {
+        "type": "pptx_slide_count",
+        "min": 5
+      },
+      {
+        "type": "pptx_notes_count",
+        "min": 3
+      }
+    ]
+  },
+  {
+    "id": "pptx-02-tu-khoa",
+    "group": "Định dạng từ khoá",
+    "request": "In đậm và tô cam chữ 'tiết kiệm' trên các slide",
+    "inputs": [
+      "pptx_gioi_thieu"
+    ],
+    "checks": [
+      {
+        "type": "file_changed",
+        "file": "gioi-thieu.pptx"
+      }
+    ]
+  },
+  {
+    "id": "undo-01",
+    "group": "Hoàn tác",
+    "request": "Hoàn tác lần sửa vừa rồi",
+    "inputs": [
+      "xlsx_loi_nhuan"
+    ],
+    "setup_request": "Ghi số 999 vào ô B2",
+    "checks": [
+      {
+        "type": "xlsx_cell_equals",
+        "file": "loi-nhuan.xlsx",
+        "sheet": "Lợi nhuận",
+        "ref": "B2",
+        "value": 120
+      },
+      {
+        "type": "has_redo",
+        "file": "loi-nhuan.xlsx"
+      }
+    ]
+  },
+  {
+    "id": "mo-ho-01",
+    "group": "Yêu cầu không rõ",
+    "request": "Sửa cái bảng kia đi",
+    "inputs": [
+      "xlsx_loi_nhuan",
+      "docx_hop_dong"
+    ],
+    "checks": [
+      {
+        "type": "no_file_changed"
+      },
+      {
+        "type": "reply_asks_question"
+      }
+    ]
+  }
+]

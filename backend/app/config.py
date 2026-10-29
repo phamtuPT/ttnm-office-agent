@@ -38,6 +38,10 @@ class Settings(BaseSettings):
     max_image_mb: int = 10
     cors_origins: list[str] = ["http://localhost:5173", "http://localhost:3000"]
     soffice_path: str = ""  # để trống = tìm soffice/libreoffice trong PATH
+    # Dịch vụ chạy mã phân tích dữ liệu (run_python) — container riêng, không có mạng. Trống = tắt tính năng.
+    sandbox_url: str = ""
+    sandbox_timeout_s: float = 60
+    tesseract_path: str = ""  # OCR cục bộ để so sánh với vision LLM; trống = tìm trong PATH
 
 
 @lru_cache

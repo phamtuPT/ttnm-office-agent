@@ -25,9 +25,11 @@ Bản đề xuất gốc: [đề-xuất-btl.docx](đề-xuất-btl.docx). Bảng
 │  versioning/   store.py (thế hệ sao lưu, hoàn tác theo yêu cầu) · diff.py                        │
 │  preview/      render.py — LibreOffice headless → PDF → PNG (PyMuPDF)                            │
 │  privacy/      pii.py (ẩn danh tất định) · secrets.py (che khoá API trong log)                   │
+│  media/        ocr.py — Tesseract cục bộ, CER, độ chính xác trích bảng                           │
 │  runtime_settings.py — đổi nhà cung cấp/model/khoá lúc đang chạy                                 │
 └───────┬───────────────────────────────┬───────────────────────────────┬─────────────────────────┘
    SQLite storage/app.db         storage/<phiên>/files|versions|assets|renders     Gemini / OpenAI / Ollama
+                                                                          sandbox (mạng nội bộ, không Internet)
 ```
 
 ## Luồng một yêu cầu (đề xuất mục 4.3)
@@ -79,37 +81,46 @@ Bản đề xuất gốc: [đề-xuất-btl.docx](đề-xuất-btl.docx). Bảng
 | Kế hoạch ①→②→③ cho tác vụ nhiều bước | ✅ (prompt) | `agent/prompts.py` |
 | Excel: tạo bảng, công thức, định dạng, tô màu có điều kiện, biểu đồ gốc | ✅ | `tools/excel.py` |
 | Excel: cảnh báo ghi đè ô có dữ liệu | ✅ | `excel_write_cells` |
-| Excel: thanh sai số, sắp xếp, lọc | ⬜ TV2 | `tools/excel.py` |
+| Excel: thanh sai số, sắp xếp, lọc | ✅ | `excel_add_chart(error_range)`, `excel_sort_range`, `excel_set_filter` |
+| Excel: kiểm tra công thức trước khi ghi (#NAME?, #REF!, ngoặc), tự thêm `_xlfn.` cho hàm mới | ✅ | `tools/xlsx_util.py` |
 | Word: tạo tài liệu, đề mục, danh sách, chèn ảnh, sửa đoạn | ✅ | `tools/word.py` |
-| Word: bảng, sửa hàng loạt, sao chép phong cách, Track Changes/Comment | ⬜ TV2 | `tools/word.py` |
-| PowerPoint: tạo 16:9, ghi chú thuyết trình, chèn ảnh, sửa chữ | ✅ | `tools/pptx.py` |
-| PowerPoint: mẫu thiết kế (default_theme.pptx), bảng, biểu đồ | ⬜ TV2 | `tools/pptx.py` |
-| Định dạng từ khoá trên cả ba định dạng | ⬜ TV2 | |
-| Dịch giữ định dạng, so sánh hai phiên bản | 🟡 so sánh có trong Lịch sử; dịch dùng tool sửa đoạn | `versioning/diff.py` |
+| Word: bảng, tìm-thay hàng loạt, viết lại nhiều đoạn (dịch) | ✅ | `word_insert_table`, `word_find_replace`, `word_rewrite_paragraphs` |
+| Word: Track Changes, Comment | ✅ | `word_suggest_edit`, `word_add_comment` |
+| Word: sao chép phong cách từ tài liệu khác | ⬜ TV2 | |
+| PowerPoint: tạo 16:9 có chủ đề màu, ghi chú, chèn ảnh, sửa chữ | ✅ | `tools/pptx.py` (theme clean/midnight/warm) |
+| PowerPoint: thêm/xoá/đổi thứ tự slide, bảng, biểu đồ gốc | ✅ | `pptx_add_slide`, `pptx_delete_slide`, `pptx_move_slide`, `pptx_add_table`, `pptx_add_chart` |
+| PowerPoint: mẫu thiết kế từ tệp `.pptx` có sẵn | ⬜ TV2 | |
+| Định dạng từ khoá trên cả ba định dạng | ✅ | `tools/keywords.py` |
+| Dịch giữ định dạng, so sánh hai phiên bản / hai tệp | ✅ | `word_rewrite_paragraphs`, `compare_versions`, `compare_files` |
 | Tự render trang/slide để kiểm tra bố cục | ✅ (cần LibreOffice) | `preview/render.py`, tool `render_pages` |
 | Ảnh → bảng Excel / văn bản Word | ✅ qua vision LLM | ảnh trong tin nhắn + tool tạo/ghi |
-| Xử lý ảnh: xoay EXIF, thu nhỏ, nén | ✅ | `tools/assets.py` |
-| Xử lý ảnh: cắt, xoay theo yêu cầu | ⬜ TV3 | `tools/assets.py` |
-| OCR cục bộ để so sánh trong báo cáo | ⬜ TV3 | |
+| Xử lý ảnh: xoay EXIF, thu nhỏ, nén; xoay/cắt/trắng đen theo yêu cầu | ✅ | `tools/assets.py`, tool `image_edit` |
+| OCR cục bộ (Tesseract) + CER, độ chính xác trích bảng | ✅ (cần Tesseract, có trong Docker) | `media/ocr.py`, tool `ocr_image` |
 | Ghi nguyên tử, 20 thế hệ, hoàn tác theo yêu cầu, hoàn tác lần khôi phục | ✅ | `tools/executor.py`, `versioning/store.py` |
 | "Hoàn tác lần sửa vừa rồi" bằng lời | ✅ | tool `undo_last_request` |
 | Ollama / OpenAI / Gemini, đổi trên giao diện không khởi động lại | ✅ | `llm/`, `runtime_settings.py`, `SettingsDialog.tsx` |
 | Ẩn danh PII, che khoá API trong log | ✅ | `privacy/` |
 | Retry backoff, timeout khi stream treo | ✅ | `llm/gemini.py`, `llm/base.py::with_idle_timeout` |
-| `run_python` (pandas, statsmodels…) trong sandbox | ⬜ TV1 — xem bên dưới | |
+| `run_python` (pandas, statsmodels…) trong sandbox cách ly | ✅ | `sandbox/`, tool `run_python` |
 | Web Speech API, xem/sửa bản chép trước khi gửi | ✅ | `components/VoiceButton.tsx` |
+| Lưới Excel tự viết + biểu đồ SVG, chọn vùng | ✅ | `components/PreviewPane.tsx`, `components/ChartView.tsx` |
 | Docker Compose, nginx, chỉ mở 127.0.0.1, cổng 3000 | ✅ | `docker-compose.yml` |
 | Nhật ký vận hành, chỉ số mục 8.3 | ✅ | bảng `turns`, `tool_calls`; `GET /api/sessions/{id}/turns` |
-| pytest, độ phủ ≥ 70% | ✅ 84% | `backend/tests` |
+| Bộ đánh giá tự động (tỉ lệ hoàn thành, độ chính xác tool, toàn vẹn tệp, độ trễ) | ✅ 12 yêu cầu mẫu, cần mở rộng lên ~100 | `backend/eval/` |
+| pytest backend, độ phủ ≥ 70% | ✅ 85% (62 test) | `backend/tests` |
+| Test frontend | ✅ 11 test (Vitest) | `frontend/src/__tests__` |
+| Test end-to-end trình duyệt (Playwright) | ⬜ TV4 | |
 
-### Thiết kế đề nghị cho `run_python` (chưa làm)
+### Sandbox `run_python`
 
 Chạy mã do LLM sinh ra là rủi ro lớn nhất của hệ thống (nội dung tài liệu có thể chứa lệnh độc hại —
-prompt injection). Không chạy trong tiến trình backend. Đề nghị:
+prompt injection). Mã **không bao giờ** chạy trong tiến trình backend:
 
-- Dịch vụ thứ ba `sandbox` trong docker-compose: image Python có pandas, NumPy, SciPy, statsmodels,
-  seaborn, matplotlib; **không có mạng** (`network_mode: none`), chạy user không quyền root, file system
-  chỉ đọc trừ thư mục làm việc tạm, giới hạn CPU/RAM/thời gian.
-- Backend chép bản sao tệp dữ liệu vào thư mục tạm, gọi sandbox, nhận lại bảng kết quả (CSV/JSON) và
-  hình (PNG); tool Office sau đó đưa kết quả vào Word/Excel.
-- Người dùng xem mã trước khi chạy (tool `destructive=True` để hỏi xác nhận).
+- Dịch vụ `sandbox` riêng (`sandbox/app.py`): pandas, NumPy, SciPy, statsmodels, seaborn, matplotlib.
+- Chỉ nối vào mạng nội bộ `sandboxnet` (`internal: true`) — không có đường ra Internet; user không phải root;
+  hệ thống tệp chỉ đọc trừ `/tmp`; `mem_limit`, `cpus`, `pids_limit`, bỏ mọi capability.
+- Mỗi lần chạy: thư mục tạm mới, giới hạn CPU/RAM/kích thước tệp/số tiến trình, timeout.
+- Backend chỉ gửi **bản sao** các tệp được nêu tên; nhận lại stdout, hình (thành ảnh để chèn), bảng CSV,
+  tệp Office (thành tệp mới trong phiên).
+- Tool có `destructive=True`: người dùng **đọc mã và bấm Chạy** trước khi chạy.
+- Không đặt `SANDBOX_URL` (chạy ngoài Docker) → tính năng tắt, trợ lý dùng công thức Excel thay thế.

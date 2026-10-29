@@ -72,7 +72,7 @@ export function SettingsDialog(p: { onClose: () => void; onSaved: (s: AppSetting
               </label>
             )}
             {keyProvider && (
-              <label>Khoá API {s.has_key[keyProvider] ? <span className="tag ok">đã lưu</span> : <span className="tag warn">chưa có</span>}
+              <label>Khoá API {s.has_key[keyProvider] ? <span className="pill ok">đã lưu</span> : <span className="pill warn">chưa có</span>}
                 <input type="password" autoComplete="off" value={keys[keyProvider] ?? ""}
                   onChange={(e) => setKeys({ ...keys, [keyProvider]: e.target.value })}
                   placeholder={s.has_key[keyProvider] ? "để trống = giữ khoá đã lưu" : "dán khoá API"} />

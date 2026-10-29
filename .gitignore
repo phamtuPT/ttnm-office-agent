@@ -21,3 +21,4 @@ storage/
 .idea/
 ~$*
 .coverage
+backend/eval/results/
