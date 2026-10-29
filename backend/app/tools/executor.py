@@ -96,8 +96,12 @@ class ToolExecutor:
                 return ToolResult(False, {"error": f"Tên tệp phải có đuôi .{tool.kind}"})
             if store.safe_filename(file_arg) != file_arg:
                 return ToolResult(False, {"error": f"Tên tệp không hợp lệ, gợi ý: {store.safe_filename(file_arg)}"})
-            if any(x.name == file_arg for x in files):
-                return ToolResult(False, {"error": f"Đã có tệp '{file_arg}', hãy chọn tên khác hoặc sửa tệp đó"})
+            existing = next((x for x in files if x.name == file_arg), None)
+            if existing is not None:
+                if not _untouched_starter(existing):
+                    return ToolResult(False, {"error": f"Đã có tệp '{file_arg}', hãy chọn tên khác hoặc sửa tệp đó"})
+                # Tệp trống tạo sẵn khi mở phiên (chưa sửa gì): tạo nội dung thẳng vào tệp đó như một phiên bản mới
+                f = existing
         elif file_arg is not None:
             f = next((x for x in files if x.name == file_arg), None)
             if f is None:
@@ -137,7 +141,10 @@ class ToolExecutor:
 
         images = data.pop("_images", [])
         changes = data.pop("_changes", [])
-        if tool.creates:
+        if tool.creates and f is not None:  # ghi đè tệp khởi đầu còn trống
+            version, d, summary = store.apply_change(self.db, f, tmp, name, self.turn_id)
+            changes = [FileChange(f.id, f.name, version, summary, d)]
+        elif tool.creates:
             nf = store.create_file(self.db, self.session_id, file_arg, tmp.read_bytes(), source=name,
                                    turn_id=self.turn_id, rename_if_exists=False)
             tmp.unlink(missing_ok=True)
@@ -168,3 +175,8 @@ class ToolExecutor:
             except OSError:
                 pass  # Windows: thread timeout có thể còn giữ tệp; tệp .tmp-* bị bỏ qua ở mọi nơi
         return ToolResult(False, {"error": msg})
+
+
+def _untouched_starter(f: File) -> bool:
+    """Tệp trống tạo sẵn khi chọn loại ở trang chủ và chưa bị sửa lần nào."""
+    return len(f.versions) == 1 and f.versions[0].source == "blank"

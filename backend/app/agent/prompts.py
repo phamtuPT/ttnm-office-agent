@@ -3,6 +3,7 @@ Hướng dẫn thiết kế slide chỉ chèn khi yêu cầu liên quan PowerPoi
 Danh sách tệp, tệp đang mở, vùng chọn, ảnh đính kèm đi trong tin nhắn người dùng qua context_block().
 """
 import re
+from pathlib import Path
 
 from ..tools.registry import Selection
 
@@ -39,13 +40,8 @@ Nguyên tắc:
 17. Khi xong: trả lời ngắn gọn bằng tiếng Việt — đã làm gì, ở đâu (tệp, sheet/ô, đoạn, slide). Người dùng có thể bấm Hoàn tác.
 """
 
-PPTX_GUIDE = """
-Hướng dẫn thiết kế slide:
-- Khổ 16:9. Mỗi slide một ý chính; tiêu đề ≤ 8 từ; tối đa 5 gạch đầu dòng, mỗi dòng ≤ 12 từ.
-- Nội dung dài → tách thành nhiều slide hoặc đưa vào ghi chú thuyết trình (pptx_set_notes).
-- Sau khi tạo/sửa slide, gọi render_pages để tự xem lại; thấy chữ tràn khung hoặc hình chồng lấn thì sửa rồi xem lại.
-- Ảnh chèn vào slide không đè lên chữ; chừa lề ít nhất 1 cm.
-"""
+# Hướng dẫn thiết kế slide nằm trong tệp riêng để nhóm sửa nội dung mà không đụng mã
+PPTX_GUIDE = "\n" + (Path(__file__).resolve().parent.parent / "resources" / "design_guide.md").read_text(encoding="utf-8")
 
 _PPTX_HINT = re.compile(r"slide|pptx|powerpoint|trình chiếu|thuyết trình|bài trình bày", re.I)
 

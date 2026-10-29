@@ -1,22 +1,19 @@
-"""Tool PowerPoint (python-pptx). TV2 mở rộng: xoá/sắp xếp slide, bảng, biểu đồ, mẫu thiết kế, ..."""
+"""Tool PowerPoint (python-pptx): tạo từ mẫu thiết kế, sửa chữ/công thức, slide, bảng, biểu đồ, hình khối."""
 from typing import Literal
 
 from pptx import Presentation
 from pptx.chart.data import CategoryChartData
 from pptx.dml.color import RGBColor
 from pptx.enum.chart import XL_CHART_TYPE, XL_LEGEND_POSITION
-from pptx.oxml.ns import qn
-from pptx.oxml.xmlchemy import OxmlElement
-from pptx.util import Cm, Emu, Pt
+from pptx.util import Cm, Pt
 from pydantic import BaseModel, Field
 
-from . import omml
 from .assets import asset_path
+from .pptx_design import BUILT_IN, find_layout, new_presentation
 from .pptx_math import all_shapes, finalize, shape_markup, write_text
 from .registry import ToolCtx, ToolError, tool
 
 FILE = Field(description="Tên tệp .pptx trong phiên")
-SLIDE_16_9 = (Emu(12192000), Emu(6858000))
 
 
 def _slide(prs, index: int):
@@ -57,23 +54,15 @@ class SlideSpec(BaseModel):
     notes: str = Field("", description="Ghi chú thuyết trình")
 
 
-_LAYOUTS = {"title": 0, "title_content": 1, "section": 2, "title_only": 5, "blank": 6}
-
-
 class CreateArgs(BaseModel):
     file: str = Field(description="Tên tệp mới, đuôi .pptx")
     slides: list[SlideSpec]
     theme: Literal["clean", "midnight", "warm"] = Field(
-        "clean", description="clean = nền trắng chữ xanh đậm; midnight = nền xanh đêm chữ sáng; "
-                             "warm = nền kem, tiêu đề cam san hô")
-
-
-# (nền, màu tiêu đề, màu chữ) — tương phản đủ để đọc trên máy chiếu
-THEMES = {
-    "clean": ("FFFFFF", "16324F", "2E3A46"),
-    "midnight": ("0F1923", "FFB830", "F0EDE6"),
-    "warm": ("FBF6EE", "E0533A", "3A2E26"),
-}
+        "clean", description="Bảng màu: clean = nền trắng chữ xanh đậm; midnight = nền xanh đêm chữ sáng; "
+                             "warm = nền kem, tiêu đề cam đất")
+    template: str = Field(
+        "default_theme", description="Mẫu thiết kế: 'default_theme' (có dải màu nhấn), 'default_plain' (trơn), hoặc "
+                                     "tên một tệp .pptx trong phiên để dùng thiết kế của tệp đó (mẫu công ty)")
 
 
 def _fill_slide(s, spec: "SlideSpec") -> None:
@@ -89,50 +78,33 @@ def _fill_slide(s, spec: "SlideSpec") -> None:
         s.notes_slide.notes_text_frame.text = spec.notes
 
 
-def _color_math(shape, rgb: str) -> None:
-    """Tô màu chữ cho công thức (m:r có a:rPr riêng, không nằm trong p.runs)."""
-    for rpr in shape.text_frame._txBody.iter(qn("a:rPr")):
-        if rpr.getparent().tag != f"{{{omml.M}}}r":
-            continue
-        for old in rpr.findall(qn("a:solidFill")):
-            rpr.remove(old)
-        fill = OxmlElement("a:solidFill")
-        clr = OxmlElement("a:srgbClr")
-        clr.set("val", rgb)
-        fill.append(clr)
-        rpr.insert(0, fill)
-
-
-def _apply_theme(slide, theme: str) -> None:
-    bg, title_c, body_c = THEMES[theme]
-    fill = slide.background.fill
-    fill.solid()
-    fill.fore_color.rgb = RGBColor.from_string(bg)
-    for sh in slide.placeholders:
-        if not sh.has_text_frame:
-            continue
-        is_title = sh.placeholder_format.idx == 0
-        for p in sh.text_frame.paragraphs:
-            for r in p.runs:
-                r.font.color.rgb = RGBColor.from_string(title_c if is_title else body_c)
-                if is_title:
-                    r.font.bold = True
-        _color_math(sh, title_c if is_title else body_c)
-
-
-@tool("pptx_create_presentation", "Tạo bài trình chiếu 16:9 mới. Sau khi tạo nên gọi render_pages để tự kiểm tra "
-      "chữ tràn/chồng lấn.", CreateArgs, kind="pptx", creates=True)
+@tool("pptx_create_presentation", "Tạo bài trình chiếu 16:9 mới từ mẫu thiết kế (hoặc theo thiết kế của một tệp "
+      ".pptx có sẵn). Sau khi tạo nên gọi pptx_check_layout / render_pages để tự kiểm tra chữ tràn, chồng lấn.",
+      CreateArgs, kind="pptx", creates=True)
 def pptx_create_presentation(args: CreateArgs, ctx: ToolCtx) -> dict:
-    # TODO(TV2): dùng mẫu thiết kế (default_theme.pptx) thay cho mẫu trắng mặc định của python-pptx
-    prs = Presentation()
-    prs.slide_width, prs.slide_height = SLIDE_16_9
+    if args.template in BUILT_IN:
+        template, palette = BUILT_IN[args.template], args.theme
+    else:  # mẫu của người dùng: giữ nguyên màu của họ
+        template, palette = _session_pptx(ctx, args.template), None
+    prs = new_presentation(template, palette)
     for spec in args.slides:
-        s = prs.slides.add_slide(prs.slide_layouts[_LAYOUTS[spec.layout]])
+        s = prs.slides.add_slide(find_layout(prs, spec.layout))
         _fill_slide(s, spec)
-        _apply_theme(s, args.theme)
         finalize(s)
     prs.save(ctx.path)
-    return {"created": args.file, "slides": len(args.slides), "theme": args.theme}
+    return {"created": args.file, "slides": len(args.slides), "template": args.template,
+            "theme": palette or "theo mẫu"}
+
+
+def _session_pptx(ctx: ToolCtx, name: str):
+    from ..versioning import store  # import muộn: versioning dùng tools
+    match = next((f for f in ctx.files if f["name"] == name and f["kind"] == "pptx"), None)
+    if match is None:
+        pptx_files = [f["name"] for f in ctx.files if f["kind"] == "pptx"]
+        raise ToolError(f"Không có mẫu '{name}'. Dùng 'default_theme', 'default_plain' hoặc một tệp: {pptx_files}")
+    from ..db import File, SessionLocal
+    with SessionLocal() as db:
+        return store.working_path(db.get(File, match["id"]))
 
 
 class TextItem(BaseModel):
@@ -209,7 +181,7 @@ def pptx_add_image(args: AddImageArgs, ctx: ToolCtx) -> dict:
 class AddSlideArgs(BaseModel):
     file: str = FILE
     after: int = Field(description="Chèn sau slide này (từ 0); -1 để chèn lên đầu")
-    slide: SlideSpec
+    slides: list[SlideSpec] = Field(description="Các slide thêm liên tiếp — gộp TẤT CẢ slide cần thêm vào MỘT lần gọi")
 
 
 def _move_slide(prs, old: int, new: int) -> None:
@@ -219,19 +191,21 @@ def _move_slide(prs, old: int, new: int) -> None:
     ids.insert(new, el)
 
 
-@tool("pptx_add_slide", "Thêm một slide (layout, tiêu đề, gạch đầu dòng, ghi chú) vào bài có sẵn.", AddSlideArgs,
-      kind="pptx", writes=True)
+@tool("pptx_add_slide", "Thêm một hoặc nhiều slide liên tiếp (layout, tiêu đề, gạch đầu dòng, công thức, ghi chú) "
+      "vào bài có sẵn, theo mẫu thiết kế của bài.", AddSlideArgs, kind="pptx", writes=True)
 def pptx_add_slide(args: AddSlideArgs, ctx: ToolCtx) -> dict:
+    if not args.slides:
+        raise ToolError("Cần ít nhất một slide")
     prs = Presentation(ctx.path)
     if not -1 <= args.after < len(prs.slides):
         raise ToolError(f"Vị trí {args.after} không hợp lệ (có {len(prs.slides)} slide)")
-    layouts = prs.slide_layouts
-    s = prs.slides.add_slide(layouts[min(_LAYOUTS[args.slide.layout], len(layouts) - 1)])
-    _fill_slide(s, args.slide)
-    finalize(s)
-    _move_slide(prs, len(prs.slides) - 1, args.after + 1)
+    for k, spec in enumerate(args.slides):
+        s = prs.slides.add_slide(find_layout(prs, spec.layout))
+        _fill_slide(s, spec)
+        finalize(s)
+        _move_slide(prs, len(prs.slides) - 1, args.after + 1 + k)
     prs.save(ctx.path)
-    return {"inserted_at": args.after + 1}
+    return {"inserted_at": list(range(args.after + 1, args.after + 1 + len(args.slides)))}
 
 
 class DeleteSlideArgs(BaseModel):
@@ -340,10 +314,123 @@ def pptx_add_chart(args: PptChartArgs, ctx: ToolCtx) -> dict:
     if args.title:
         chart.has_title = True
         chart.chart_title.text_frame.text = args.title
-    palette = ["0072B2", "E69F00", "009E73", "D55E00", "CC79A7", "56B4E9"]
     if args.chart_type != "pie":
-        for i, ser in enumerate(chart.series):
+        from pptx.enum.dml import MSO_THEME_COLOR
+        for i, ser in enumerate(chart.series):  # màu nhấn của chủ đề (Okabe–Ito) → đổi bảng màu thì đổi theo
             ser.format.fill.solid()
-            ser.format.fill.fore_color.rgb = RGBColor.from_string(palette[i % len(palette)])
+            ser.format.fill.fore_color.theme_color = getattr(MSO_THEME_COLOR, f"ACCENT_{i % 6 + 1}")
     prs.save(ctx.path)
     return {"chart": args.chart_type, "slide": args.slide}
+
+
+SHAPES = {
+    "rectangle": "RECTANGLE", "rounded_rectangle": "ROUNDED_RECTANGLE", "oval": "OVAL", "triangle": "ISOSCELES_TRIANGLE",
+    "right_arrow": "RIGHT_ARROW", "left_right_arrow": "LEFT_RIGHT_ARROW", "chevron": "CHEVRON", "pentagon": "PENTAGON",
+    "diamond": "DIAMOND", "star": "STAR_5_POINT", "callout": "ROUNDED_RECTANGULAR_CALLOUT", "cloud": "CLOUD",
+}
+THEME_FILLS = {f"accent{i}": f"ACCENT_{i}" for i in range(1, 7)} | {"dark": "TEXT_2", "light": "BACKGROUND_2"}
+
+
+class ShapeItem(BaseModel):
+    kind: Literal["rectangle", "rounded_rectangle", "oval", "triangle", "right_arrow", "left_right_arrow", "chevron",
+                  "pentagon", "diamond", "star", "callout", "cloud", "text_box"] = "rounded_rectangle"
+    left_cm: float = Field(description="Slide 16:9 rộng 33,9 cm, cao 19,05 cm; chừa lề ≥ 1,9 cm")
+    top_cm: float
+    width_cm: float
+    height_cm: float
+    text: str = Field("", description="Chữ trong hình; \n xuống dòng; công thức toán viết LaTeX $...$")
+    fill: str = Field("accent1", description="'accent1'..'accent6', 'dark', 'light' (màu theo bảng màu của bài, đổi "
+                                             "chủ đề vẫn hợp), 'none' hoặc mã '#RRGGBB'")
+    font_pt: int = Field(18, ge=8, le=60)
+    bold: bool = False
+
+
+class AddShapeArgs(BaseModel):
+    file: str = FILE
+    slide: int = Field(description="Chỉ số slide (từ 0)")
+    shapes: list[ShapeItem] = Field(description="Các hình — vẽ cả sơ đồ (quy trình, so sánh, chu trình) trong MỘT lần gọi")
+
+
+@tool("pptx_add_shape", "Vẽ hình khối/hộp chữ lên slide: sơ đồ quy trình (chevron, mũi tên), khối so sánh, chú thích, "
+      "nhãn; có thể chứa chữ và công thức toán.", AddShapeArgs, kind="pptx", writes=True)
+def pptx_add_shape(args: AddShapeArgs, ctx: ToolCtx) -> dict:
+    from pptx.enum.dml import MSO_THEME_COLOR
+    from pptx.enum.shapes import MSO_SHAPE
+    from pptx.enum.text import MSO_ANCHOR, PP_ALIGN
+
+    if not args.shapes:
+        raise ToolError("Cần ít nhất một hình")
+    _check_selection(ctx, args.slide)
+    prs = Presentation(ctx.path)
+    s = _slide(prs, args.slide)
+    w, h = prs.slide_width / 360000, prs.slide_height / 360000
+    added = []
+    for it in args.shapes:
+        if it.left_cm < 0 or it.top_cm < 0 or it.left_cm + it.width_cm > w + 0.01 or it.top_cm + it.height_cm > h + 0.01:
+            raise ToolError(f"Hình '{it.text[:20] or it.kind}' nằm ngoài slide ({w:.1f} × {h:.1f} cm)")
+        box = (Cm(it.left_cm), Cm(it.top_cm), Cm(it.width_cm), Cm(it.height_cm))
+        sh = s.shapes.add_textbox(*box) if it.kind == "text_box" else \
+            s.shapes.add_shape(getattr(MSO_SHAPE, SHAPES[it.kind]), *box)
+        filled = it.kind != "text_box" and it.fill != "none"
+        if it.kind != "text_box":
+            if not filled:
+                sh.fill.background()
+            elif it.fill in THEME_FILLS:
+                sh.fill.solid()
+                sh.fill.fore_color.theme_color = getattr(MSO_THEME_COLOR, THEME_FILLS[it.fill])
+            else:
+                try:
+                    sh.fill.solid()
+                    sh.fill.fore_color.rgb = RGBColor.from_string(it.fill.lstrip("#").upper())
+                except ValueError:
+                    raise ToolError(f"Màu '{it.fill}' không hợp lệ: dùng accent1..accent6, dark, light, none, #RRGGBB")
+            sh.line.fill.background()
+        if it.text:
+            write_text(sh, it.text)
+            tf = sh.text_frame
+            tf.word_wrap = True
+            tf.vertical_anchor = MSO_ANCHOR.MIDDLE
+            for p in tf.paragraphs:
+                if it.kind != "text_box":
+                    p.alignment = PP_ALIGN.CENTER
+                for r in p.runs:
+                    r.font.size = Pt(it.font_pt)
+                    r.font.bold = it.bold
+                    # Chữ trên nền màu nhấn/đậm: màu nền slide (lt1) cho đủ tương phản; hình trống: màu chữ thường
+                    r.font.color.theme_color = MSO_THEME_COLOR.BACKGROUND_1 if filled and it.fill != "light" \
+                        else MSO_THEME_COLOR.TEXT_1
+        added.append(sh.shape_id)
+    finalize(s)
+    ids = [x.shape_id for x in all_shapes(s)]
+    prs.save(ctx.path)
+    return {"slide": args.slide, "shapes": [ids.index(i) for i in added]}
+
+
+class ThemeArgs(BaseModel):
+    file: str = FILE
+    theme: Literal["clean", "midnight", "warm"] = Field(description="Bảng màu mới cho cả bài")
+
+
+@tool("pptx_set_theme", "Đổi bảng màu của cả bài trình chiếu (nền, tiêu đề, chữ, màu nhấn, biểu đồ) — áp dụng cho "
+      "mọi slide dùng màu chủ đề.", ThemeArgs, kind="pptx", writes=True)
+def pptx_set_theme(args: ThemeArgs, ctx: ToolCtx) -> dict:
+    from .pptx_design import apply_palette
+    prs = Presentation(ctx.path)
+    apply_palette(prs, args.theme)
+    prs.save(ctx.path)
+    return {"theme": args.theme}
+
+
+class CheckArgs(BaseModel):
+    file: str = FILE
+    slides: list[int] | None = Field(None, description="Chỉ kiểm tra các slide này (từ 0); bỏ trống = cả bài")
+
+
+@tool("pptx_check_layout", "Tự kiểm tra bố cục slide (không cần ảnh): chữ tràn khung, hình chồng lấn, hình ra ngoài "
+      "slide. Gọi sau khi tạo/sửa slide; có lỗi thì sửa rồi kiểm tra lại.", CheckArgs, kind="pptx")
+def pptx_check_layout(args: CheckArgs, ctx: ToolCtx) -> dict:
+    from .layout_check import check_presentation
+    prs = Presentation(ctx.path)
+    issues = check_presentation(prs, args.slides)
+    return {"issues": issues[:30], "issue_count": len(issues),
+            "checked_slides": len(args.slides) if args.slides is not None else len(prs.slides)}

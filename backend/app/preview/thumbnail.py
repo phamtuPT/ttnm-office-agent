@@ -153,6 +153,24 @@ def _rgb(color_format):
         return None
 
 
+def _theme_colors(prs) -> dict:
+    """Bảng màu theme (dk1, lt1, dk2, accent1...) → RGB; màu hệ thống (sysClr) dùng lastClr."""
+    from lxml import etree
+    from pptx.opc.constants import RELATIONSHIP_TYPE as RT
+    a = "{http://schemas.openxmlformats.org/drawingml/2006/main}"
+    try:
+        scheme = etree.fromstring(prs.slide_master.part.part_related_by(RT.THEME).blob).find(f".//{a}clrScheme")
+    except (KeyError, etree.XMLSyntaxError):
+        return {}
+    out = {}
+    for slot in scheme if scheme is not None else []:
+        c = slot.find(f"{a}srgbClr")
+        val = c.get("val") if c is not None else (slot.find(f"{a}sysClr").get("lastClr") if slot.find(f"{a}sysClr") is not None else None)
+        if val and len(val) == 6:
+            out[etree.QName(slot).localname] = tuple(int(val[i:i + 2], 16) for i in (0, 2, 4))
+    return out
+
+
 def _pptx(path: Path) -> Image.Image:
     from ..tools.pptx_math import all_shapes, shape_markup
 
@@ -160,16 +178,19 @@ def _pptx(path: Path) -> Image.Image:
     if not len(prs.slides):
         return Image.new("RGB", (W, H), PAGE)
     s = prs.slides[0]
-    bg = PAGE
+    theme = _theme_colors(prs)
+    bg = theme.get("lt1", PAGE)  # mẫu thiết kế: nền lấy từ bảng màu của theme (slide kế thừa master)
     try:
         if s.background.fill.type is not None:
-            bg = _rgb(s.background.fill.fore_color) or PAGE
+            bg = _rgb(s.background.fill.fore_color) or bg
     except (AttributeError, TypeError):
         pass
     img = Image.new("RGB", (W, H), bg)
     d = ImageDraw.Draw(img)
     dark_bg = sum(bg) < 380
     sx, sy = W / prs.slide_width, H / prs.slide_height
+    if any(sh.name == "Dải nhấn" for sh in prs.slide_master.shapes) and "accent1" in theme:
+        d.rectangle([0, 0, max(int(W * 0.013), 2), H], fill=theme["accent1"])
     for sh in all_shapes(s):
         box = [int(sh.left * sx), int(sh.top * sy), int((sh.left + sh.width) * sx), int((sh.top + sh.height) * sy)] \
             if sh.left is not None else [24, 24, W - 24, H - 24]
@@ -197,7 +218,7 @@ def _pptx(path: Path) -> Image.Image:
                     pass
                 break
             break
-        color = color or ((240, 237, 230) if dark_bg else INK)
+        color = color or theme.get("dk2" if is_title else "dk1") or ((240, 237, 230) if dark_bg else INK)
         y = box[1] + 4
         width = max(box[2] - box[0] - 8, 40)
         for text in shape_markup(sh).split("\n"):

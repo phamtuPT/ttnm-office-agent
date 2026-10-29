@@ -72,6 +72,8 @@ function DiffView({ diff }: { diff: FileDiff }) {
       {diff.slides?.map((s, i) => (
         <div key={i}>Slide {s.index + 1}: {s.before === null ? "thêm mới" : s.after === null ? "đã xoá" : "nội dung thay đổi"}</div>
       ))}
+      {diff.styles && <div>Đổi kiểu chữ (Heading, Normal…) hoặc lề trang của tài liệu</div>}
+      {diff.design && <div>Đổi thiết kế / bảng màu của bài trình chiếu</div>}
     </div>
   );
 }

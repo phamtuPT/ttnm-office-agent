@@ -3,8 +3,6 @@ import io
 
 import openpyxl
 from docx import Document
-from pptx import Presentation
-from pptx.util import Emu
 
 # Tên tệp và tên phiên mặc định. Phiên có tên mặc định sẽ được đặt lại tên theo yêu cầu đầu tiên.
 DEFAULTS = {
@@ -24,9 +22,9 @@ def blank_bytes(kind: str) -> bytes:
     elif kind == "docx":
         Document().save(buf)
     elif kind == "pptx":
-        prs = Presentation()
-        prs.slide_width, prs.slide_height = Emu(12192000), Emu(6858000)  # 16:9
-        prs.slides.add_slide(prs.slide_layouts[0])
+        from ..tools.pptx_design import BUILT_IN, find_layout, new_presentation  # import muộn: tools dùng versioning
+        prs = new_presentation(BUILT_IN["default_theme"], "clean")  # 16:9, có sẵn mẫu thiết kế
+        prs.slides.add_slide(find_layout(prs, "title"))
         prs.save(buf)
     else:
         raise ValueError(f"Không hỗ trợ loại tệp {kind}")

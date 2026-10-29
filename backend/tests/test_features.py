@@ -107,7 +107,7 @@ def test_pptx_theme_add_move_delete_table_chart(db, chat):
     ex = ex_for(db, chat)
     assert run(ex, "pptx_create_presentation", {"file": "t.pptx", "theme": "midnight", "slides": [
         {"layout": "title", "title": "Mở đầu"}, {"title": "Hai", "bullets": ["x"]}]}).ok
-    assert run(ex, "pptx_add_slide", {"file": "t.pptx", "after": -1, "slide": {"title": "Đầu tiên"}}).ok
+    assert run(ex, "pptx_add_slide", {"file": "t.pptx", "after": -1, "slides": [{"title": "Đầu tiên"}]}).ok
     assert run(ex, "pptx_move_slide", {"file": "t.pptx", "slide": 0, "to": 2}).ok
     assert run(ex, "pptx_add_table", {"file": "t.pptx", "slide": 0, "rows": [["Q", "DT"], ["1", "10"]]}).ok
     assert run(ex, "pptx_add_chart", {"file": "t.pptx", "slide": 1, "chart_type": "column",
@@ -120,7 +120,13 @@ def test_pptx_theme_add_move_delete_table_chart(db, chat):
     titles = [s.shapes.title.text for s in prs.slides]
     assert titles == ["Mở đầu", "Hai"]
     assert any(sh.has_table for sh in prs.slides[0].shapes) and any(sh.has_chart for sh in prs.slides[1].shapes)
-    assert str(prs.slides[0].background.fill.fore_color.rgb) == "0F1923"
+    # Màu nằm trong bảng màu của theme (mẫu thiết kế), slide kế thừa — slide thêm sau cũng đúng màu
+    from lxml import etree
+    from pptx.opc.constants import RELATIONSHIP_TYPE as RT
+    theme = etree.fromstring(prs.slide_master.part.part_related_by(RT.THEME).blob)
+    a = "{http://schemas.openxmlformats.org/drawingml/2006/main}"
+    assert theme.find(f".//{a}lt1/{a}srgbClr").get("val") == "0F1923"
+    assert prs.slide_width == 12192000
 
 
 # ---------- Định dạng từ khoá ----------

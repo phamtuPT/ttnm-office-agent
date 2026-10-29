@@ -49,6 +49,8 @@ export interface FileDiff {
   sheets_removed?: string[];
   paragraphs?: { op: string; before_index: number; after_index: number; before: string[]; after: string[] }[];
   slides?: { index: number; before: string | null; after: string | null }[];
+  styles?: boolean; // Word: đổi kiểu chữ dùng chung / lề trang
+  design?: boolean; // PowerPoint: đổi mẫu thiết kế / bảng màu
 }
 
 export type Provider = "gemini" | "openai" | "ollama" | "mock";
@@ -123,6 +125,9 @@ export const TOOL_LABELS: Record<string, string> = {
   pptx_move_slide: "Đổi thứ tự slide",
   pptx_add_table: "Chèn bảng vào slide",
   pptx_add_chart: "Chèn biểu đồ vào slide",
+  pptx_add_shape: "Vẽ hình khối",
+  pptx_set_theme: "Đổi bảng màu bài trình chiếu",
+  pptx_check_layout: "Tự kiểm tra bố cục slide",
   word_insert_table: "Chèn bảng Word",
   word_find_replace: "Tìm và thay",
   word_rewrite_paragraphs: "Viết lại các đoạn",

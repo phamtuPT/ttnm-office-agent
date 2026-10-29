@@ -16,7 +16,7 @@ def compute(kind: str, before: Path, after: Path) -> dict:
 
 def is_empty(diff: dict) -> bool:
     keys = ("cells", "paragraphs", "slides", "sheets_added", "sheets_removed", "charts", "conditional", "filters", "tables",
-            "created")
+            "created", "styles", "design")
     return not any(diff.get(k) for k in keys)
 
 
@@ -48,6 +48,10 @@ def summarize(diff: dict) -> str:
         parts.append(f"số bảng {t['before']} → {t['after']}" if t["before"] != t["after"] else "nội dung bảng thay đổi")
     if diff.get("slides"):
         parts.append(f"{len(diff['slides'])} slide thay đổi")
+    if diff.get("styles"):
+        parts.append("đổi kiểu chữ (styles) của tài liệu")
+    if diff.get("design"):
+        parts.append("đổi thiết kế/bảng màu")
     return "; ".join(parts) or "Không có thay đổi"
 
 
@@ -119,6 +123,9 @@ def _docx(before: Path, after: Path) -> dict:
     out = {"paragraphs": ops[:MAX_ITEMS]}
     if [t._tbl.xml for t in da.tables] != [t._tbl.xml for t in db.tables]:
         out["tables"] = {"before": len(da.tables), "after": len(db.tables)}
+    # Kiểu chữ dùng chung (Heading, Normal...) và lề trang: đổi được mà không đoạn nào khác XML
+    if da.styles.element.xml != db.styles.element.xml or             [s._sectPr.xml for s in da.sections] != [s._sectPr.xml for s in db.sections]:
+        out["styles"] = True
     return out
 
 
@@ -137,8 +144,17 @@ def _slide_text(s) -> str:
     return "\n".join(shape_markup(sh) for sh in all_shapes(s) if sh.has_text_frame)
 
 
+def _design_sig(prs) -> tuple:
+    """Theme (bảng màu, phông) + master + layout: đổi mẫu thiết kế không làm khác XML của slide nào."""
+    from pptx.opc.constants import RELATIONSHIP_TYPE as RT
+    master = prs.slide_master
+    return (master.part.part_related_by(RT.THEME).blob, master._element.xml,
+            tuple(layout._element.xml for layout in prs.slide_layouts))
+
+
 def _pptx(before: Path, after: Path) -> dict:
-    sa, sb = list(Presentation(before).slides), list(Presentation(after).slides)
+    pa, pb = Presentation(before), Presentation(after)
+    sa, sb = list(pa.slides), list(pb.slides)
     slides = []
     for i in range(max(len(sa), len(sb))):
         a = sa[i] if i < len(sa) else None
@@ -146,7 +162,10 @@ def _pptx(before: Path, after: Path) -> dict:
         if (a is None) != (b is None) or (a is not None and _slide_sig(a) != _slide_sig(b)):
             slides.append({"index": i, "before": _slide_text(a) if a is not None else None,
                            "after": _slide_text(b) if b is not None else None})
-    return {"slides": slides[:MAX_ITEMS]}
+    out = {"slides": slides[:MAX_ITEMS]}
+    if _design_sig(pa) != _design_sig(pb):
+        out["design"] = True
+    return out
 
 
 def _plain(v):
